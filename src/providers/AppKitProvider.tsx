@@ -97,12 +97,16 @@ function initializeAppKitSingleton(
       },
       siweConfig: createSIWEConfig({
         signOutOnAccountChange: true,
-        getMessageParams: async () => ({
-          domain: new URL(process.env.SITE_URL!).host,
-          uri: typeof window !== 'undefined' ? window.location.origin : '',
-          chains: [defaultNetwork.id],
-          statement: 'Please sign with your account',
-        }),
+        getMessageParams: async () => {
+          const params = {
+            domain: new URL(process.env.SITE_URL!).host,
+            uri: typeof window !== 'undefined' ? window.location.origin : '',
+            chains: [defaultNetwork.id],
+            statement: 'Please sign with your account',
+          }
+          console.log('SIWE getMessageParams:', params)
+          return params
+        },
         createMessage: ({ address, ...args }: SIWECreateMessageArgs) => formatMessage(args, address),
         getNonce: async () => generateRandomString(32),
         getSession: async () => {
@@ -124,7 +128,9 @@ function initializeAppKitSingleton(
         },
         verifyMessage: async ({ message, signature }: SIWEVerifyMessageArgs) => {
           try {
+            console.log('SIWE verifyMessage called with message:', message)
             const address = getAddressFromMessage(message)
+            console.log('Extracted address:', address)
             await authClient.siwe.nonce({
               walletAddress: address,
               chainId: defaultNetwork.id,
@@ -135,9 +141,11 @@ function initializeAppKitSingleton(
               walletAddress: address,
               chainId: defaultNetwork.id,
             })
+            console.log('SIWE verification result:', data)
             return Boolean(data?.success)
           }
-          catch {
+          catch (error) {
+            console.error('SIWE verification failed:', error)
             return false
           }
         },

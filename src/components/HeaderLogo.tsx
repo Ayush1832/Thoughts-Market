@@ -17,17 +17,19 @@ export default function HeaderLogo({ labelSuffix }: HeaderLogoProps) {
       intentPrefetch
       href="/"
       className={`
-        flex h-10 shrink-0 items-center gap-2 text-2xl font-medium text-foreground transition-opacity
+        flex h-14 shrink-0 items-center gap-3 text-2xl font-medium text-foreground transition-opacity
         hover:opacity-80
       `}
     >
       <SiteLogoIcon
         logoSvg={site.logoSvg}
+        logoUrl={site.logoUrl}
         logoImageUrl={site.logoImageUrl}
         alt={`${site.name} logo`}
-        className="size-[1em] text-current [&_svg]:size-[1em] [&_svg_*]:fill-current [&_svg_*]:stroke-current"
-        imageClassName="size-[1em] object-contain"
-        size={32}
+        className="inline-flex w-20 h-20 items-center justify-center text-current [&_svg]:w-full [&_svg]:h-full [&_svg_*]:fill-current [&_svg_*]:stroke-current"
+        svgClassName="w-full h-full"
+        imageClassName="w-full h-full object-contain"
+        size={80}
       />
       <span>{label}</span>
     </AppLink>

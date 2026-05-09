@@ -215,7 +215,7 @@ function AdminGeneralSettingsFormInner({
 
   const sanitizedLogoSvg = useMemo(() => sanitizeSvg(logoSvg), [logoSvg])
   const svgPreviewUrl = useMemo(
-    () => `data:image/svg+xml;utf8,${encodeURIComponent(sanitizedLogoSvg)}`,
+    () => `data:image/svg+xml;charset=utf-8,${encodeURIComponent(sanitizedLogoSvg)}`,
     [sanitizedLogoSvg],
   )
 

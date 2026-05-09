@@ -16,7 +16,7 @@ export const THEME_SITE_SOCIAL_LINK_FIELDS = [
 export type ThemeSiteSocialLinkField = typeof THEME_SITE_SOCIAL_LINK_FIELDS[number]
 
 const THEME_SITE_LOGO_MODE_SET = new Set<string>(THEME_SITE_LOGO_MODES)
-const DEFAULT_SITE_NAME_FALLBACK = 'Kuest'
+const DEFAULT_SITE_NAME_FALLBACK = 'Thoughts Market'
 const DEFAULT_SITE_DESCRIPTION_FALLBACK = 'Decentralized Prediction Markets'
 const DEFAULT_SITE_LOGO_SVG_FALLBACK = `
 <svg viewBox="0 0 518 414" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
@@ -71,7 +71,6 @@ function sanitizeDefaultLogo() {
   if (!sanitized || !/<svg[\s>]/i.test(sanitized)) {
     return normalizeRootSvgDimensions(sanitizeSvg(DEFAULT_SITE_LOGO_SVG_FALLBACK).trim())
   }
-
   return sanitized
 }
 
@@ -80,6 +79,7 @@ export const DEFAULT_THEME_SITE_DESCRIPTION = DEFAULT_SITE_DESCRIPTION_FALLBACK
 export const DEFAULT_THEME_SITE_LOGO_SVG = sanitizeDefaultLogo()
 export const DEFAULT_THEME_SITE_PWA_ICON_192_URL = '/images/pwa/default-icon-192.png'
 export const DEFAULT_THEME_SITE_PWA_ICON_512_URL = '/images/pwa/default-icon-512.png'
+export const DEFAULT_THEME_SITE_LOGO_IMAGE_PATH = '/images/thoughtmarket.png'
 
 export function buildSvgDataUri(svg: string) {
   return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`
@@ -91,11 +91,11 @@ export function createDefaultThemeSiteIdentity(): ThemeSiteIdentity {
   return {
     name: DEFAULT_THEME_SITE_NAME,
     description: DEFAULT_THEME_SITE_DESCRIPTION,
-    logoMode: 'svg',
+    logoMode: 'image',
     logoSvg,
-    logoImagePath: null,
-    logoImageUrl: null,
-    logoUrl: buildSvgDataUri(logoSvg),
+    logoImagePath: DEFAULT_THEME_SITE_LOGO_IMAGE_PATH,
+    logoImageUrl: DEFAULT_THEME_SITE_LOGO_IMAGE_PATH,
+    logoUrl: DEFAULT_THEME_SITE_LOGO_IMAGE_PATH,
     googleAnalyticsId: null,
     discordLink: null,
     twitterLink: null,

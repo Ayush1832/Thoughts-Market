@@ -228,11 +228,11 @@ async function isCurrentRegionBlocked() {
 function createAppKitContextValue({
   instance,
   hasAuthenticatedUser,
-  t,
+  regionBlockedMessage,
 }: {
   instance: AppKit | null
   hasAuthenticatedUser: boolean
-  t: ReturnType<typeof useExtracted>
+  regionBlockedMessage: string
 }) {
   if (!instance) {
     return defaultAppKitValue
@@ -241,7 +241,7 @@ function createAppKitContextValue({
   return {
     open: async (options: Parameters<AppKit['open']>[0]) => {
       if (!hasAuthenticatedUser && await isCurrentRegionBlocked()) {
-        toast.warning(t('This platform is not currently available in your region.'))
+        toast.warning(regionBlockedMessage)
         return
       }
 
@@ -300,17 +300,17 @@ function useAppKitInstance({
 function useAppKitContextValue({
   instance,
   hasAuthenticatedUser,
-  t,
+  regionBlockedMessage,
 }: {
   instance: AppKit | null
   hasAuthenticatedUser: boolean
-  t: ReturnType<typeof useExtracted>
+  regionBlockedMessage: string
 }) {
   return useMemo(() => createAppKitContextValue({
     instance,
     hasAuthenticatedUser,
-    t,
-  }), [hasAuthenticatedUser, instance, t])
+    regionBlockedMessage,
+  }), [hasAuthenticatedUser, instance, regionBlockedMessage])
 }
 
 export default function AppKitProvider({ children }: { children: ReactNode }) {
@@ -328,7 +328,7 @@ export default function AppKitProvider({ children }: { children: ReactNode }) {
   const appKitValue = useAppKitContextValue({
     instance,
     hasAuthenticatedUser: Boolean(currentUser?.id),
-    t,
+    regionBlockedMessage: t('This platform is not currently available in your region.'),
   })
   const canSyncTheme = Boolean(instance)
 

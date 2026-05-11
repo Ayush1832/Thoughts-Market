@@ -11,6 +11,7 @@ test.describe('desktop and mobile', () => {
     await page.goto('/')
   })
 
+
   test('has title', async ({ page }) => {
     await expect(page).toHaveTitle('Thoughts Market | Decentralized Prediction Markets')
   })

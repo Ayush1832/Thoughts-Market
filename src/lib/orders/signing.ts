@@ -19,6 +19,10 @@ export async function signOrderPayload({
   domain,
   signTypedDataAsync,
 }: SignOrderArgs) {
+  if (payload.signature_type !== 3) {
+    throw new Error('Only Deposit Wallet signature type 3 is supported')
+  }
+
   const orderMessage = {
     salt: payload.salt,
     maker: payload.maker,
@@ -33,50 +37,39 @@ export async function signOrderPayload({
     builder: payload.builder,
   }
 
-  if (payload.signature_type === 3) {
-    const typedDataSignTypes = {
-      ...EIP712_TYPES,
-      TypedDataSign: [
-        { name: 'contents', type: 'Order' },
-        { name: 'name', type: 'string' },
-        { name: 'version', type: 'string' },
-        { name: 'chainId', type: 'uint256' },
-        { name: 'verifyingContract', type: 'address' },
-        { name: 'salt', type: 'bytes32' },
-      ],
-    } as const
+  const typedDataSignTypes = {
+    ...EIP712_TYPES,
+    TypedDataSign: [
+      { name: 'contents', type: 'Order' },
+      { name: 'name', type: 'string' },
+      { name: 'version', type: 'string' },
+      { name: 'chainId', type: 'uint256' },
+      { name: 'verifyingContract', type: 'address' },
+      { name: 'salt', type: 'bytes32' },
+    ],
+  } as const
 
-    const verifierDomainMessage = {
-      contents: orderMessage,
-      name: 'DepositWallet',
-      version: '1',
-      chainId: BigInt(DEFAULT_CHAIN_ID),
-      verifyingContract: payload.signer,
-      salt: ZERO_BYTES32,
-    }
-
-    const signature = await signTypedDataAsync({
-      domain,
-      types: typedDataSignTypes,
-      primaryType: 'TypedDataSign',
-      message: verifierDomainMessage,
-    })
-
-    return wrapTypedDataSignature({
-      domain,
-      types: EIP712_TYPES,
-      primaryType: 'Order',
-      message: orderMessage,
-      signature: signature as `0x${string}`,
-    })
+  const verifierDomainMessage = {
+    contents: orderMessage,
+    name: 'DepositWallet',
+    version: '1',
+    chainId: BigInt(DEFAULT_CHAIN_ID),
+    verifyingContract: payload.signer,
+    salt: ZERO_BYTES32,
   }
 
   const signature = await signTypedDataAsync({
     domain,
+    types: typedDataSignTypes,
+    primaryType: 'TypedDataSign',
+    message: verifierDomainMessage,
+  })
+
+  return wrapTypedDataSignature({
+    domain,
     types: EIP712_TYPES,
     primaryType: 'Order',
     message: orderMessage,
+    signature: signature as `0x${string}`,
   })
-
-  return signature
 }

@@ -75,7 +75,7 @@ export function handleValidationError(reason: OrderValidationError, { openWallet
       break
     case 'INSUFFICIENT_BALANCE':
       toast.error('Insufficient balance', {
-        description: 'Reduce the order size or deposit more into your Safe.',
+        description: 'Reduce the order size or deposit more into your Deposit Wallet.',
       })
       break
     case 'INSUFFICIENT_SHARES': {

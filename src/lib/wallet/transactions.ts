@@ -7,6 +7,7 @@ import {
 } from 'viem'
 import { addressToBuilderCode } from '@/lib/builder-code'
 import {
+  assertCurrentNegRiskAdapterAddress,
   COLLATERAL_TOKEN_ADDRESS,
   CONDITIONAL_TOKENS_CONTRACT,
   CTF_AUTO_REDEEM_ADDRESS,
@@ -14,7 +15,6 @@ import {
   DEPOSIT_WALLET_FACTORY_ADDRESS,
   NEG_RISK_CTF_EXCHANGE_ADDRESS,
   UMA_NEG_RISK_ADAPTER_ADDRESS,
-  UMA_NEG_RISK_ADAPTER_LEGACY_ADDRESS,
   ZERO_COLLECTION_ID,
 } from '@/lib/contracts'
 import {
@@ -262,6 +262,20 @@ function createWalletCall(target: `0x${string}`, data: `0x${string}`): WalletCal
   }
 }
 
+function resolveNegRiskAdapterContract(contract?: `0x${string}`): `0x${string}` {
+  return assertCurrentNegRiskAdapterAddress(contract ?? UMA_NEG_RISK_ADAPTER_ADDRESS)
+}
+
+function resolveConditionalPositionContract(contract?: `0x${string}`): `0x${string}` {
+  if (!contract) {
+    return CONDITIONAL_TOKENS_CONTRACT
+  }
+  if (contract.toLowerCase() === CONDITIONAL_TOKENS_CONTRACT.toLowerCase()) {
+    return contract
+  }
+  return resolveNegRiskAdapterContract(contract)
+}
+
 export function getDepositWalletDeadline(now = Date.now()) {
   return Math.floor(now / 1000) + DEPOSIT_WALLET_BATCH_DEADLINE_SECONDS
 }
@@ -289,10 +303,8 @@ export function buildApproveTokenCalls(): WalletCall[] {
     buildConditionalSetApprovalForAllCall(CTF_EXCHANGE_ADDRESS),
     buildCollateralApproveCall(NEG_RISK_CTF_EXCHANGE_ADDRESS),
     buildCollateralApproveCall(UMA_NEG_RISK_ADAPTER_ADDRESS),
-    buildCollateralApproveCall(UMA_NEG_RISK_ADAPTER_LEGACY_ADDRESS),
     buildConditionalSetApprovalForAllCall(NEG_RISK_CTF_EXCHANGE_ADDRESS),
     buildConditionalSetApprovalForAllCall(UMA_NEG_RISK_ADAPTER_ADDRESS),
-    buildConditionalSetApprovalForAllCall(UMA_NEG_RISK_ADAPTER_LEGACY_ADDRESS),
   ]
 }
 
@@ -348,7 +360,7 @@ export function buildSendErc20Call(params: {
 }
 
 export function buildNegRiskSplitPositionCall(args: NegRiskSplitArgs): WalletCall {
-  return createWalletCall((args.contract ?? UMA_NEG_RISK_ADAPTER_ADDRESS) as `0x${string}`, encodeFunctionData({
+  return createWalletCall(resolveNegRiskAdapterContract(args.contract), encodeFunctionData({
     abi: negRiskAdapterAbi,
     functionName: 'splitPosition',
     args: [
@@ -359,7 +371,7 @@ export function buildNegRiskSplitPositionCall(args: NegRiskSplitArgs): WalletCal
 }
 
 export function buildNegRiskRedeemPositionCall(args: NegRiskRedeemArgs): WalletCall {
-  return createWalletCall((args.contract ?? UMA_NEG_RISK_ADAPTER_ADDRESS) as `0x${string}`, encodeFunctionData({
+  return createWalletCall(resolveNegRiskAdapterContract(args.contract), encodeFunctionData({
     abi: negRiskAdapterAbi,
     functionName: 'redeemPositions',
     args: [
@@ -373,7 +385,7 @@ export function buildNegRiskRedeemPositionCall(args: NegRiskRedeemArgs): WalletC
 }
 
 export function buildSplitPositionCall(args: ConditionalPositionArgs): WalletCall {
-  return createWalletCall((args.contract ?? CONDITIONAL_TOKENS_CONTRACT) as `0x${string}`, encodeFunctionData({
+  return createWalletCall(resolveConditionalPositionContract(args.contract), encodeFunctionData({
     abi: conditionalTokensAbi,
     functionName: 'splitPosition',
     args: [
@@ -387,7 +399,7 @@ export function buildSplitPositionCall(args: ConditionalPositionArgs): WalletCal
 }
 
 export function buildMergePositionCall(args: ConditionalPositionArgs): WalletCall {
-  return createWalletCall((args.contract ?? CONDITIONAL_TOKENS_CONTRACT) as `0x${string}`, encodeFunctionData({
+  return createWalletCall(resolveConditionalPositionContract(args.contract), encodeFunctionData({
     abi: conditionalTokensAbi,
     functionName: 'mergePositions',
     args: [
@@ -401,7 +413,7 @@ export function buildMergePositionCall(args: ConditionalPositionArgs): WalletCal
 }
 
 export function buildConvertPositionsCall(args: ConvertPositionsArgs): WalletCall {
-  return createWalletCall((args.contract ?? UMA_NEG_RISK_ADAPTER_ADDRESS) as `0x${string}`, encodeFunctionData({
+  return createWalletCall(resolveNegRiskAdapterContract(args.contract), encodeFunctionData({
     abi: negRiskAdapterAbi,
     functionName: 'convertPositions',
     args: [

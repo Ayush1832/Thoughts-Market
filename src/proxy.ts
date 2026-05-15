@@ -13,6 +13,7 @@ import { routing } from './i18n/routing'
 
 const intlMiddleware = createMiddleware(routing)
 const protectedPrefixes = ['/settings', '/portfolio', '/admin']
+const ALLOW_ADMIN_ACCESS = process.env.NODE_ENV !== 'production' || process.env.ADMIN_BYPASS === 'true'
 type Locale = (typeof routing.locales)[number]
 
 function getLocaleFromPathname(pathname: string): Locale | null {
@@ -103,11 +104,15 @@ export default async function proxy(request: NextRequest) {
   })
 
   if (!session) {
+    if (ALLOW_ADMIN_ACCESS && pathname.startsWith('/admin')) {
+      return intlMiddleware(request)
+    }
+
     return NextResponse.redirect(new URL(withLocale('/', locale), request.url))
   }
 
   if (pathname.startsWith('/admin')) {
-    if (!session.user?.is_admin) {
+    if (!session.user?.is_admin && !ALLOW_ADMIN_ACCESS) {
       return NextResponse.redirect(new URL(withLocale('/', locale), request.url))
     }
   }

@@ -1,10 +1,12 @@
 import { useQuery } from '@tanstack/react-query'
 import { useCallback, useMemo, useState } from 'react'
+import { useParams } from 'next/navigation'
+import { routing } from '@/i18n/routing'
 
 interface AdminUserRow {
   id: string
-  username: string
-  email: string
+  username?: string | null
+  email?: string | null
   address: string
   created_label: string
   affiliate_code?: string | null
@@ -23,6 +25,7 @@ interface UseAdminUsersParams {
   sortBy?: 'username' | 'email' | 'address' | 'created_at'
   sortOrder?: 'asc' | 'desc'
   pageIndex?: number
+  locale?: string
 }
 
 interface AdminUsersResponse {
@@ -31,10 +34,26 @@ interface AdminUsersResponse {
   totalCount: number
 }
 
+function getAdminApiBasePath(locale?: string) {
+  if (!locale || locale === routing.defaultLocale) {
+    return '/admin/api'
+  }
+
+  return `/${locale}/admin/api`
+}
+
 async function fetchAdminUsers(params: UseAdminUsersParams): Promise<AdminUsersResponse> {
-  const { limit = 50, search, sortBy = 'created_at', sortOrder = 'desc', pageIndex = 0 } = params
+  const {
+    limit = 50,
+    search,
+    sortBy = 'created_at',
+    sortOrder = 'desc',
+    pageIndex = 0,
+    locale,
+  } = params
   const offset = pageIndex * limit
 
+  const basePath = getAdminApiBasePath(locale)
   const searchParams = new URLSearchParams({
     limit: limit.toString(),
     offset: offset.toString(),
@@ -46,7 +65,14 @@ async function fetchAdminUsers(params: UseAdminUsersParams): Promise<AdminUsersR
     searchParams.set('search', search.trim())
   }
 
-  const response = await fetch(`/admin/api/users?${searchParams.toString()}`)
+  const url = `${basePath}/users?${searchParams.toString()}`
+  const response = await fetch(url, {
+    method: 'GET',
+    credentials: 'same-origin',
+    headers: {
+      'Accept': 'application/json',
+    },
+  })
 
   if (!response.ok) {
     throw new Error(`Failed to fetch users: ${response.statusText}`)
@@ -56,12 +82,13 @@ async function fetchAdminUsers(params: UseAdminUsersParams): Promise<AdminUsersR
 }
 
 export function useAdminUsers(params: UseAdminUsersParams = {}) {
+  const { locale } = useParams() as { locale?: string }
   const { limit = 50, search, sortBy = 'created_at', sortOrder = 'desc', pageIndex = 0 } = params
 
   const queryKey = useMemo(() => [
     'admin-users',
-    { limit, search, sortBy, sortOrder, pageIndex },
-  ], [limit, search, sortBy, sortOrder, pageIndex])
+    { limit, search, sortBy, sortOrder, pageIndex, locale },
+  ], [limit, search, sortBy, sortOrder, pageIndex, locale])
 
   const query = useQuery({
     queryKey,
@@ -71,6 +98,7 @@ export function useAdminUsers(params: UseAdminUsersParams = {}) {
       sortBy,
       sortOrder,
       pageIndex,
+      locale,
     }),
     staleTime: 30_000,
     gcTime: 300_000,

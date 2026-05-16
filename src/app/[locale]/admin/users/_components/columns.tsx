@@ -10,8 +10,8 @@ import { Checkbox } from '@/components/ui/checkbox'
 
 interface AdminUserRow {
   id: string
-  username: string
-  email: string
+  username?: string | null
+  email?: string | null
   address: string
   deposit_wallet_address?: string | null
   created_label: string

@@ -4,6 +4,8 @@ interface SiteLogoIconProps {
   logoSvg: string
   logoUrl?: string | null
   logoImageUrl?: string | null
+  logoImageUrlDark?: string | null
+  theme?: 'light' | 'dark'
   className?: string
   svgClassName?: string
   imageClassName?: string
@@ -19,13 +21,17 @@ export default function SiteLogoIcon({
   logoSvg,
   logoUrl,
   logoImageUrl,
+  logoImageUrlDark,
+  theme = 'light',
   className,
   svgClassName,
   imageClassName,
   alt = '',
   size = 24,
 }: SiteLogoIconProps) {
-  const imageSrc = logoImageUrl || (!isSvgDataUri(logoUrl) ? logoUrl : null)
+  const imageSrc = theme === 'dark' && logoImageUrlDark
+    ? logoImageUrlDark
+    : logoImageUrl || (!isSvgDataUri(logoUrl) ? logoUrl : null)
 
   if (imageSrc) {
     return (

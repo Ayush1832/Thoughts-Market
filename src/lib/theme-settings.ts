@@ -502,6 +502,8 @@ function buildThemeSiteIdentity(config: NormalizedThemeSiteConfig): ThemeSiteIde
     logoSvg: config.logoSvg,
     logoImagePath: useImageLogo ? config.logoImagePath : null,
     logoImageUrl: useImageLogo ? logoImageUrl : null,
+    logoImagePathDark: useImageLogo ? defaultSite.logoImagePathDark : null,
+    logoImageUrlDark: useImageLogo ? defaultSite.logoImageUrlDark : null,
     logoUrl: useImageLogo && logoImageUrl ? logoImageUrl : buildSvgDataUri(config.logoSvg),
     googleAnalyticsId: config.googleAnalyticsId,
     discordLink: config.discordLink,

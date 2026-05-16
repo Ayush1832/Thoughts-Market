@@ -296,5 +296,9 @@ export function getPublicAssetUrl(assetPath: string | null): string {
     return `${baseUrl}/${normalizedPath}`
   }
 
-  return ''
+  if (assetPath.startsWith('/')) {
+    return assetPath
+  }
+
+  return `/${normalizedPath}`
 }

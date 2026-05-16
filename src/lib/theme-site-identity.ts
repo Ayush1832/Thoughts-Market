@@ -55,6 +55,8 @@ export interface ThemeSiteIdentity extends ThemeSiteSocialLinks {
   logoSvg: string
   logoImagePath: string | null
   logoImageUrl: string | null
+  logoImagePathDark: string | null
+  logoImageUrlDark: string | null
   logoUrl: string
   googleAnalyticsId: string | null
   supportUrl: string | null
@@ -80,6 +82,7 @@ export const DEFAULT_THEME_SITE_LOGO_SVG = sanitizeDefaultLogo()
 export const DEFAULT_THEME_SITE_PWA_ICON_192_URL = '/images/pwa/default-icon-192.png'
 export const DEFAULT_THEME_SITE_PWA_ICON_512_URL = '/images/pwa/default-icon-512.png'
 export const DEFAULT_THEME_SITE_LOGO_IMAGE_PATH = '/images/thoughtmarket.png'
+export const DEFAULT_THEME_SITE_LOGO_IMAGE_PATH_DARK = '/images/thoughtmarketdarktheme.png'
 
 export function buildSvgDataUri(svg: string) {
   return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`
@@ -95,6 +98,8 @@ export function createDefaultThemeSiteIdentity(): ThemeSiteIdentity {
     logoSvg,
     logoImagePath: DEFAULT_THEME_SITE_LOGO_IMAGE_PATH,
     logoImageUrl: DEFAULT_THEME_SITE_LOGO_IMAGE_PATH,
+    logoImagePathDark: DEFAULT_THEME_SITE_LOGO_IMAGE_PATH_DARK,
+    logoImageUrlDark: DEFAULT_THEME_SITE_LOGO_IMAGE_PATH_DARK,
     logoUrl: DEFAULT_THEME_SITE_LOGO_IMAGE_PATH,
     googleAnalyticsId: null,
     discordLink: null,

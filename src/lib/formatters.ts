@@ -285,7 +285,7 @@ export function formatCentsLabel(
   }
 
   const numeric = Number(value)
-  if (!Number.isFinite(numeric)) {
+  if (!Number.isFinite(numeric) || numeric <= 0) {
     return fallback
   }
 

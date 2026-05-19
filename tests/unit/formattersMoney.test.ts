@@ -28,6 +28,7 @@ describe('money/price formatters', () => {
   it('formatCentsLabel handles null/NaN and <1 vs >=1 inputs', () => {
     expect(formatCentsLabel(null)).toBe('—')
     expect(formatCentsLabel('nope')).toBe('—')
+    expect(formatCentsLabel(0)).toBe('—')
     expect(formatCentsLabel(0.5)).toBe('50¢')
     expect(formatCentsLabel(0.03)).toBe('3¢')
     expect(formatCentsLabel(55.56)).toBe('55.6¢')

@@ -530,7 +530,7 @@ function useOrderBookComputations({
     }
 
     if (!isLimitOrder && side === ORDER_SIDE.BUY) {
-      return marketBuyFill?.avgPriceCents ?? null
+      return marketBuyFill?.avgPriceCents ?? outcomeFallbackBuyPriceCents
     }
 
     return outcomeFallbackBuyPriceCents
@@ -1028,9 +1028,16 @@ export default function EventOrderPanelForm({
     ? (outcomeAccentOverrides[outcomeIndex] ?? null)
     : null
 
-  const outcomeFallbackBuyPriceCents = typeof activeOutcome?.buy_price === 'number'
-    ? Number((activeOutcome.buy_price * 100).toFixed(1))
-    : null
+  const outcomeFallbackBuyPriceCents = (() => {
+    if (typeof activeOutcome?.buy_price === 'number') {
+      return Number((activeOutcome.buy_price * 100).toFixed(1))
+    }
+
+    const fallbackPrice = activeOutcome?.outcome_index === OUTCOME_INDEX.NO ? noPrice : yesPrice
+    return typeof fallbackPrice === 'number' && Number.isFinite(fallbackPrice)
+      ? Number((fallbackPrice * 100).toFixed(1))
+      : null
+  })()
 
   const {
     limitMatchingShares,

@@ -520,6 +520,7 @@ function buildThemeSiteIdentity(config: NormalizedThemeSiteConfig): ThemeSiteIde
     pwaIcon192Url,
     pwaIcon512Url,
     appleTouchIconUrl: pwaIcon192Url,
+    feeRecipientWallet: config.feeRecipientWallet,
   }
 }
 

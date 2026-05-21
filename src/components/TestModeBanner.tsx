@@ -30,6 +30,11 @@ function useTestModeBannerClosedState(persistKey: string) {
 export default function TestModeBanner({
   persistKey = 'test_mode_banner_closed_session',
 }: TestModeBannerProps) {
+  // Test mode banner is disabled
+  return null
+
+  // Original code commented out:
+  /*
   const { closeBanner, closed } = useTestModeBannerClosedState(persistKey)
 
   const discordUrl = 'https://discord.gg/kuest'
@@ -92,5 +97,5 @@ export default function TestModeBanner({
         </div>
       </div>
     </div>
-  )
+  */
 }

@@ -1,4 +1,5 @@
 import type { CustomJavascriptCodeConfig } from '@/lib/custom-javascript-code'
+import { DEFAULT_FEE_RECEIVER_WALLET_ADDRESS } from '@/lib/contracts'
 import { sanitizeSvg } from '@/lib/utils'
 
 export const THEME_SITE_LOGO_MODES = ['svg', 'image'] as const
@@ -66,6 +67,7 @@ export interface ThemeSiteIdentity extends ThemeSiteSocialLinks {
   pwaIcon192Url: string
   pwaIcon512Url: string
   appleTouchIconUrl: string
+  feeRecipientWallet: string
 }
 
 function sanitizeDefaultLogo() {
@@ -116,6 +118,7 @@ export function createDefaultThemeSiteIdentity(): ThemeSiteIdentity {
     pwaIcon192Url: DEFAULT_THEME_SITE_PWA_ICON_192_URL,
     pwaIcon512Url: DEFAULT_THEME_SITE_PWA_ICON_512_URL,
     appleTouchIconUrl: DEFAULT_THEME_SITE_PWA_ICON_192_URL,
+    feeRecipientWallet: DEFAULT_FEE_RECEIVER_WALLET_ADDRESS,
   }
 }
 

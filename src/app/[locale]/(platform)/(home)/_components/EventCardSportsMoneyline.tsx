@@ -10,7 +10,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { ensureReadableTextColorOnDark } from '@/lib/color-contrast'
 import { resolveEventOutcomePath } from '@/lib/events-routing'
 import { formatDate, formatVolume } from '@/lib/formatters'
-import { isHomeEventResolvedLike } from '@/lib/home-events'
+import { isEventResolvedLike } from '@/lib/home-events'
 import { resolveHomeSportsButtonChance, resolveResolvedHomeSportsMoneylineWinner } from '@/lib/sports-home-card'
 import { resolveSportsTeamFallbackClassName } from '@/lib/sports-team-colors'
 import { cn } from '@/lib/utils'
@@ -173,7 +173,7 @@ export default function EventCardSportsMoneyline({
       outcomeIndex: button.outcomeIndex,
     })
   }
-  const isResolvedEvent = isHomeEventResolvedLike(event)
+  const isResolvedEvent = isEventResolvedLike(event)
   const sportsCompetitionLabel = resolveSportsCompetitionLabel(event)
   const startTimeLabel = formatSportsStartTime(event.sports_start_time ?? event.start_date, currentTimestamp)
   const endedLabel = isResolvedEvent && event.resolved_at
@@ -199,12 +199,12 @@ export default function EventCardSportsMoneyline({
 
   return (
     <Card
-      className={`
+      className={cn(`
         group relative flex h-45 cursor-pointer flex-col overflow-hidden rounded-xl shadow-md shadow-black/4
         transition-all
         hover:-translate-y-0.5 hover:shadow-black/8
         dark:hover:bg-secondary
-      `}
+      `)}
     >
       <CardContent
         className={cn(`
@@ -275,12 +275,12 @@ export default function EventCardSportsMoneyline({
           <div className={cn(isResolvedEvent ? 'mt-auto mb-3' : 'mt-auto mb-2')}>
             {isResolvedEvent && resolvedWinner
               ? (
-                  <div className={`
+                  <div className={cn(`
                     flex h-12 w-full cursor-default items-center justify-center gap-2 rounded-md border px-3 text-sm
                     font-semibold text-foreground transition-colors
                     dark:border-none dark:bg-secondary
                     dark:group-hover:bg-card
-                  `}
+                  `)}
                   >
                     <span className="flex size-4 shrink-0 items-center justify-center rounded-full bg-yes">
                       <CheckIcon className="size-3 text-background" strokeWidth={2.5} />

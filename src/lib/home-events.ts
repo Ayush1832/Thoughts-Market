@@ -83,7 +83,7 @@ export const isHomeEventResolvedLike = isEventResolvedLike
 
 function isOverdueUnresolved<T extends HomeVisibleEventCandidate>(event: T, nowMs: number) {
   const endTimestamp = toTimestamp(event.end_date)
-  return !isHomeEventResolvedLike(event) && Number.isFinite(endTimestamp) && endTimestamp < nowMs
+  return !isEventResolvedLike(event) && Number.isFinite(endTimestamp) && endTimestamp < nowMs
 }
 
 function isPreferredSeriesEvent<T extends HomeVisibleEventCandidate>(candidate: T, current: T, nowMs: number) {
@@ -91,16 +91,12 @@ function isPreferredSeriesEvent<T extends HomeVisibleEventCandidate>(candidate: 
   const currentEnd = toTimestamp(current.end_date)
   const candidateHasFutureEnd = candidateEnd >= nowMs
   const currentHasFutureEnd = currentEnd >= nowMs
-  const candidateResolved = isHomeEventResolvedLike(candidate)
-  const currentResolved = isHomeEventResolvedLike(current)
+  const candidateResolved = isEventResolvedLike(candidate)
+  const currentResolved = isEventResolvedLike(current)
   const candidateOverdueUnresolved = isOverdueUnresolved(candidate, nowMs)
   const currentOverdueUnresolved = isOverdueUnresolved(current, nowMs)
 
-  if (candidateOverdueUnresolved || currentOverdueUnresolved) {
-    if (candidateOverdueUnresolved !== currentOverdueUnresolved) {
-      return candidateOverdueUnresolved
-    }
-
+  if (candidateOverdueUnresolved && currentOverdueUnresolved) {
     if (candidateEnd !== currentEnd) {
       return candidateEnd > currentEnd
     }
@@ -122,6 +118,10 @@ function isPreferredSeriesEvent<T extends HomeVisibleEventCandidate>(candidate: 
 
   if (candidateHasFutureEnd !== currentHasFutureEnd) {
     return candidateHasFutureEnd
+  }
+
+  if (candidateOverdueUnresolved !== currentOverdueUnresolved) {
+    return candidateOverdueUnresolved
   }
 
   if (candidateResolved !== currentResolved) {

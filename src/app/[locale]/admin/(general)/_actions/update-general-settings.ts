@@ -1,10 +1,11 @@
 'use server'
 
 import { Buffer } from 'node:buffer'
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import sharp from 'sharp'
 import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
 import { SettingsRepository } from '@/lib/db/queries/settings'
+import { cacheTags } from '@/lib/cache-tags'
 import { UserRepository } from '@/lib/db/queries/user'
 import { encryptSecret } from '@/lib/encryption'
 import {
@@ -141,7 +142,7 @@ function revalidateGeneralSettingsPaths() {
   revalidatePath('/[locale]/admin', 'page')
   revalidatePath('/[locale]/admin/theme', 'page')
   revalidatePath('/[locale]/admin/market-context', 'page')
-  revalidatePath('/[locale]/tos', 'page')
+  revalidateTag(cacheTags.settings)
 }
 
 async function syncGeoblockSettings() {

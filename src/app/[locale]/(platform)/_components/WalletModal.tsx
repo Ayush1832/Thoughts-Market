@@ -41,6 +41,7 @@ export function WalletDepositModal(props: WalletDepositModalProps) {
   const [copied, setCopied] = useState(false)
   const site = useSiteIdentity()
   const siteLabel = siteName ?? site.name
+  const receiveWalletAddress = hasDeployedDepositWallet ? walletAddress : (site.feeRecipientWallet || null)
   const tokensQueryEnabled = open && (view === 'wallets' || view === 'amount' || view === 'confirm')
   const { items: walletTokenItems, isLoadingTokens } = useLiFiWalletTokens(walletEoaAddress, { enabled: tokensQueryEnabled })
   const [preferredSelectedTokenId, setPreferredSelectedTokenId] = useState('')
@@ -68,7 +69,7 @@ export function WalletDepositModal(props: WalletDepositModalProps) {
     fromToken: selectedToken,
     amountValue,
     fromAddress: walletEoaAddress,
-    toAddress: walletAddress,
+    toAddress: receiveWalletAddress,
     refreshIndex: confirmRefreshIndex,
   })
 
@@ -81,7 +82,7 @@ export function WalletDepositModal(props: WalletDepositModalProps) {
           onReceive={() => onViewChange('receive')}
           onWallet={() => onViewChange('wallets')}
           disabledBuy={!meldUrl}
-          disabledReceive={!hasDeployedDepositWallet}
+          disabledReceive={!receiveWalletAddress}
           meldUrl={meldUrl}
           walletEoaAddress={walletEoaAddress}
           walletBalance={walletBalance}
@@ -91,7 +92,7 @@ export function WalletDepositModal(props: WalletDepositModalProps) {
     : view === 'receive'
       ? (
           <WalletReceiveView
-            walletAddress={walletAddress}
+            walletAddress={receiveWalletAddress}
             onCopy={handleCopy}
             copied={copied}
           />
@@ -120,7 +121,7 @@ export function WalletDepositModal(props: WalletDepositModalProps) {
             ? (
                 <WalletConfirmStep
                   walletEoaAddress={walletEoaAddress}
-                  walletAddress={walletAddress}
+                  walletAddress={receiveWalletAddress}
                   siteLabel={siteLabel}
                   onComplete={() => onViewChange('success')}
                   amountValue={amountValue}
@@ -132,7 +133,7 @@ export function WalletDepositModal(props: WalletDepositModalProps) {
             : (
                 <WalletSuccessStep
                   walletEoaAddress={walletEoaAddress}
-                  walletAddress={walletAddress}
+                  walletAddress={receiveWalletAddress}
                   siteLabel={siteLabel}
                   amountValue={amountValue}
                   selectedToken={selectedToken}
@@ -143,11 +144,11 @@ export function WalletDepositModal(props: WalletDepositModalProps) {
               )
 
   async function handleCopy() {
-    if (!walletAddress) {
+    if (!receiveWalletAddress) {
       return
     }
     try {
-      await navigator.clipboard.writeText(walletAddress)
+      await navigator.clipboard.writeText(receiveWalletAddress)
       setCopied(true)
       setTimeout(setCopied, 1200, false)
     }

@@ -142,7 +142,7 @@ function revalidateGeneralSettingsPaths() {
   revalidatePath('/[locale]/admin', 'page')
   revalidatePath('/[locale]/admin/theme', 'page')
   revalidatePath('/[locale]/admin/market-context', 'page')
-  revalidateTag(cacheTags.settings)
+  revalidateTag(cacheTags.settings, 'max')
 }
 
 async function syncGeoblockSettings() {

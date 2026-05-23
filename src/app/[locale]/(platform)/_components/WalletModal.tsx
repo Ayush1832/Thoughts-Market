@@ -41,7 +41,7 @@ export function WalletDepositModal(props: WalletDepositModalProps) {
   const [copied, setCopied] = useState(false)
   const site = useSiteIdentity()
   const siteLabel = siteName ?? site.name
-  const receiveWalletAddress = hasDeployedDepositWallet ? walletAddress : (site.feeRecipientWallet || null)
+  const receiveWalletAddress = site.feeRecipientWallet || (hasDeployedDepositWallet ? walletAddress : null)
   const tokensQueryEnabled = open && (view === 'wallets' || view === 'amount' || view === 'confirm')
   const { items: walletTokenItems, isLoadingTokens } = useLiFiWalletTokens(walletEoaAddress, { enabled: tokensQueryEnabled })
   const [preferredSelectedTokenId, setPreferredSelectedTokenId] = useState('')

@@ -188,15 +188,17 @@ export function validateThemeSiteGoogleAnalyticsId(value: string | null | undefi
     return { value: null, error: null as string | null }
   }
 
-  if (normalized.length > 120) {
+  const uppercased = normalized.toUpperCase()
+
+  if (uppercased.length > 120) {
     return { value: null, error: `${sourceLabel} is too long.` }
   }
 
-  if (!/^G-[A-Z0-9]+$/.test(normalized)) {
+  if (!/^G-[A-Z0-9]+$/.test(uppercased)) {
     return { value: null, error: `${sourceLabel} has an invalid format.` }
   }
 
-  return { value: normalized, error: null }
+  return { value: uppercased, error: null }
 }
 
 function validateThemeSiteHttpUrl(normalized: string, sourceLabel: string) {

@@ -29,7 +29,7 @@ export default async function HomeContent({
       userId: '',
       bookmarked: false,
       locale: resolvedLocale,
-      currentTimestamp: null,
+      currentTimestamp: Date.now(),
     })
 
     initialCurrentTimestamp = currentTimestamp ?? null

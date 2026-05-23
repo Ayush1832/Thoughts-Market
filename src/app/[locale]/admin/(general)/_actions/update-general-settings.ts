@@ -182,7 +182,6 @@ export async function updateGeneralSettingsAction(
   const logoImagePathRaw = formData.get('logo_image_path')
   const pwaIcon192PathRaw = formData.get('pwa_icon_192_path')
   const pwaIcon512PathRaw = formData.get('pwa_icon_512_path')
-  const logoFileRaw = formData.get('logo_image')
   const pwaIcon192FileRaw = formData.get('pwa_icon_192')
   const pwaIcon512FileRaw = formData.get('pwa_icon_512')
   const googleAnalyticsIdRaw = formData.get('google_analytics_id')
@@ -264,23 +263,6 @@ export async function updateGeneralSettingsAction(
     return { error: normalizedTermsOfServicePdfPath.error }
   }
   tosPdfPath = normalizedTermsOfServicePdfPath.value
-
-  if (logoFileRaw instanceof File && logoFileRaw.size > 0) {
-    const processed = await processThemeLogoFile(logoFileRaw)
-    if (!processed.mode) {
-      return { error: processed.error ?? DEFAULT_ERROR_MESSAGE }
-    }
-
-    if (processed.mode === 'svg') {
-      logoMode = 'svg'
-      logoSvg = processed.svg ?? ''
-      logoImagePath = ''
-    }
-    else {
-      logoMode = 'image'
-      logoImagePath = processed.path ?? logoImagePath
-    }
-  }
 
   if (pwaIcon192FileRaw instanceof File && pwaIcon192FileRaw.size > 0) {
     const processed = await processPwaIconFile(pwaIcon192FileRaw, 192, 'PWA icon (192x192)')

@@ -2,7 +2,7 @@
 
 import type { LucideIcon } from 'lucide-react'
 import type { Route } from 'next'
-import { BadgePercentIcon, CalendarIcon, LanguagesIcon, SettingsIcon, SwatchBookIcon, TagsIcon, TextSelectIcon, UsersIcon } from 'lucide-react'
+import { BadgePercentIcon, CalendarIcon, HeadphonesIcon, LanguagesIcon, SettingsIcon, ShieldCheckIcon, SwatchBookIcon, TagsIcon, TextSelectIcon, UsersIcon } from 'lucide-react'
 import { useExtracted } from 'next-intl'
 import AppLink from '@/components/AppLink'
 import { Button } from '@/components/ui/button'
@@ -27,6 +27,8 @@ export default function AdminSidebar() {
     { id: 'affiliate', label: t('Affiliate'), href: '/admin/affiliate' as Route, icon: BadgePercentIcon },
     { id: 'events', label: t('Events'), href: '/admin/events' as Route, icon: CalendarIcon },
     { id: 'users', label: t('Users'), href: '/admin/users' as Route, icon: UsersIcon },
+    { id: 'roles', label: t('Roles'), href: '/admin/roles' as Route, icon: ShieldCheckIcon },
+    { id: 'support', label: t('Support'), href: '/admin/support' as Route, icon: HeadphonesIcon },
   ]
   const pathname = usePathname()
   const activeItem = adminMenuItems.find((item) => {

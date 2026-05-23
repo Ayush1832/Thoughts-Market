@@ -300,13 +300,19 @@ export default function SettingsProfileContent({ user }: { user: User }) {
           </div>
         </div>
 
-        <div className="flex items-center justify-between gap-3">
-          <AppLink
-            href={buildPublicProfilePath(user.username || user.deposit_wallet_address || '') || '#'}
-            className="text-sm font-medium text-primary transition-colors hover:text-primary/80 hover:underline"
-          >
-            {t('View Public Profile')}
-          </AppLink>
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex flex-col gap-2">
+            <AppLink
+              href={buildPublicProfilePath(user.username || user.deposit_wallet_address || '') || '#'}
+              className="text-sm font-medium text-primary transition-colors hover:text-primary/80 hover:underline"
+            >
+              {t('View Public Profile')}
+            </AppLink>
+            <Button asChild variant="outline" size="sm">
+              <AppLink href="/#play-with-friends">{t('Play with friends')}</AppLink>
+            </Button>
+          </div>
+
           <Button type="submit" disabled={isPending} className="w-36">
             {isPending ? t('Saving...') : t('Save changes')}
           </Button>

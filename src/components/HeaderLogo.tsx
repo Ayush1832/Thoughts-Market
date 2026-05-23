@@ -1,9 +1,10 @@
-'use client'
+"use client"
 
 import AppLink from '@/components/AppLink'
 import SiteLogoIcon from '@/components/SiteLogoIcon'
 import { useSiteIdentity } from '@/hooks/useSiteIdentity'
 import { useTheme } from 'next-themes'
+import { useEffect, useState } from 'react'
 
 interface HeaderLogoProps {
   labelSuffix?: string
@@ -12,7 +13,13 @@ interface HeaderLogoProps {
 export default function HeaderLogo({ labelSuffix }: HeaderLogoProps) {
   const site = useSiteIdentity()
   const { resolvedTheme } = useTheme()
-  const theme = resolvedTheme === 'dark' ? 'dark' : 'light'
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  const theme = mounted ? (resolvedTheme === 'dark' ? 'dark' : 'light') : 'light'
   const label = labelSuffix ? `${site.name} ${labelSuffix}` : site.name
 
   return (

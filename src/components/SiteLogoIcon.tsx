@@ -29,9 +29,11 @@ export default function SiteLogoIcon({
   alt = '',
   size = 24,
 }: SiteLogoIconProps) {
-  const imageSrc = theme === 'dark' && logoImageUrlDark
-    ? logoImageUrlDark
-    : logoImageUrl || (!isSvgDataUri(logoUrl) ? logoUrl : null)
+  const isServer = typeof window === 'undefined'
+
+  const imageSrc = isServer
+    ? (logoImageUrl || (!isSvgDataUri(logoUrl) ? logoUrl : null))
+    : (theme === 'dark' && logoImageUrlDark ? logoImageUrlDark : logoImageUrl || (!isSvgDataUri(logoUrl) ? logoUrl : null))
 
   if (imageSrc) {
     return (

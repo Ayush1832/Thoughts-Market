@@ -112,3 +112,28 @@ export const two_factors = pgTable('two_factors', {
     .notNull()
     .references(() => users.id, { onDelete: 'cascade' }),
 })
+
+export const ADMIN_ROLES = [
+  'super_admin',
+  'finance_admin',
+  'moderator',
+  'risk_analyst',
+  'market_manager',
+  'support_agent',
+  'content_manager',
+] as const
+
+export type AdminRole = (typeof ADMIN_ROLES)[number]
+
+export const admin_roles = pgTable('admin_roles', {
+  id: text().primaryKey(),
+  user_id: text()
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  role: text().$type<AdminRole>().notNull(),
+  created_at: timestamp().defaultNow().notNull(),
+  updated_at: timestamp()
+    .defaultNow()
+    .$onUpdate(() => /* @__PURE__ */ new Date())
+    .notNull(),
+})

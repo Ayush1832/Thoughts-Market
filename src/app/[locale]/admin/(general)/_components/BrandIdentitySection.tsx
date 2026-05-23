@@ -85,105 +85,39 @@ function BrandIdentitySection({
         <div className="grid gap-6 md:grid-cols-[11rem_1fr]">
           <div className="grid gap-3">
             <Label>{t('Logo icon')}</Label>
-            <div className="grid gap-2">
-              <Input
-                id="theme-logo-file"
-                type="file"
-                name="logo_image"
-                accept="image/png,image/jpeg,image/webp,image/svg+xml"
-                disabled={isPending}
-                className="sr-only"
-                onChange={(event) => {
-                  const file = event.target.files?.[0] ?? null
-                  if (logoPreviewUrl) {
-                    URL.revokeObjectURL(logoPreviewUrl)
-                  }
-
-                  setSelectedLogoFile(file)
-
-                  if (file) {
-                    setLogoPreviewUrl(URL.createObjectURL(file))
-                    if (file.type === 'image/svg+xml') {
-                      setLogoMode('svg')
-                      setLogoImagePath('')
-                      void file.text().then((text) => {
-                        setLogoSvg(sanitizeSvg(text))
-                      })
-                    }
-                    else {
-                      setLogoMode('image')
-                    }
-                  }
-                  else {
-                    setLogoPreviewUrl(null)
-                    setLogoMode(initialLogoMode)
-                  }
-                }}
-              />
-              <label
-                htmlFor="theme-logo-file"
-                className={cn(
-                  `
-                    group relative flex size-40 cursor-pointer items-center justify-center overflow-hidden rounded-xl
-                    border border-dashed border-border bg-muted/20 text-muted-foreground transition
-                    hover:border-primary/60
-                  `,
-                  { 'cursor-not-allowed opacity-60 hover:border-border hover:bg-muted/20': isPending },
-                )}
-              >
-                <span className={`
-                  pointer-events-none absolute inset-0 bg-foreground/0 transition
-                  group-hover:bg-foreground/5
-                `}
+            <div
+              className={cn(
+                `
+                  relative flex size-40 items-center justify-center overflow-hidden rounded-xl
+                  border border-border bg-muted/20 text-muted-foreground
+                `,
+                { 'opacity-60': isPending },
+              )}
+            >
+              {imagePreview && (
+                <Image
+                  src={imagePreview}
+                  alt={t('Platform logo')}
+                  fill
+                  sizes="160px"
+                  className="object-contain"
+                  unoptimized
                 />
-                {imagePreview && (
-                  <Image
-                    src={imagePreview}
-                    alt={t('Platform logo')}
-                    fill
-                    sizes="160px"
-                    className="object-contain"
-                    unoptimized
-                  />
-                )}
-                {!showImagePreview && showSvgPreview && (
-                  <Image
-                    src={svgPreviewUrl}
-                    alt={t('Platform logo')}
-                    fill
-                    sizes="160px"
-                    className="object-contain"
-                    unoptimized
-                  />
-                )}
-                <ImageUp
-                  className={cn(
-                    `
-                      pointer-events-none absolute top-1/2 left-1/2 z-10 size-7 -translate-1/2 text-foreground/70
-                      opacity-0 transition
-                      group-hover:opacity-100
-                    `,
-                  )}
+              )}
+              {!showImagePreview && showSvgPreview && (
+                <Image
+                  src={svgPreviewUrl}
+                  alt={t('Platform logo')}
+                  fill
+                  sizes="160px"
+                  className="object-contain"
+                  unoptimized
                 />
-                <span
-                  className={`
-                    pointer-events-none absolute bottom-2 left-1/2 z-10 w-30 -translate-x-1/2 rounded-md
-                    bg-background/80 px-2 py-1 text-center text-2xs leading-tight font-medium text-muted-foreground
-                    opacity-0 transition
-                    group-hover:opacity-100
-                  `}
-                >
-                  {t('SVG, PNG, JPG or WebP')}
-                </span>
-              </label>
+              )}
+              <div className="pointer-events-none absolute inset-0 flex items-end justify-center p-3 bg-background/80 text-center text-2xs font-medium text-muted-foreground">
+                {t('Logo updates are disabled in admin.')}
+              </div>
             </div>
-            {selectedLogoFile && (
-              <p className="text-xs text-muted-foreground">
-                {t('Selected file:')}
-                {' '}
-                {selectedLogoFile.name}
-              </p>
-            )}
           </div>
 
           <div className="grid gap-4">

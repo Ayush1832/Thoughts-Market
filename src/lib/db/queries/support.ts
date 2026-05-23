@@ -6,6 +6,7 @@ import { users } from '@/lib/db/schema/auth/tables'
 import { support_tickets } from '@/lib/db/schema/support/tables'
 import { runQuery } from '@/lib/db/utils/run-query'
 import { db } from '@/lib/drizzle'
+import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
 
 const reporter = alias(users, 'reporter')
 
@@ -18,8 +19,11 @@ export const SupportRepository = {
     category?: TicketCategory | null
     sortBy?: 'created_at' | 'updated_at' | 'priority' | 'status'
     sortOrder?: 'asc' | 'desc'
-  } = {}) {
-    return runQuery(async () => {
+  } = {}): Promise<
+    | { data: { id: string; category: TicketCategory; subject: string; description: string; status: TicketStatus; priority: TicketPriority; resolution_notes: string | null; created_at: Date; updated_at: Date; user_id: string | null; assigned_to: string | null; reporter_username: string | null; reporter_address: string | null; reporter_email: string | null }[]; count: number; error: null }
+    | { data: null; count: null; error: string }
+  > {
+    try {
       const {
         limit = 50,
         offset = 0,
@@ -80,7 +84,10 @@ export const SupportRepository = {
         .where(whereClause)
 
       return { data: rows, count: total, error: null }
-    })
+    }
+    catch {
+      return { data: null, count: null, error: DEFAULT_ERROR_MESSAGE }
+    }
   },
 
   async getTicketById(id: string) {

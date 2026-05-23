@@ -8,10 +8,10 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import EventsGrid from '@/app/[locale]/(platform)/(home)/_components/EventsGrid'
 import FilterToolbar from '@/app/[locale]/(platform)/(home)/_components/FilterToolbar'
 import FriendPlayLobby from '@/app/[locale]/(platform)/(home)/_components/FriendPlayLobby'
-import { Button } from '@/components/ui/button'
 import HomeSecondaryNavigation from '@/app/[locale]/(platform)/(home)/_components/HomeSecondaryNavigation'
 import { DEFAULT_FILTERS, useFilters } from '@/app/[locale]/(platform)/_providers/FilterProvider'
 import { usePlatformNavigationData } from '@/app/[locale]/(platform)/_providers/PlatformNavigationProvider'
+import { Button } from '@/components/ui/button'
 import { usePathname, useRouter } from '@/i18n/navigation'
 import { parsePlatformPathname, resolvePlatformNavigationSelection } from '@/lib/platform-navigation'
 import { buildDynamicHomeCategorySlugSet } from '@/lib/platform-routing'
@@ -351,20 +351,22 @@ function HomeClientContent({
           />
 
           <div id="play-with-friends">
-            {showFriendLobby ? (
-              <FriendPlayLobby onClose={() => setShowFriendLobby(false)} />
-            ) : (
-              <div className="rounded-3xl border border-border/60 bg-muted p-6 shadow-sm">
-                <div className="flex items-center justify-between gap-4">
-                  <div>
-                    <p className="text-sm uppercase tracking-[0.2em] text-muted-foreground">Friends lobby</p>
-                    <h2 className="mt-2 text-2xl font-semibold text-foreground">Play with friends</h2>
-                    <p className="mt-2 max-w-2xl text-sm text-muted-foreground">Create a shared room on your dashboard, invite up to 50 people, and start the game once at least 3 have joined.</p>
+            {showFriendLobby
+              ? (
+                  <FriendPlayLobby onClose={() => setShowFriendLobby(false)} />
+                )
+              : (
+                  <div className="rounded-3xl border border-border/60 bg-muted p-6 shadow-sm">
+                    <div className="flex items-center justify-between gap-4">
+                      <div>
+                        <p className="text-sm tracking-[0.2em] text-muted-foreground uppercase">Friends lobby</p>
+                        <h2 className="mt-2 text-2xl font-semibold text-foreground">Play with friends</h2>
+                        <p className="mt-2 max-w-2xl text-sm text-muted-foreground">Create a shared room on your dashboard, invite up to 50 people, and start the game once at least 3 have joined.</p>
+                      </div>
+                      <Button onClick={() => setShowFriendLobby(true)} variant="secondary" size="lg">Play with friends</Button>
+                    </div>
                   </div>
-                  <Button onClick={() => setShowFriendLobby(true)} variant="secondary" size="lg">Play with friends</Button>
-                </div>
-              </div>
-            )}
+                )}
           </div>
 
           <EventsGrid

@@ -1,7 +1,7 @@
 import type { TicketCategory, TicketPriority, TicketStatus } from '@/lib/db/schema/support/tables'
+import { randomUUID } from 'node:crypto'
 import { and, asc, count, desc, eq, ilike, or } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/pg-core'
-import { randomUUID } from 'node:crypto'
 import { users } from '@/lib/db/schema/auth/tables'
 import { support_tickets } from '@/lib/db/schema/support/tables'
 import { runQuery } from '@/lib/db/utils/run-query'
@@ -31,8 +31,8 @@ export const SupportRepository = {
       } = params
 
       const conditions = []
-      if (status) conditions.push(eq(support_tickets.status, status))
-      if (category) conditions.push(eq(support_tickets.category, category))
+      if (status) { conditions.push(eq(support_tickets.status, status)) }
+      if (category) { conditions.push(eq(support_tickets.category, category)) }
       if (search?.trim()) {
         conditions.push(or(
           ilike(support_tickets.subject, `%${search.trim()}%`),

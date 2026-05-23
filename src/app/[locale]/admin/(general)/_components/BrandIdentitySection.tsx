@@ -7,7 +7,7 @@ import { useExtracted } from 'next-intl'
 import Image from 'next/image'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { cn, sanitizeSvg } from '@/lib/utils'
+import { cn } from '@/lib/utils'
 import SettingsAccordionSection from './SettingsAccordionSection'
 
 interface BrandIdentitySectionProps {
@@ -88,8 +88,8 @@ function BrandIdentitySection({
             <div
               className={cn(
                 `
-                  relative flex size-40 items-center justify-center overflow-hidden rounded-xl
-                  border border-border bg-muted/20 text-muted-foreground
+                  relative flex size-40 items-center justify-center overflow-hidden rounded-xl border border-border
+                  bg-muted/20 text-muted-foreground
                 `,
                 { 'opacity-60': isPending },
               )}
@@ -114,7 +114,11 @@ function BrandIdentitySection({
                   unoptimized
                 />
               )}
-              <div className="pointer-events-none absolute inset-0 flex items-end justify-center p-3 bg-background/80 text-center text-2xs font-medium text-muted-foreground">
+              <div className="
+                pointer-events-none absolute inset-0 flex items-end justify-center bg-background/80 p-3 text-center
+                text-2xs font-medium text-muted-foreground
+              "
+              >
                 {t('Logo updates are disabled in admin.')}
               </div>
             </div>

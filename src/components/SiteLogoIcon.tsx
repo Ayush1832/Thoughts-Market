@@ -43,7 +43,7 @@ export default function SiteLogoIcon({
           alt={alt}
           width={size}
           height={size}
-          className={cn('w-full h-full object-contain', imageClassName)}
+          className={cn('size-full object-contain', imageClassName)}
         />
       </span>
     )

@@ -3,9 +3,9 @@
 import { Buffer } from 'node:buffer'
 import { revalidatePath, revalidateTag } from 'next/cache'
 import sharp from 'sharp'
+import { cacheTags } from '@/lib/cache-tags'
 import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
 import { SettingsRepository } from '@/lib/db/queries/settings'
-import { cacheTags } from '@/lib/cache-tags'
 import { UserRepository } from '@/lib/db/queries/user'
 import { encryptSecret } from '@/lib/encryption'
 import {
@@ -208,9 +208,9 @@ export async function updateGeneralSettingsAction(
 
   const siteName = typeof siteNameRaw === 'string' ? siteNameRaw : ''
   const siteDescription = typeof siteDescriptionRaw === 'string' ? siteDescriptionRaw : ''
-  let logoMode = typeof logoModeRaw === 'string' ? logoModeRaw : ''
-  let logoSvg = typeof logoSvgRaw === 'string' ? logoSvgRaw : ''
-  let logoImagePath = typeof logoImagePathRaw === 'string' ? logoImagePathRaw : ''
+  const logoMode = typeof logoModeRaw === 'string' ? logoModeRaw : ''
+  const logoSvg = typeof logoSvgRaw === 'string' ? logoSvgRaw : ''
+  const logoImagePath = typeof logoImagePathRaw === 'string' ? logoImagePathRaw : ''
   let pwaIcon192Path = typeof pwaIcon192PathRaw === 'string' ? pwaIcon192PathRaw : ''
   let pwaIcon512Path = typeof pwaIcon512PathRaw === 'string' ? pwaIcon512PathRaw : ''
   const googleAnalyticsId = typeof googleAnalyticsIdRaw === 'string' ? googleAnalyticsIdRaw : ''

@@ -1,10 +1,10 @@
-"use client"
+'use client'
 
+import { useTheme } from 'next-themes'
+import { useEffect, useState } from 'react'
 import AppLink from '@/components/AppLink'
 import SiteLogoIcon from '@/components/SiteLogoIcon'
 import { useSiteIdentity } from '@/hooks/useSiteIdentity'
-import { useTheme } from 'next-themes'
-import { useEffect, useState } from 'react'
 
 interface HeaderLogoProps {
   labelSuffix?: string
@@ -38,7 +38,11 @@ export default function HeaderLogo({ labelSuffix }: HeaderLogoProps) {
         logoImageUrlDark={site.logoImageUrlDark}
         theme={theme}
         alt={`${site.name} logo`}
-        className="inline-flex w-10 h-10 items-center justify-center text-current [&_svg]:w-full [&_svg]:h-full [&_svg_*]:fill-current [&_svg_*]:stroke-current"
+        className="
+          inline-flex size-10 items-center justify-center text-current
+          [&_svg]:size-full
+          [&_svg_*]:fill-current [&_svg_*]:stroke-current
+        "
         svgClassName="w-full h-full"
         imageClassName="w-full h-full object-contain"
         size={40}

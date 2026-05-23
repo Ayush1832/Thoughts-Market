@@ -1,6 +1,6 @@
 import type { AdminRole } from '@/lib/db/schema/auth/tables'
-import { and, eq } from 'drizzle-orm'
 import { randomUUID } from 'node:crypto'
+import { and, eq } from 'drizzle-orm'
 import { admin_roles, users } from '@/lib/db/schema/auth/tables'
 import { runQuery } from '@/lib/db/utils/run-query'
 import { db } from '@/lib/drizzle'

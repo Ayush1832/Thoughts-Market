@@ -1,5 +1,5 @@
-import { Suspense } from 'react'
 import { getExtracted, setRequestLocale } from 'next-intl/server'
+import { Suspense } from 'react'
 import { DataTableSkeleton } from '@/app/[locale]/admin/_components/DataTableSkeleton'
 import AdminSupportTable from './_components/AdminSupportTable'
 

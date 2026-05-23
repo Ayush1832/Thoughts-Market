@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import type { TicketPriority, TicketStatus } from '@/lib/db/schema/support/tables'
 import { useExtracted } from 'next-intl'
+import { useState, useTransition } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -20,7 +21,6 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-import type { TicketPriority, TicketStatus } from '@/lib/db/schema/support/tables'
 import { TICKET_PRIORITIES, TICKET_STATUSES } from '@/lib/db/schema/support/tables'
 import { updateTicketAction } from '../_actions/update-ticket'
 
@@ -94,7 +94,7 @@ export function TicketDetailDialog({ ticket, open, onOpenChange, onUpdated }: Pr
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 flex-wrap">
+          <DialogTitle className="flex flex-wrap items-center gap-2">
             <span>{ticket.subject}</span>
             <Badge variant="outline" className={`text-xs ${STATUS_COLORS[ticket.status]}`}>
               {ticket.status.replace('_', ' ')}
@@ -104,14 +104,24 @@ export function TicketDetailDialog({ ticket, open, onOpenChange, onUpdated }: Pr
 
         <div className="grid gap-4 py-2">
           <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-            <span>{t('Category')}: <strong className="text-foreground">{categoryLabel}</strong></span>
+            <span>
+              {t('Category')}
+              :
+              {' '}
+              <strong className="text-foreground">{categoryLabel}</strong>
+            </span>
             <span>·</span>
-            <span>{t('Reporter')}: <strong className="text-foreground">{reporter}</strong></span>
+            <span>
+              {t('Reporter')}
+              :
+              {' '}
+              <strong className="text-foreground">{reporter}</strong>
+            </span>
             <span>·</span>
             <span>{new Date(ticket.created_at).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })}</span>
           </div>
 
-          <div className="rounded-md bg-muted/50 p-3 text-sm text-muted-foreground whitespace-pre-wrap">
+          <div className="rounded-md bg-muted/50 p-3 text-sm whitespace-pre-wrap text-muted-foreground">
             {ticket.description}
           </div>
 

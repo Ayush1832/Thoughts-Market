@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useTransition, useEffect, useRef } from 'react'
+import type { AdminRole } from '@/lib/db/schema/auth/tables'
+import { PlusIcon, SearchIcon, UserIcon } from 'lucide-react'
 import { useExtracted } from 'next-intl'
 import { useParams } from 'next/navigation'
-import { PlusIcon, SearchIcon, UserIcon } from 'lucide-react'
+import { useEffect, useRef, useState, useTransition } from 'react'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -25,7 +26,6 @@ import {
 } from '@/components/ui/select'
 import { routing } from '@/i18n/routing'
 import { ADMIN_ROLES } from '@/lib/db/schema/auth/tables'
-import type { AdminRole } from '@/lib/db/schema/auth/tables'
 import { cn } from '@/lib/utils'
 import { assignRoleAction } from '../_actions/manage-role'
 
@@ -48,7 +48,7 @@ interface UserResult {
 }
 
 function getAdminApiBasePath(locale?: string) {
-  if (!locale || locale === routing.defaultLocale) return '/admin/api'
+  if (!locale || locale === routing.defaultLocale) { return '/admin/api' }
   return `/${locale}/admin/api`
 }
 
@@ -73,7 +73,7 @@ export function AssignRoleDialog({ onSuccess }: { onSuccess?: () => void }) {
       setShowDropdown(false)
       return
     }
-    if (searchTimeout.current) clearTimeout(searchTimeout.current)
+    if (searchTimeout.current) { clearTimeout(searchTimeout.current) }
     searchTimeout.current = setTimeout(async () => {
       setIsSearching(true)
       try {
@@ -147,7 +147,7 @@ export function AssignRoleDialog({ onSuccess }: { onSuccess?: () => void }) {
   }
 
   const displayLabel = selectedUser
-    ? (selectedUser.username ?? selectedUser.address.slice(0, 12) + '...')
+    ? (selectedUser.username ?? `${selectedUser.address.slice(0, 12)}...`)
     : null
 
   return (
@@ -174,8 +174,8 @@ export function AssignRoleDialog({ onSuccess }: { onSuccess?: () => void }) {
                     <div className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm">
                       <UserIcon className="size-4 shrink-0 text-muted-foreground" />
                       <span className="flex-1 truncate font-medium">{displayLabel}</span>
-                      <span className="text-xs text-muted-foreground truncate max-w-28">
-                        {selectedUser.email ?? selectedUser.address.slice(0, 10) + '...'}
+                      <span className="max-w-28 truncate text-xs text-muted-foreground">
+                        {selectedUser.email ?? `${selectedUser.address.slice(0, 10)}...`}
                       </span>
                       <button
                         type="button"
@@ -189,7 +189,7 @@ export function AssignRoleDialog({ onSuccess }: { onSuccess?: () => void }) {
                   )
                 : (
                     <div className="relative">
-                      <SearchIcon className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                      <SearchIcon className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
                       <Input
                         className="pl-9"
                         placeholder={t('Search by username, address, or email...')}
@@ -199,7 +199,7 @@ export function AssignRoleDialog({ onSuccess }: { onSuccess?: () => void }) {
                         autoComplete="off"
                       />
                       {isSearching && (
-                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+                        <span className="absolute top-1/2 right-3 -translate-y-1/2 text-xs text-muted-foreground">
                           {t('Searching...')}
                         </span>
                       )}
@@ -221,10 +221,10 @@ export function AssignRoleDialog({ onSuccess }: { onSuccess?: () => void }) {
                     >
                       <UserIcon className="size-4 shrink-0 text-muted-foreground" />
                       <div className="min-w-0 flex-1">
-                        <div className="font-medium truncate">
-                          {user.username ?? user.address.slice(0, 12) + '...'}
+                        <div className="truncate font-medium">
+                          {user.username ?? `${user.address.slice(0, 12)}...`}
                         </div>
-                        <div className="text-xs text-muted-foreground truncate">
+                        <div className="truncate text-xs text-muted-foreground">
                           {user.email ?? user.address}
                         </div>
                       </div>
@@ -234,7 +234,11 @@ export function AssignRoleDialog({ onSuccess }: { onSuccess?: () => void }) {
               )}
 
               {showDropdown && results.length === 0 && !isSearching && search.trim() && (
-                <div className="absolute z-50 mt-1 w-full rounded-md border bg-popover px-3 py-2 text-sm text-muted-foreground shadow-md">
+                <div className="
+                  absolute z-50 mt-1 w-full rounded-md border bg-popover px-3 py-2 text-sm text-muted-foreground
+                  shadow-md
+                "
+                >
                   {t('No users found.')}
                 </div>
               )}

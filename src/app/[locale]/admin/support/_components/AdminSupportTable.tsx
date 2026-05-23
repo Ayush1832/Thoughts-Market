@@ -1,10 +1,11 @@
 'use client'
 
+import type { TicketRow } from './TicketDetailDialog'
+import type { TicketCategory, TicketStatus } from '@/lib/db/schema/support/tables'
 import { useQuery } from '@tanstack/react-query'
-import { useCallback, useMemo, useState } from 'react'
 import { useExtracted } from 'next-intl'
 import { useParams } from 'next/navigation'
-import { routing } from '@/i18n/routing'
+import { useCallback, useMemo, useState } from 'react'
 import { DataTable } from '@/app/[locale]/admin/_components/DataTable'
 import {
   Select,
@@ -13,11 +14,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import type { TicketCategory, TicketStatus } from '@/lib/db/schema/support/tables'
+import { routing } from '@/i18n/routing'
 import { TICKET_CATEGORIES, TICKET_STATUSES } from '@/lib/db/schema/support/tables'
-import { CreateTicketDialog } from './CreateTicketDialog'
 import { useAdminSupportColumns } from './columns'
-import type { TicketRow } from './TicketDetailDialog'
+import { CreateTicketDialog } from './CreateTicketDialog'
 
 const CATEGORY_LABELS: Record<TicketCategory, string> = {
   deposits: 'Deposits',
@@ -28,7 +28,7 @@ const CATEGORY_LABELS: Record<TicketCategory, string> = {
 }
 
 function getAdminApiBasePath(locale?: string) {
-  if (!locale || locale === routing.defaultLocale) return '/admin/api'
+  if (!locale || locale === routing.defaultLocale) { return '/admin/api' }
   return `/${locale}/admin/api`
 }
 
@@ -50,12 +50,12 @@ async function fetchTickets(params: {
     sortBy: rest.sortBy,
     sortOrder: rest.sortOrder,
   })
-  if (rest.search) qs.set('search', rest.search)
-  if (rest.status) qs.set('status', rest.status)
-  if (rest.category) qs.set('category', rest.category)
+  if (rest.search) { qs.set('search', rest.search) }
+  if (rest.status) { qs.set('status', rest.status) }
+  if (rest.category) { qs.set('category', rest.category) }
 
   const res = await fetch(`${basePath}/support?${qs}`, { credentials: 'same-origin' })
-  if (!res.ok) throw new Error('Failed to fetch tickets')
+  if (!res.ok) { throw new Error('Failed to fetch tickets') }
   return res.json()
 }
 
@@ -102,8 +102,8 @@ export default function AdminSupportTable() {
   }
 
   const filterBar = (
-    <div className="flex gap-2 flex-wrap">
-      <Select value={statusFilter} onValueChange={v => { setStatusFilter(v as any); setPageIndex(0) }}>
+    <div className="flex flex-wrap gap-2">
+      <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v as any); setPageIndex(0) }}>
         <SelectTrigger className="h-8 w-32 text-xs">
           <SelectValue placeholder={t('Status')} />
         </SelectTrigger>
@@ -115,7 +115,7 @@ export default function AdminSupportTable() {
         </SelectContent>
       </Select>
 
-      <Select value={categoryFilter} onValueChange={v => { setCategoryFilter(v as any); setPageIndex(0) }}>
+      <Select value={categoryFilter} onValueChange={(v) => { setCategoryFilter(v as any); setPageIndex(0) }}>
         <SelectTrigger className="h-8 w-40 text-xs">
           <SelectValue placeholder={t('Category')} />
         </SelectTrigger>

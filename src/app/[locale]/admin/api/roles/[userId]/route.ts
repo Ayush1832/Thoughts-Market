@@ -1,10 +1,10 @@
 import type { NextRequest } from 'next/server'
-import { NextResponse } from 'next/server'
-import { ADMIN_ROLES } from '@/lib/db/schema/auth/tables'
 import type { AdminRole } from '@/lib/db/schema/auth/tables'
+import { NextResponse } from 'next/server'
 import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
 import { RolesRepository } from '@/lib/db/queries/roles'
 import { UserRepository } from '@/lib/db/queries/user'
+import { ADMIN_ROLES } from '@/lib/db/schema/auth/tables'
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ userId: string }> }) {
   try {

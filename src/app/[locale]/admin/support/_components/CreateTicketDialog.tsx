@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useTransition } from 'react'
-import { useExtracted } from 'next-intl'
+import type { TicketCategory, TicketPriority } from '@/lib/db/schema/support/tables'
 import { PlusIcon } from 'lucide-react'
+import { useExtracted } from 'next-intl'
+import { useState, useTransition } from 'react'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -23,7 +24,6 @@ import {
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { TICKET_CATEGORIES, TICKET_PRIORITIES } from '@/lib/db/schema/support/tables'
-import type { TicketCategory, TicketPriority } from '@/lib/db/schema/support/tables'
 import { createTicketAction } from '../_actions/update-ticket'
 
 const CATEGORY_LABELS: Record<TicketCategory, string> = {

@@ -1,24 +1,24 @@
 'use client'
 
+import type { AdminRoleRow } from './columns'
 import { useQuery } from '@tanstack/react-query'
-import { useCallback, useMemo, useState } from 'react'
 import { useExtracted } from 'next-intl'
 import { useParams } from 'next/navigation'
-import { routing } from '@/i18n/routing'
+import { useCallback, useMemo, useState } from 'react'
 import { DataTable } from '@/app/[locale]/admin/_components/DataTable'
+import { routing } from '@/i18n/routing'
 import { AssignRoleDialog } from './AssignRoleDialog'
 import { useAdminRolesColumns } from './columns'
-import type { AdminRoleRow } from './columns'
 
 function getAdminApiBasePath(locale?: string) {
-  if (!locale || locale === routing.defaultLocale) return '/admin/api'
+  if (!locale || locale === routing.defaultLocale) { return '/admin/api' }
   return `/${locale}/admin/api`
 }
 
 async function fetchRoles(locale?: string): Promise<{ data: AdminRoleRow[], totalCount: number }> {
   const basePath = getAdminApiBasePath(locale)
   const res = await fetch(`${basePath}/roles`, { credentials: 'same-origin' })
-  if (!res.ok) throw new Error('Failed to fetch roles')
+  if (!res.ok) { throw new Error('Failed to fetch roles') }
   return res.json()
 }
 
@@ -40,7 +40,7 @@ export default function AdminRolesTable() {
 
   const filtered = useMemo(() => {
     const rows = data?.data ?? []
-    if (!search.trim()) return rows
+    if (!search.trim()) { return rows }
     const q = search.toLowerCase()
     return rows.filter(r =>
       r.username?.toLowerCase().includes(q)

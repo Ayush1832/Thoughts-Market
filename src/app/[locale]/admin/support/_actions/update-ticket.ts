@@ -1,9 +1,9 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
-import { UserRepository } from '@/lib/db/queries/user'
-import { SupportRepository } from '@/lib/db/queries/support'
 import type { TicketPriority, TicketStatus } from '@/lib/db/schema/support/tables'
+import { revalidatePath } from 'next/cache'
+import { SupportRepository } from '@/lib/db/queries/support'
+import { UserRepository } from '@/lib/db/queries/user'
 
 export async function updateTicketAction(
   id: string,
@@ -20,7 +20,7 @@ export async function updateTicketAction(
   }
 
   const { error } = await SupportRepository.updateTicket(id, input)
-  if (error) return { error }
+  if (error) { return { error } }
 
   revalidatePath('/admin/support')
   return { error: null }
@@ -39,7 +39,7 @@ export async function createTicketAction(input: {
   }
 
   const { error } = await SupportRepository.createTicket(input as any)
-  if (error) return { error }
+  if (error) { return { error } }
 
   revalidatePath('/admin/support')
   return { error: null }

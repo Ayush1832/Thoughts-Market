@@ -106,7 +106,7 @@ export default function FriendPlayLobby({ onClose }: { onClose?: () => void }) {
     <section className="rounded-3xl border border-border/60 bg-muted p-6 shadow-sm">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-sm uppercase tracking-[0.2em] text-muted-foreground">Friends lobby</p>
+          <p className="text-sm tracking-[0.2em] text-muted-foreground uppercase">Friends lobby</p>
           <h2 className="mt-2 text-2xl font-semibold text-foreground">Play with friends</h2>
           <p className="mt-2 max-w-2xl text-sm text-muted-foreground">Create a shared room on your dashboard, invite up to 50 people, and start the game once at least 3 have joined.</p>
         </div>
@@ -114,11 +114,13 @@ export default function FriendPlayLobby({ onClose }: { onClose?: () => void }) {
           <Button onClick={handleCreateRoom} variant="secondary" size="lg">
             {roomCreated ? 'Room created' : 'Create room'}
           </Button>
-          {onClose ? (
-            <Button onClick={onClose} variant="outline" size="lg">
-              Close
-            </Button>
-          ) : null}
+          {onClose
+            ? (
+                <Button onClick={onClose} variant="outline" size="lg">
+                  Close
+                </Button>
+              )
+            : null}
         </div>
       </div>
 
@@ -148,22 +150,40 @@ export default function FriendPlayLobby({ onClose }: { onClose?: () => void }) {
             </div>
 
             <div className="grid gap-2 rounded-2xl bg-slate-50 p-4 text-sm text-foreground dark:bg-slate-950/60">
-              <div className="flex items-center justify-between text-xs uppercase tracking-[0.2em] text-muted-foreground">
+              <div className="
+                flex items-center justify-between text-xs tracking-[0.2em] text-muted-foreground uppercase
+              "
+              >
                 <span>Players</span>
-                <span>{participantCount}/{MAX_PARTICIPANTS}</span>
+                <span>
+                  {participantCount}
+                  /
+                  {MAX_PARTICIPANTS}
+                </span>
               </div>
               <div className="space-y-2">
-                {participants.length > 0 ? (
-                  participants.map(participant => (
-                    <div key={participant} className="rounded-2xl border border-border/60 bg-background px-3 py-2 text-sm text-foreground">
-                      {participant}
-                    </div>
-                  ))
-                ) : (
-                  <div className="rounded-2xl border border-dashed border-border/60 bg-background px-3 py-2 text-sm text-muted-foreground">
-                    No participants yet.
-                  </div>
-                )}
+                {participants.length > 0
+                  ? (
+                      participants.map(participant => (
+                        <div
+                          key={participant}
+                          className="
+                            rounded-2xl border border-border/60 bg-background px-3 py-2 text-sm text-foreground
+                          "
+                        >
+                          {participant}
+                        </div>
+                      ))
+                    )
+                  : (
+                      <div className="
+                        rounded-2xl border border-dashed border-border/60 bg-background px-3 py-2 text-sm
+                        text-muted-foreground
+                      "
+                      >
+                        No participants yet.
+                      </div>
+                    )}
               </div>
             </div>
           </div>
@@ -183,11 +203,17 @@ export default function FriendPlayLobby({ onClose }: { onClose?: () => void }) {
               Close room
             </Button>
           </div>
-          {message ? (
-            <div className="mt-4 rounded-2xl border border-border/70 bg-emerald-50/60 px-4 py-3 text-sm text-emerald-900 dark:bg-emerald-500/10 dark:text-emerald-200">
-              {message}
-            </div>
-          ) : null}
+          {message
+            ? (
+                <div className="
+                  mt-4 rounded-2xl border border-border/70 bg-emerald-50/60 px-4 py-3 text-sm text-emerald-900
+                  dark:bg-emerald-500/10 dark:text-emerald-200
+                "
+                >
+                  {message}
+                </div>
+              )
+            : null}
         </div>
       </div>
     </section>

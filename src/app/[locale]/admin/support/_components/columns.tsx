@@ -1,13 +1,13 @@
 'use client'
 
 import type { ColumnDef } from '@tanstack/react-table'
-import { useState } from 'react'
-import { useExtracted } from 'next-intl'
+import type { TicketRow } from './TicketDetailDialog'
+import type { TicketPriority, TicketStatus } from '@/lib/db/schema/support/tables'
 import { ArrowUpDownIcon } from 'lucide-react'
+import { useExtracted } from 'next-intl'
+import { useState } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import type { TicketPriority, TicketStatus } from '@/lib/db/schema/support/tables'
-import type { TicketRow } from './TicketDetailDialog'
 import { TicketDetailDialog } from './TicketDetailDialog'
 
 const STATUS_COLORS: Record<TicketStatus, string> = {
@@ -38,11 +38,11 @@ function TicketCell({ row, onUpdated }: { row: TicketRow, onUpdated?: () => void
     <>
       <button
         type="button"
-        className="text-left hover:text-primary transition-colors"
+        className="text-left transition-colors hover:text-primary"
         onClick={() => setOpen(true)}
       >
-        <span className="text-sm font-medium line-clamp-1">{row.subject}</span>
-        <span className="block text-xs text-muted-foreground line-clamp-1">{row.description}</span>
+        <span className="line-clamp-1 text-sm font-medium">{row.subject}</span>
+        <span className="line-clamp-1 block text-xs text-muted-foreground">{row.description}</span>
       </button>
       <TicketDetailDialog
         ticket={row}
@@ -68,7 +68,7 @@ export function useAdminSupportColumns(onUpdated?: () => void): ColumnDef<Ticket
       accessorKey: 'category',
       header: () => <div className="text-xs font-medium text-muted-foreground uppercase">{t('Category')}</div>,
       cell: ({ row }) => (
-        <span className="text-xs text-muted-foreground whitespace-nowrap">
+        <span className="text-xs whitespace-nowrap text-muted-foreground">
           {CATEGORY_LABELS[row.original.category] ?? row.original.category}
         </span>
       ),

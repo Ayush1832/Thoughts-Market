@@ -1,12 +1,12 @@
 'use client'
 
 import type { ColumnDef } from '@tanstack/react-table'
-import { useTransition } from 'react'
+import type { AdminRole } from '@/lib/db/schema/auth/tables'
 import { Trash2Icon } from 'lucide-react'
 import { useExtracted } from 'next-intl'
+import { useTransition } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import type { AdminRole } from '@/lib/db/schema/auth/tables'
 import { removeRoleAction } from '../_actions/manage-role'
 
 export interface AdminRoleRow {
@@ -71,8 +71,8 @@ export function useAdminRolesColumns(): ColumnDef<AdminRoleRow>[] {
       cell: ({ row }) => {
         const { username, address, email } = row.original
         return (
-          <div className="flex flex-col gap-0.5 min-w-40">
-            <span className="text-sm font-medium">{username ?? address.slice(0, 10) + '...'}</span>
+          <div className="flex min-w-40 flex-col gap-0.5">
+            <span className="text-sm font-medium">{username ?? `${address.slice(0, 10)}...`}</span>
             <span className="text-xs text-muted-foreground">{email || address}</span>
           </div>
         )
@@ -96,7 +96,7 @@ export function useAdminRolesColumns(): ColumnDef<AdminRoleRow>[] {
       cell: ({ row }) => {
         const date = new Date(row.original.created_at)
         return (
-          <span className="text-xs text-muted-foreground whitespace-nowrap">
+          <span className="text-xs whitespace-nowrap text-muted-foreground">
             {date.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })}
           </span>
         )

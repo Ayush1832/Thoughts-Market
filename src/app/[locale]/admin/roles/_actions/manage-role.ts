@@ -1,10 +1,10 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
-import { UserRepository } from '@/lib/db/queries/user'
-import { RolesRepository } from '@/lib/db/queries/roles'
-import { ADMIN_ROLES } from '@/lib/db/schema/auth/tables'
 import type { AdminRole } from '@/lib/db/schema/auth/tables'
+import { revalidatePath } from 'next/cache'
+import { RolesRepository } from '@/lib/db/queries/roles'
+import { UserRepository } from '@/lib/db/queries/user'
+import { ADMIN_ROLES } from '@/lib/db/schema/auth/tables'
 
 export async function assignRoleAction(userId: string, role: AdminRole): Promise<{ error: string | null }> {
   const currentUser = await UserRepository.getCurrentUser({ minimal: true })
@@ -17,7 +17,7 @@ export async function assignRoleAction(userId: string, role: AdminRole): Promise
   }
 
   const { error } = await RolesRepository.assignRole(userId, role)
-  if (error) return { error: 'Failed to assign role.' }
+  if (error) { return { error: 'Failed to assign role.' } }
 
   revalidatePath('/admin/roles')
   return { error: null }
@@ -34,7 +34,7 @@ export async function removeRoleAction(userId: string, role: AdminRole): Promise
   }
 
   const { error } = await RolesRepository.removeRole(userId, role)
-  if (error) return { error: 'Failed to remove role.' }
+  if (error) { return { error: 'Failed to remove role.' } }
 
   revalidatePath('/admin/roles')
   return { error: null }

@@ -1,6 +1,8 @@
 /* eslint-disable perfectionist/sort-exports */
 
 // tables
+export * from './content/tables'
+export * from './ai/tables'
 export * from './affiliates/tables'
 export * from './auth/tables'
 export * from './bookmarks/tables'

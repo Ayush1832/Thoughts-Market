@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button'
 import { InputError } from '@/components/ui/input-error'
 import { serializeCustomJavascriptCodes } from '@/lib/custom-javascript-code'
 import { sanitizeSvg } from '@/lib/utils'
+import AiControlCenterSection from './AiControlCenterSection'
 import BrandIdentitySection from './BrandIdentitySection'
 import GlobalAnnouncementSection from './GlobalAnnouncementSection'
 import IntegrationsSection from './IntegrationsSection'
@@ -151,6 +152,18 @@ function AdminGeneralSettingsFormInner({
   const [lifiApiKey, setLifiApiKey] = useState(initialLiFiApiKey)
   const [openRouterApiKey, setOpenRouterApiKey] = useState('')
   const [openRouterModel, setOpenRouterModel] = useState(initialOpenRouterModel)
+  const [aiMarketAssistantEnabled, setAiMarketAssistantEnabled] = useState(
+    initialThemeSiteSettings.aiMarketAssistantEnabled ?? false,
+  )
+  const [aiInsightsEnabled, setAiInsightsEnabled] = useState(
+    initialThemeSiteSettings.aiInsightsEnabled ?? false,
+  )
+  const [aiRiskEngineEnabled, setAiRiskEngineEnabled] = useState(
+    initialThemeSiteSettings.aiRiskEngineEnabled ?? false,
+  )
+  const [aiUserProfilingEnabled, setAiUserProfilingEnabled] = useState(
+    initialThemeSiteSettings.aiUserProfilingEnabled ?? false,
+  )
   const [openRouterSelectValue, setOpenRouterSelectValue] = useState(
     initialOpenRouterModel || AUTOMATIC_MODEL_VALUE,
   )
@@ -499,6 +512,20 @@ function AdminGeneralSettingsFormInner({
           onToggleSection={toggleSection}
           feeRecipientWallet={feeRecipientWallet}
           setFeeRecipientWallet={setFeeRecipientWallet}
+        />
+
+        <AiControlCenterSection
+          isPending={isPending}
+          openSections={openSections}
+          onToggleSection={toggleSection}
+          aiMarketAssistantEnabled={aiMarketAssistantEnabled}
+          onAiMarketAssistantEnabledChange={setAiMarketAssistantEnabled}
+          aiInsightsEnabled={aiInsightsEnabled}
+          onAiInsightsEnabledChange={setAiInsightsEnabled}
+          aiRiskEngineEnabled={aiRiskEngineEnabled}
+          onAiRiskEngineEnabledChange={setAiRiskEngineEnabled}
+          aiUserProfilingEnabled={aiUserProfilingEnabled}
+          onAiUserProfilingEnabledChange={setAiUserProfilingEnabled}
         />
       </div>
 

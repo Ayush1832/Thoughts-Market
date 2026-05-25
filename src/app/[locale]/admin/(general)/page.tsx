@@ -68,6 +68,10 @@ export default async function AdminGeneralSettingsPage({ params }: AdminGeneralS
     logoImageUrl: initialThemeSiteImageUrl,
     pwaIcon192Url: initialPwaIcon192Url,
     pwaIcon512Url: initialPwaIcon512Url,
+    aiMarketAssistantEnabled: allSettings?.ai?.ai_market_assistant_enabled?.value === 'true',
+    aiInsightsEnabled: allSettings?.ai?.ai_insights_enabled?.value === 'true',
+    aiRiskEngineEnabled: allSettings?.ai?.ai_risk_engine_enabled?.value === 'true',
+    aiUserProfilingEnabled: allSettings?.ai?.ai_user_profiling_enabled?.value === 'true',
   }
 
   return (

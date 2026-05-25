@@ -13,6 +13,9 @@ import EventOrderStateSync from '@/app/[locale]/(platform)/event/[slug]/_compone
 import EventRelatedSlot from '@/app/[locale]/(platform)/event/[slug]/_components/EventRelatedSlot'
 import EventRules from '@/app/[locale]/(platform)/event/[slug]/_components/EventRules'
 import EventTabsSection from '@/app/[locale]/(platform)/event/[slug]/_components/EventTabsSection'
+import AiInsightsPanel from '@/app/[locale]/(platform)/event/[slug]/_components/AiInsightsPanel'
+import AiMarketAlerts from '@/app/[locale]/(platform)/event/[slug]/_components/AiMarketAlerts'
+import AiRiskScorePanel from '@/app/[locale]/(platform)/event/[slug]/_components/AiRiskScorePanel'
 import ResolutionTimelinePanel from '@/app/[locale]/(platform)/event/[slug]/_components/ResolutionTimelinePanel'
 import {
   resolveEventResolvedOutcomeIndex,
@@ -90,7 +93,12 @@ export default function EventContent({
           </div>
 
           <div className="grid gap-6">
+            <AiMarketAlerts eventId={event.id} />
             <EventMarketsSection event={event} liveChartConfig={liveChartConfig} />
+            <AiInsightsPanel eventId={event.id} />
+            {singleMarket && (
+              <AiRiskScorePanel market={singleMarket} eventId={event.id} />
+            )}
             <EventMarketContextSlot enabled={marketContextEnabled} event={event} />
             <EventRules event={event} />
             {event.total_markets_count === 1

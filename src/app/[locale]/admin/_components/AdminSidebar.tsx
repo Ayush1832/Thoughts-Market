@@ -2,7 +2,7 @@
 
 import type { LucideIcon } from 'lucide-react'
 import type { Route } from 'next'
-import { BadgePercentIcon, CalendarIcon, HeadphonesIcon, LanguagesIcon, SettingsIcon, ShieldCheckIcon, SwatchBookIcon, TagsIcon, TextSelectIcon, UsersIcon } from 'lucide-react'
+import { BadgePercentIcon, CalendarIcon, FilmIcon, HeadphonesIcon, LanguagesIcon, MessageSquareIcon, NewspaperIcon, SettingsIcon, ShieldCheckIcon, SwatchBookIcon, TagsIcon, TextSelectIcon, TrendingUpIcon, UsersIcon } from 'lucide-react'
 import { useExtracted } from 'next-intl'
 import AppLink from '@/components/AppLink'
 import { Button } from '@/components/ui/button'
@@ -29,6 +29,10 @@ export default function AdminSidebar() {
     { id: 'users', label: t('Users'), href: '/admin/users' as Route, icon: UsersIcon },
     { id: 'roles', label: t('Roles'), href: '/admin/roles' as Route, icon: ShieldCheckIcon },
     { id: 'support', label: t('Support'), href: '/admin/support' as Route, icon: HeadphonesIcon },
+    { id: 'trending', label: t('Trending'), href: '/admin/trending' as Route, icon: TrendingUpIcon },
+    { id: 'content', label: t('Content'), href: '/admin/content' as Route, icon: NewspaperIcon },
+    { id: 'reels', label: t('Reels'), href: '/admin/reels' as Route, icon: FilmIcon },
+    { id: 'social', label: t('Social'), href: '/admin/social' as Route, icon: MessageSquareIcon },
   ]
   const pathname = usePathname()
   const activeItem = adminMenuItems.find((item) => {
@@ -39,7 +43,13 @@ export default function AdminSidebar() {
   })
   const active = pathname.startsWith('/admin/events/calendar')
     ? 'events'
-    : (activeItem?.id ?? 'general')
+    : pathname.startsWith('/admin/content/')
+      ? 'content'
+      : pathname.startsWith('/admin/reels/')
+        ? 'reels'
+        : pathname.startsWith('/admin/social/')
+          ? 'social'
+          : (activeItem?.id ?? 'general')
 
   return (
     <aside className="min-w-0 lg:sticky lg:top-28 lg:self-start">

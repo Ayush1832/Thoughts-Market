@@ -6,6 +6,10 @@ export interface AdminThemeSiteSettingsInitialState extends ThemeSiteSettingsFor
   logoImageUrl: string | null
   pwaIcon192Url: string
   pwaIcon512Url: string
+  aiMarketAssistantEnabled: boolean
+  aiInsightsEnabled: boolean
+  aiRiskEngineEnabled: boolean
+  aiUserProfilingEnabled: boolean
 }
 
 export interface AdminThemePresetOption {

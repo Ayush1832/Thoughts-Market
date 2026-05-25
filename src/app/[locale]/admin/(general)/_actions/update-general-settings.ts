@@ -205,6 +205,10 @@ export async function updateGeneralSettingsAction(
   const openRouterModelRaw = formData.get('openrouter_model')
   const openRouterApiKeyRaw = formData.get('openrouter_api_key')
   const blockedCountriesRaw = formData.get('blocked_countries')
+  const aiMarketAssistantEnabledRaw = formData.get('ai_market_assistant_enabled')
+  const aiInsightsEnabledRaw = formData.get('ai_insights_enabled')
+  const aiRiskEngineEnabledRaw = formData.get('ai_risk_engine_enabled')
+  const aiUserProfilingEnabledRaw = formData.get('ai_user_profiling_enabled')
 
   const siteName = typeof siteNameRaw === 'string' ? siteNameRaw : ''
   const siteDescription = typeof siteDescriptionRaw === 'string' ? siteDescriptionRaw : ''
@@ -235,6 +239,10 @@ export async function updateGeneralSettingsAction(
   const openRouterModel = typeof openRouterModelRaw === 'string' ? openRouterModelRaw.trim() : ''
   const openRouterApiKey = typeof openRouterApiKeyRaw === 'string' ? openRouterApiKeyRaw.trim() : ''
   const blockedCountriesInput = typeof blockedCountriesRaw === 'string' ? blockedCountriesRaw : ''
+  const aiMarketAssistantEnabled = aiMarketAssistantEnabledRaw === 'true' ? 'true' : 'false'
+  const aiInsightsEnabled = aiInsightsEnabledRaw === 'true' ? 'true' : 'false'
+  const aiRiskEngineEnabled = aiRiskEngineEnabledRaw === 'true' ? 'true' : 'false'
+  const aiUserProfilingEnabled = aiUserProfilingEnabledRaw === 'true' ? 'true' : 'false'
 
   if (openRouterModel.length > 160) {
     return { error: 'OpenRouter model is too long.' }
@@ -366,6 +374,10 @@ export async function updateGeneralSettingsAction(
     { group: 'general', key: 'lifi_api_key', value: encryptedLiFiApiKey },
     { group: 'ai', key: 'openrouter_model', value: openRouterModel },
     { group: 'ai', key: 'openrouter_api_key', value: encryptedOpenRouterApiKey },
+    { group: 'ai', key: 'ai_market_assistant_enabled', value: aiMarketAssistantEnabled },
+    { group: 'ai', key: 'ai_insights_enabled', value: aiInsightsEnabled },
+    { group: 'ai', key: 'ai_risk_engine_enabled', value: aiRiskEngineEnabled },
+    { group: 'ai', key: 'ai_user_profiling_enabled', value: aiUserProfilingEnabled },
   ]
 
   const { error } = await SettingsRepository.updateSettings(settingsToUpdate)

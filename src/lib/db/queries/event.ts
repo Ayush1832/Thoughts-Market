@@ -3281,4 +3281,53 @@ export const EventRepository = {
       return { data: transformedResults, error: null }
     })
   },
+
+  async getEventById(
+    id: string,
+    userId: string = '',
+    locale: SupportedLocale = DEFAULT_LOCALE,
+  ): Promise<QueryResult<Event>> {
+    return runQuery(async () => {
+      const eventResult = await db.query.events.findFirst({
+        where: and(
+          eq(events.id, id),
+          eq(events.is_hidden, false),
+        ),
+        with: {
+          markets: {
+            with: {
+              sports: true,
+              condition: {
+                with: { outcomes: true },
+              },
+            },
+          },
+          eventTags: {
+            with: { tag: true },
+          },
+          sports: true,
+          ...(userId && {
+            bookmarks: {
+              where: eq(bookmarks.user_id, userId),
+            },
+          }),
+        },
+      }) as DrizzleEventResult
+
+      if (!eventResult) {
+        throw new Error('Event not found')
+      }
+
+      const hydratedEventResult = await hydrateSportsAuxiliaryEventContext(eventResult as DrizzleEventResult)
+      const sportsSlugResolver = await getSportsSlugResolverFromDb()
+      const transformedEvent = await buildEventResource(
+        hydratedEventResult,
+        userId,
+        sportsSlugResolver,
+        locale,
+      )
+
+      return { data: transformedEvent, error: null }
+    })
+  },
 }

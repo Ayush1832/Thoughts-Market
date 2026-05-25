@@ -11,19 +11,19 @@
   "crons": [
     {
       "path": "/api/sync/events",
-      "schedule": "*/10 * * * *"
+      "schedule": "0 0 * * *"
     },
     {
       "path": "/api/sync/resolution",
-      "schedule": "*/10 * * * *"
+      "schedule": "0 1 * * *"
     },
     {
       "path": "/api/sync/volume",
-      "schedule": "*/30 * * * *"
+      "schedule": "0 2 * * *"
     },
     {
       "path": "/api/sync/event-creations",
-      "schedule": "0,30 * * * *"
+      "schedule": "0 3 * * *"
     }
   ]
 }

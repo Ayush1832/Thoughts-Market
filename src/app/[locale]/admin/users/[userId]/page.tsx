@@ -1,6 +1,8 @@
 import UserDetailPage from './UserDetailPage'
 
-export default async function AdminUserDetailPage({ params }: PageProps<'/[locale]/admin/users/[userId]'>) {
-  const { locale, userId } = await params
+export default async function AdminUserDetailPage(props: {
+  params: Promise<{ locale: string; userId: string }>
+}) {
+  const { locale, userId } = await props.params
   return <UserDetailPage userId={userId} locale={locale} />
 }

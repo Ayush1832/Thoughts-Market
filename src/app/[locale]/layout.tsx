@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { hasLocale, NextIntlClientProvider } from 'next-intl'
 import { setRequestLocale } from 'next-intl/server'
 import { notFound } from 'next/navigation'
+import { Suspense } from 'react'
 import CustomJavascriptCode from '@/components/CustomJavascriptCode'
 import GlobalAnnouncementBanner from '@/components/GlobalAnnouncementBanner'
 import PwaInstallStateSync from '@/components/PwaInstallStateSync'
@@ -122,20 +123,22 @@ export default async function LocaleLayout({ params, children }: LayoutProps<'/[
         <SiteIdentityProvider site={runtimeTheme.site}>
           <NextIntlClientProvider locale={locale}>
             <AppProviders>
-              {hasGlobalAnnouncement
-                ? (
-                    <GlobalAnnouncementBanner
-                      locale={locale}
-                      message={globalAnnouncement.message}
-                      linkUrl={globalAnnouncement.linkUrl}
-                      disabledOn={globalAnnouncement.disabledOn}
-                    />
-                  )
-                : null}
+              {hasGlobalAnnouncement ? (
+                <Suspense fallback={null}>
+                  <GlobalAnnouncementBanner
+                    locale={locale}
+                    message={globalAnnouncement.message}
+                    linkUrl={globalAnnouncement.linkUrl}
+                    disabledOn={globalAnnouncement.disabledOn}
+                  />
+                </Suspense>
+              ) : null}
               {IS_TEST_MODE && <TestModeBannerDeferred />}
               <PwaInstallStateSync />
               {children}
-              <CustomJavascriptCode locale={locale} codes={runtimeTheme.site.customJavascriptCodes} />
+              <Suspense fallback={null}>
+                <CustomJavascriptCode locale={locale} codes={runtimeTheme.site.customJavascriptCodes} />
+              </Suspense>
             </AppProviders>
           </NextIntlClientProvider>
         </SiteIdentityProvider>

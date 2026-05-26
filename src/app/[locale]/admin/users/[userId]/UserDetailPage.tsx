@@ -107,8 +107,8 @@ export default function UserDetailPage({ userId, locale }: { userId: string; loc
   const mutation = useMutation({
     mutationFn: (payload: any) => patchAdminUserDetail(userId, locale, payload),
     onSuccess: () => {
-      queryClient.invalidateQueries(['admin-user-detail', locale, userId])
-      queryClient.invalidateQueries(['admin-users', { locale }])
+      queryClient.invalidateQueries({ queryKey: ['admin-user-detail', locale, userId] })
+      queryClient.invalidateQueries({ queryKey: ['admin-users', { locale }] })
     },
   })
 

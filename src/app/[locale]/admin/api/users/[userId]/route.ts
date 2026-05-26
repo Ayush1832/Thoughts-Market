@@ -76,14 +76,18 @@ function mergeSettings(existing: Record<string, any> = {}, incoming: Record<stri
   }
 }
 
-export async function GET(request: NextRequest, { params }: { params: { userId: string } }) {
+export async function GET(request: NextRequest, context: any) {
   try {
     const currentUser = await UserRepository.getCurrentUser({ minimal: true })
     if (!currentUser || !currentUser.is_admin) {
       return NextResponse.json({ error: 'Unauthenticated.' }, { status: 401 })
     }
 
-    const userId = params.userId
+    let paramsObj: any = context?.params ?? context
+    if (paramsObj && typeof paramsObj.then === 'function') {
+      paramsObj = await paramsObj
+    }
+    const userId = paramsObj?.userId
     const [user] = await db
       .select({
         id: users.id,
@@ -173,14 +177,18 @@ export async function GET(request: NextRequest, { params }: { params: { userId: 
   }
 }
 
-export async function PATCH(request: NextRequest, { params }: { params: { userId: string } }) {
+export async function PATCH(request: NextRequest, context: any) {
   try {
     const currentUser = await UserRepository.getCurrentUser({ minimal: true })
     if (!currentUser || !currentUser.is_admin) {
       return NextResponse.json({ error: 'Unauthenticated.' }, { status: 401 })
     }
 
-    const userId = params.userId
+    let paramsObj: any = context?.params ?? context
+    if (paramsObj && typeof paramsObj.then === 'function') {
+      paramsObj = await paramsObj
+    }
+    const userId = paramsObj?.userId
     const body = await request.json()
     const settingsInput = body.settings ?? {}
 

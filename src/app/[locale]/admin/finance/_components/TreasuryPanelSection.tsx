@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { AlertIcon, TrendingDownIcon, TrendingUpIcon } from 'lucide-react'
+import { AlertTriangleIcon, TrendingDownIcon, TrendingUpIcon } from 'lucide-react'
 import { Progress } from '@/components/ui/progress'
 
 interface TreasuryMetric {
@@ -148,7 +148,7 @@ export default function TreasuryPanelSection() {
       {/* Health Warning */}
       <Card className="border-yellow-200 bg-yellow-50">
         <CardHeader className="flex flex-row items-center gap-4 pb-3">
-          <AlertIcon className="size-5 text-yellow-600" />
+          <AlertTriangleIcon className="size-5 text-yellow-600" />
           <div>
             <CardTitle className="text-yellow-900">Treasury Health Alert</CardTitle>
             <CardDescription className="text-yellow-700">Insurance reserve below optimal level</CardDescription>

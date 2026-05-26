@@ -87,6 +87,11 @@ export async function GET(request: NextRequest) {
         referredProfile = referredPath ? `${baseProfileUrl}${referredPath}` : null
       }
 
+      const settings = user.settings ?? {}
+      const kycStatus = settings.kyc?.status ?? 'unverified'
+      const trustScore = typeof settings.trust?.score === 'number' ? settings.trust.score : null
+      const isBanned = settings.admin_controls?.is_banned ?? false
+
       const searchText = [
         user.username,
         user.email,
@@ -105,17 +110,19 @@ export async function GET(request: NextRequest) {
         profileUrl: profilePath ? `${baseProfileUrl}${profilePath}` : null,
         created_at: user.created_at,
         search_text: searchText,
+        kyc_status: kycStatus,
+        trust_score: trustScore,
+        is_banned: isBanned,
       }
     })
 
     return NextResponse.json({
-      data: transformedUsers,
-      count: count || 0,
-      totalCount: count || 0,
+      users: transformedUsers,
+      count,
     })
   }
   catch (error) {
-    console.error('API Error:', error)
+    console.error(error)
     return NextResponse.json({ error: DEFAULT_ERROR_MESSAGE }, { status: 500 })
   }
 }

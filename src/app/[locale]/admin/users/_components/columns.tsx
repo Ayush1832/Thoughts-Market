@@ -1,6 +1,7 @@
 'use client'
 
 import type { ColumnDef } from '@tanstack/react-table'
+import Link from 'next/link'
 import { ArrowUpDownIcon, MailIcon } from 'lucide-react'
 import { useExtracted } from 'next-intl'
 import ProfileLink from '@/components/ProfileLink'
@@ -23,6 +24,9 @@ interface AdminUserRow {
   profileUrl: string
   created_at: string
   search_text: string
+  kyc_status?: string | null
+  trust_score?: number | null
+  is_banned?: boolean
 }
 
 export function useAdminUsersColumns(): ColumnDef<AdminUserRow>[] {
@@ -129,6 +133,61 @@ export function useAdminUsersColumns(): ColumnDef<AdminUserRow>[] {
       },
     },
     {
+      accessorKey: 'kyc_status',
+      id: 'kyc',
+      header: () => (
+        <div className="h-auto p-0 text-xs font-medium text-muted-foreground uppercase">
+          {t('KYC')}
+        </div>
+      ),
+      enableSorting: false,
+      cell: ({ row }) => {
+        const status = row.original.kyc_status ?? 'unverified'
+        const variant = status === 'verified' ? 'secondary' : 'outline'
+        return (
+          <Badge variant={variant as any} className="text-xs">
+            {status}
+          </Badge>
+        )
+      },
+    },
+    {
+      accessorKey: 'trust_score',
+      id: 'trust',
+      header: () => (
+        <div className="h-auto p-0 text-xs font-medium text-muted-foreground uppercase">
+          {t('Trust')}
+        </div>
+      ),
+      enableSorting: false,
+      cell: ({ row }) => {
+        const score = row.original.trust_score
+        return (
+          <span className="min-w-0 text-xs text-muted-foreground">
+            {typeof score === 'number' ? score.toFixed(0) : '—'}
+          </span>
+        )
+      },
+    },
+    {
+      accessorKey: 'is_banned',
+      id: 'status',
+      header: () => (
+        <div className="h-auto p-0 text-xs font-medium text-muted-foreground uppercase">
+          {t('Status')}
+        </div>
+      ),
+      enableSorting: false,
+      cell: ({ row }) => {
+        const banned = row.original.is_banned
+        return (
+          <Badge variant={banned ? 'destructive' : 'secondary'} className="text-xs">
+            {banned ? t('Banned') : t('Active')}
+          </Badge>
+        )
+      },
+    },
+    {
       accessorKey: 'referred_by_display',
       id: 'referral',
       header: () => {
@@ -164,6 +223,26 @@ export function useAdminUsersColumns(): ColumnDef<AdminUserRow>[] {
           </div>
         )
       },
+    },
+    {
+      id: 'actions',
+      header: () => (
+        <div className="text-xs font-medium text-muted-foreground uppercase">
+          {t('Actions')}
+        </div>
+      ),
+      cell: ({ row }) => {
+        const user = row.original
+        return (
+          <div className="text-right">
+            <Link href={{ pathname: String(user.id) }} className="text-xs font-medium text-primary hover:underline">
+              {t('Manage')}
+            </Link>
+          </div>
+        )
+      },
+      enableSorting: false,
+      enableHiding: false,
     },
     {
       accessorKey: 'created_at',

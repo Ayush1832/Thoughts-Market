@@ -342,6 +342,7 @@ export const UserRepository = {
           image: users.image,
           affiliate_code: users.affiliate_code,
           referred_by_user_id: users.referred_by_user_id,
+          settings: users.settings,
         })
         .from(users)
 

@@ -10,7 +10,7 @@ import { generateRandomString } from 'better-auth/crypto'
 import { useExtracted } from 'next-intl'
 import { useTheme } from 'next-themes'
 import dynamic from 'next/dynamic'
-import { useEffect, useMemo, useState, useSyncExternalStore } from 'react'
+import { Suspense, useEffect, useMemo, useState, useSyncExternalStore } from 'react'
 import { toast } from 'sonner'
 import { WagmiProvider } from 'wagmi'
 import { AppKitContext, defaultAppKitValue } from '@/hooks/useAppKit'
@@ -335,7 +335,9 @@ export default function AppKitProvider({ children }: { children: ReactNode }) {
   return (
     <WagmiProvider config={wagmiConfig}>
       <AppKitContext value={appKitValue}>
-        {children}
+        <Suspense fallback={null}>
+          {children}
+        </Suspense>
         <SignaturePrompt />
         {canSyncTheme && <AppKitThemeSynchronizer themeMode={appKitThemeMode} />}
       </AppKitContext>

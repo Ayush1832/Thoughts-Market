@@ -8,7 +8,7 @@ import { getPublicAssetUrl } from '@/lib/storage'
 import { db } from '@/lib/drizzle'
 import { sessions } from '@/lib/db/schema/auth/tables'
 import { orders } from '@/lib/db/schema/orders/tables'
-import { inArray, sql, count } from 'drizzle-orm'
+import { inArray, sql, count, desc } from 'drizzle-orm'
 
 export async function GET(request: NextRequest) {
   try {
@@ -95,7 +95,7 @@ export async function GET(request: NextRequest) {
       .select({ user_id: sessions.user_id, last_seen: sessions.created_at })
       .from(sessions)
       .where(inArray(sessions.user_id, userIds))
-      .orderBy(sessions.created_at, 'desc') : []
+      .orderBy(desc(sessions.created_at)) : []
 
     const lastSeenMap = new Map<string, string>()
     // For simplicity take the most recent created_at per user

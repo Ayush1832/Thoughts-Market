@@ -33,9 +33,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid sortBy parameter' }, { status: 400 })
     }
 
-    // If sorting by last_active, fetch a larger unpaged set and sort in-memory.
     let data: any[] = []
-    let count = 0
+    let totalCount = 0
     let error: any = null
 
     if (sortBy === 'last_active') {
@@ -48,7 +47,7 @@ export async function GET(request: NextRequest) {
         sortOrder,
       })
       data = result.data || []
-      count = result.count || 0
+      totalCount = result.count || 0
       error = result.error
     }
     else {
@@ -60,7 +59,7 @@ export async function GET(request: NextRequest) {
         sortOrder,
       })
       data = result.data || []
-      count = result.count || 0
+      totalCount = result.count || 0
       error = result.error
     }
 
@@ -89,7 +88,6 @@ export async function GET(request: NextRequest) {
       return raw.startsWith('http') ? raw : `https://${raw}`
     })()
 
-    // fetch last session (last active) for listed users
     const userIds = (data ?? []).map(u => u.id)
     const sessionsRows = userIds.length ? await db
       .select({ user_id: sessions.user_id, last_seen: sessions.created_at })
@@ -98,7 +96,6 @@ export async function GET(request: NextRequest) {
       .orderBy(desc(sessions.created_at)) : []
 
     const lastSeenMap = new Map<string, string>()
-    // For simplicity take the most recent created_at per user
     for (const s of sessionsRows as any[]) {
       const existing = lastSeenMap.get(s.user_id)
       if (!existing || new Date(s.last_seen) > new Date(existing)) {
@@ -106,7 +103,6 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // aggregate trade metrics for listed users
     const ordersAggRows = userIds.length ? await db
       .select({ user_id: orders.user_id, trade_count: count(orders.id), trade_volume: sql`coalesce(sum(${orders.taker_amount}), 0)` })
       .from(orders)
@@ -174,7 +170,7 @@ export async function GET(request: NextRequest) {
         trade_volume: tradeMap.get(user.id)?.trade_volume ?? '0',
       }
     })
-    // If we fetched an unpaged set for last_active sorting, sort now and page in-memory
+
     if (sortBy === 'last_active') {
       const sorted = transformedUsers.sort((a: any, b: any) => {
         const ta = a.last_active ? new Date(a.last_active).getTime() : 0
@@ -183,11 +179,10 @@ export async function GET(request: NextRequest) {
       })
 
       const paged = sorted.slice(offset, offset + limit)
-      return NextResponse.json({ data: paged, count, totalCount: count })
+      return NextResponse.json({ data: paged, count: totalCount, totalCount })
     }
 
-    // Return in the shape expected by frontend hooks: { data, count, totalCount }
-    return NextResponse.json({ data: transformedUsers, count, totalCount: count })
+    return NextResponse.json({ data: transformedUsers, count: totalCount, totalCount })
   }
   catch (error) {
     console.error(error)

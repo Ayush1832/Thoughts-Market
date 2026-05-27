@@ -25,10 +25,10 @@ export async function GET(request: NextRequest) {
     const offsetParam = Number.parseInt(searchParams.get('offset') || '0')
     const offset = Number.isNaN(offsetParam) ? 0 : Math.max(offsetParam, 0)
     const search = searchParams.get('search') || undefined
-    const sortBy = (searchParams.get('sortBy') as 'username' | 'email' | 'address' | 'created_at') || 'created_at'
+    const sortBy = (searchParams.get('sortBy') as 'username' | 'email' | 'address' | 'created_at' | 'last_active') || 'created_at'
     const sortOrder = (searchParams.get('sortOrder') as 'asc' | 'desc') || 'desc'
 
-    const validSortFields = ['username', 'email', 'address', 'created_at']
+    const validSortFields = ['username', 'email', 'address', 'created_at', 'last_active']
     if (!validSortFields.includes(sortBy)) {
       return NextResponse.json({ error: 'Invalid sortBy parameter' }, { status: 400 })
     }

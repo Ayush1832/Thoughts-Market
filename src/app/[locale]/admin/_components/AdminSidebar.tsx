@@ -31,7 +31,6 @@ export default function AdminSidebar() {
     { id: 'roles', label: t('Roles'), href: '/admin/roles' as Route, icon: ShieldCheckIcon },
     { id: 'support', label: t('Support'), href: '/admin/support' as Route, icon: HeadphonesIcon },
     { id: 'trending', label: t('Trending'), href: '/admin/trending' as Route, icon: TrendingUpIcon },
-    { id: 'content', label: t('Content'), href: '/admin/content' as Route, icon: NewspaperIcon },
     // { id: 'reels', label: t('Reels'), href: '/admin/reels' as Route, icon: FilmIcon },
     { id: 'social', label: t('Social'), href: '/admin/social' as Route, icon: MessageSquareIcon },
   ]
@@ -44,15 +43,13 @@ export default function AdminSidebar() {
   })
   const active = pathname.startsWith('/admin/events/calendar')
     ? 'events'
-    : pathname.startsWith('/admin/content/')
-      ? 'content'
-      : pathname.startsWith('/admin/reels/')
-        ? 'reels'
-        : pathname.startsWith('/admin/social/')
-          ? 'social'
-          : pathname.startsWith('/admin/finance/')
-            ? 'finance'
-            : (activeItem?.id ?? 'general')
+    : pathname.startsWith('/admin/reels/')
+      ? 'reels'
+      : pathname.startsWith('/admin/social/')
+        ? 'social'
+        : pathname.startsWith('/admin/finance/')
+          ? 'finance'
+          : (activeItem?.id ?? 'general')
 
   return (
     <aside className="min-w-0 lg:sticky lg:top-28 lg:self-start">

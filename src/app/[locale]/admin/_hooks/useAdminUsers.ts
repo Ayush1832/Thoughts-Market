@@ -22,7 +22,7 @@ interface AdminUserRow {
 interface UseAdminUsersParams {
   limit?: number
   search?: string
-  sortBy?: 'username' | 'email' | 'address' | 'created_at'
+  sortBy?: 'username' | 'email' | 'address' | 'created_at' | 'last_active'
   sortOrder?: 'asc' | 'desc'
   pageIndex?: number
   locale?: string
@@ -118,7 +118,7 @@ export function useAdminUsersTable() {
   const [pageIndex, setPageIndex] = useState(0)
   const [pageSize, setPageSize] = useState(50)
   const [search, setSearch] = useState('')
-  const [sortBy, setSortBy] = useState<'username' | 'email' | 'address' | 'created_at'>('created_at')
+  const [sortBy, setSortBy] = useState<'username' | 'email' | 'address' | 'created_at' | 'last_active'>('created_at')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
 
   const { data, isLoading, error, retry } = useAdminUsers({
@@ -140,7 +140,7 @@ export function useAdminUsersTable() {
       setSortOrder('desc')
     }
     else {
-      setSortBy(column as 'username' | 'email' | 'address' | 'created_at')
+      setSortBy(column as 'username' | 'email' | 'address' | 'created_at' | 'last_active')
       setSortOrder(order)
     }
     setPageIndex(0)

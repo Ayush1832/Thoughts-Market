@@ -5,6 +5,10 @@ import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
 import { UserRepository } from '@/lib/db/queries/user'
 import { buildPublicProfilePath, buildUsernameProfilePath } from '@/lib/platform-routing'
 import { getPublicAssetUrl } from '@/lib/storage'
+import { db } from '@/lib/drizzle'
+import { sessions } from '@/lib/db/schema/auth/tables'
+import { orders } from '@/lib/db/schema/orders/tables'
+import { inArray, sql, count } from 'drizzle-orm'
 
 export async function GET(request: NextRequest) {
   try {
@@ -29,13 +33,36 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid sortBy parameter' }, { status: 400 })
     }
 
-    const { data, count, error } = await UserRepository.listUsers({
-      limit,
-      offset,
-      search,
-      sortBy,
-      sortOrder,
-    })
+    // If sorting by last_active, fetch a larger unpaged set and sort in-memory.
+    let data: any[] = []
+    let count = 0
+    let error: any = null
+
+    if (sortBy === 'last_active') {
+      const fetchLimit = 1000
+      const result = await UserRepository.listUsers({
+        limit: fetchLimit,
+        offset: 0,
+        search,
+        sortBy: 'created_at',
+        sortOrder,
+      })
+      data = result.data || []
+      count = result.count || 0
+      error = result.error
+    }
+    else {
+      const result = await UserRepository.listUsers({
+        limit,
+        offset,
+        search,
+        sortBy,
+        sortOrder,
+      })
+      data = result.data || []
+      count = result.count || 0
+      error = result.error
+    }
 
     if (error) {
       return NextResponse.json({ error: DEFAULT_ERROR_MESSAGE }, { status: 500 })
@@ -61,6 +88,35 @@ export async function GET(request: NextRequest) {
       const raw = process.env.SITE_URL!
       return raw.startsWith('http') ? raw : `https://${raw}`
     })()
+
+    // fetch last session (last active) for listed users
+    const userIds = (data ?? []).map(u => u.id)
+    const sessionsRows = userIds.length ? await db
+      .select({ user_id: sessions.user_id, last_seen: sessions.created_at })
+      .from(sessions)
+      .where(inArray(sessions.user_id, userIds))
+      .orderBy(sessions.user_id, { nulls: 'last' }) : []
+
+    const lastSeenMap = new Map<string, string>()
+    // For simplicity take the most recent created_at per user
+    for (const s of sessionsRows as any[]) {
+      const existing = lastSeenMap.get(s.user_id)
+      if (!existing || new Date(s.last_seen) > new Date(existing)) {
+        lastSeenMap.set(s.user_id, s.last_seen)
+      }
+    }
+
+    // aggregate trade metrics for listed users
+    const ordersAggRows = userIds.length ? await db
+      .select({ user_id: orders.user_id, trade_count: count(), trade_volume: sql`coalesce(sum(${orders.taker_amount}), 0)` })
+      .from(orders)
+      .where(inArray(orders.user_id, userIds))
+      .groupBy(orders.user_id) : []
+
+    const tradeMap = new Map<string, { trade_count: number, trade_volume: string }>()
+    for (const r of ordersAggRows as any[]) {
+      tradeMap.set(r.user_id, { trade_count: Number(r.trade_count || 0), trade_volume: String(r.trade_volume ?? '0') })
+    }
 
     const transformedUsers = (data ?? []).map((user) => {
       const created = new Date(user.created_at)
@@ -113,13 +169,25 @@ export async function GET(request: NextRequest) {
         kyc_status: kycStatus,
         trust_score: trustScore,
         is_banned: isBanned,
+        last_active: lastSeenMap.get(user.id) ?? null,
+        trade_count: tradeMap.get(user.id)?.trade_count ?? 0,
+        trade_volume: tradeMap.get(user.id)?.trade_volume ?? '0',
       }
     })
+    // If we fetched an unpaged set for last_active sorting, sort now and page in-memory
+    if (sortBy === 'last_active') {
+      const sorted = transformedUsers.sort((a: any, b: any) => {
+        const ta = a.last_active ? new Date(a.last_active).getTime() : 0
+        const tb = b.last_active ? new Date(b.last_active).getTime() : 0
+        return sortOrder === 'asc' ? ta - tb : tb - ta
+      })
 
-    return NextResponse.json({
-      users: transformedUsers,
-      count,
-    })
+      const paged = sorted.slice(offset, offset + limit)
+      return NextResponse.json({ data: paged, count, totalCount: count })
+    }
+
+    // Return in the shape expected by frontend hooks: { data, count, totalCount }
+    return NextResponse.json({ data: transformedUsers, count, totalCount: count })
   }
   catch (error) {
     console.error(error)

@@ -27,6 +27,9 @@ interface AdminUserRow {
   kyc_status?: string | null
   trust_score?: number | null
   is_banned?: boolean
+  last_active?: string | null
+  trade_count?: number
+  trade_volume?: string
 }
 
 export function useAdminUsersColumns(): ColumnDef<AdminUserRow>[] {
@@ -186,6 +189,54 @@ export function useAdminUsersColumns(): ColumnDef<AdminUserRow>[] {
           </Badge>
         )
       },
+    },
+    {
+      accessorKey: 'last_active',
+      id: 'last_active',
+      header: ({ column }) => (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+          className="h-auto p-0 text-xs font-medium text-muted-foreground uppercase hover:text-foreground"
+        >
+          {t('Last active')}
+          <ArrowUpDownIcon className="ml-2 size-4" />
+        </Button>
+      ),
+      cell: ({ row }) => {
+        const val = row.original.last_active
+        return (
+          <div className="min-w-0 text-xs text-muted-foreground">
+            {val ? new Date(val).toLocaleString() : '—'}
+          </div>
+        )
+      },
+    },
+    {
+      accessorKey: 'trade_count',
+      id: 'trade_count',
+      header: () => (
+        <div className="h-auto p-0 text-xs font-medium text-muted-foreground uppercase">
+          {t('Trades')}
+        </div>
+      ),
+      enableSorting: false,
+      cell: ({ row }) => (
+        <div className="min-w-0 text-xs text-muted-foreground">{row.original.trade_count ?? 0}</div>
+      ),
+    },
+    {
+      accessorKey: 'trade_volume',
+      id: 'trade_volume',
+      header: () => (
+        <div className="h-auto p-0 text-xs font-medium text-muted-foreground uppercase">
+          {t('Volume')}
+        </div>
+      ),
+      enableSorting: false,
+      cell: ({ row }) => (
+        <div className="min-w-0 text-xs text-muted-foreground">{row.original.trade_volume ?? '0'}</div>
+      ),
     },
     {
       accessorKey: 'referred_by_display',

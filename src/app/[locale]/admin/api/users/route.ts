@@ -108,7 +108,7 @@ export async function GET(request: NextRequest) {
 
     // aggregate trade metrics for listed users
     const ordersAggRows = userIds.length ? await db
-      .select({ user_id: orders.user_id, trade_count: count(), trade_volume: sql`coalesce(sum(${orders.taker_amount}), 0)` })
+      .select({ user_id: orders.user_id, trade_count: count(orders.id), trade_volume: sql`coalesce(sum(${orders.taker_amount}), 0)` })
       .from(orders)
       .where(inArray(orders.user_id, userIds))
       .groupBy(orders.user_id) : []

@@ -95,7 +95,7 @@ export async function GET(request: NextRequest) {
       .select({ user_id: sessions.user_id, last_seen: sessions.created_at })
       .from(sessions)
       .where(inArray(sessions.user_id, userIds))
-      .orderBy(sessions.user_id, { nulls: 'last' }) : []
+      .orderBy(sessions.created_at, 'desc') : []
 
     const lastSeenMap = new Map<string, string>()
     // For simplicity take the most recent created_at per user

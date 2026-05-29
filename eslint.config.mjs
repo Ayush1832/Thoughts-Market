@@ -2,6 +2,7 @@ import antfu from '@antfu/eslint-config'
 import eslintPluginBetterTailwindcss from 'eslint-plugin-better-tailwindcss'
 import reactYouMightNotNeedAnEffect from 'eslint-plugin-react-you-might-not-need-an-effect'
 
+
 export default antfu({
   react: true,
   nextjs: true,

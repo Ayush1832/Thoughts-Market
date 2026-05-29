@@ -1,52 +1,128 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { AlertTriangleIcon, TrendingDownIcon, TrendingUpIcon } from 'lucide-react'
 import { Progress } from '@/components/ui/progress'
 
-interface TreasuryMetric {
-  label: string
-  value: string
-  change: number
-  isPositive: boolean
+interface TreasuryStats {
+  treasuryBalance: number
+  totalDeposits: number
+  totalWithdrawals: number
+  tradingFees30d: number
+  tradingFees30dChange: number
+  withdrawalFees30d: number
+  pendingExposure: number
+  totalRevenue30d: number
 }
 
-const treasuryMetrics: TreasuryMetric[] = [
-  { label: 'Platform Reserve', value: '$500,000', change: 3.2, isPositive: true },
-  { label: 'Insurance Reserve', value: '$50,000', change: -1.5, isPositive: false },
-  { label: 'Operating Capital', value: '$200,000', change: 5.8, isPositive: true },
-  { label: 'Total Treasury', value: '$750,000', change: 2.1, isPositive: true },
-]
+function fmt(n: number) {
+  if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(2)}M`
+  if (n >= 1_000) return `$${(n / 1_000).toFixed(1)}K`
+  return `$${n.toFixed(2)}`
+}
 
-const exposureMetrics = [
-  { label: 'User Liability Exposure', value: '$120,000', max: '$500,000', percentage: 24 },
-  { label: 'Open Payout Exposure', value: '$85,000', max: '$300,000', percentage: 28 },
-  { label: 'Pending Settlement', value: '$45,000', max: '$200,000', percentage: 23 },
-]
-
-const analyticsMetrics = [
-  { label: 'Total Revenue (30d)', value: '$125,000', change: '+8.5%' },
-  { label: 'Trading Fees Collected', value: '$75,000', change: '+12.3%' },
-  { label: 'Withdrawal Fees', value: '$15,000', change: '+3.2%' },
-  { label: 'Affiliate Commissions Paid', value: '$25,000', change: '-2.1%' },
-]
-
-const runwayMetrics = [
-  { label: 'Daily Burn Rate', value: '$5,200', trend: 'stable' },
-  { label: 'Monthly Burn Rate', value: '$156,000', trend: 'decreasing' },
-  { label: 'Operational Runway', value: '4.8 months', trend: 'stable' },
-  { label: 'Reserves Health', value: '92%', trend: 'increasing' },
-]
+function pct(value: number, max: number) {
+  if (max <= 0) return 0
+  return Math.min(Math.round((value / max) * 100), 100)
+}
 
 export default function TreasuryPanelSection() {
+  const [data, setData] = useState<TreasuryStats | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetch('/en/admin/api/finance/treasury')
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d) setData(d) })
+      .finally(() => setLoading(false))
+  }, [])
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Card key={i}>
+            <CardContent className="pt-6">
+              <div className="h-20 bg-muted animate-pulse rounded" />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    )
+  }
+
+  const totalDeposits = data?.totalDeposits ?? 0
+  const totalWithdrawals = data?.totalWithdrawals ?? 0
+  const balance = data?.treasuryBalance ?? 0
+  const pendingExp = data?.pendingExposure ?? 0
+  const tradingFees = data?.tradingFees30d ?? 0
+  const tradingFeesChange = data?.tradingFees30dChange ?? 0
+  const withdrawalFees = data?.withdrawalFees30d ?? 0
+  const totalRevenue = data?.totalRevenue30d ?? 0
+
+  const reserveMax = Math.max(totalDeposits * 1.2, 1)
+  const exposureMax = Math.max(balance * 0.5, pendingExp * 1.5, 1)
+
+  const treasuryMetrics = [
+    {
+      label: 'Total Deposits',
+      value: fmt(totalDeposits),
+      change: 0,
+      isPositive: true,
+    },
+    {
+      label: 'Total Withdrawals',
+      value: fmt(totalWithdrawals),
+      change: 0,
+      isPositive: false,
+    },
+    {
+      label: 'Net Balance',
+      value: fmt(balance),
+      change: 0,
+      isPositive: balance >= 0,
+    },
+    {
+      label: 'Total Revenue (30d)',
+      value: fmt(totalRevenue),
+      change: tradingFeesChange,
+      isPositive: tradingFeesChange >= 0,
+    },
+  ]
+
+  const exposureMetrics = [
+    {
+      label: 'Pending Settlements Exposure',
+      value: fmt(pendingExp),
+      max: fmt(exposureMax),
+      percentage: pct(pendingExp, exposureMax),
+    },
+    {
+      label: 'Withdrawals vs Deposits',
+      value: fmt(totalWithdrawals),
+      max: fmt(totalDeposits),
+      percentage: pct(totalWithdrawals, totalDeposits),
+    },
+  ]
+
+  const analyticsMetrics = [
+    { label: 'Total Revenue (30d)', value: fmt(totalRevenue), change: `${tradingFeesChange > 0 ? '+' : ''}${tradingFeesChange.toFixed(1)}%` },
+    { label: 'Trading Fees Collected', value: fmt(tradingFees), change: `${tradingFeesChange > 0 ? '+' : ''}${tradingFeesChange.toFixed(1)}%` },
+    { label: 'Withdrawal Fees (30d)', value: fmt(withdrawalFees), change: '' },
+    { label: 'Net Deposits', value: fmt(balance), change: '' },
+  ]
+
+  const healthPct = totalDeposits > 0 ? Math.min(Math.round((balance / totalDeposits) * 100), 100) : 0
+
   return (
     <div className="space-y-6">
       {/* Treasury Reserves Overview */}
       <div>
-        <h3 className="text-lg font-semibold mb-4">Treasury Reserves</h3>
+        <h3 className="text-lg font-semibold mb-4">Treasury Overview</h3>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {treasuryMetrics.map((metric) => (
+          {treasuryMetrics.map(metric => (
             <Card key={metric.label}>
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-medium text-muted-foreground">{metric.label}</CardTitle>
@@ -54,14 +130,12 @@ export default function TreasuryPanelSection() {
               <CardContent>
                 <div className="flex items-end justify-between">
                   <div className="text-2xl font-bold">{metric.value}</div>
-                  <div className={`flex items-center gap-1 text-sm font-semibold ${metric.isPositive ? 'text-green-600' : 'text-red-600'}`}>
-                    {metric.isPositive ? (
-                      <TrendingUpIcon className="size-4" />
-                    ) : (
-                      <TrendingDownIcon className="size-4" />
-                    )}
-                    {metric.change > 0 ? '+' : ''}{metric.change}%
-                  </div>
+                  {metric.change !== 0 && (
+                    <div className={`flex items-center gap-1 text-sm font-semibold ${metric.isPositive ? 'text-green-600' : 'text-red-600'}`}>
+                      {metric.isPositive ? <TrendingUpIcon className="size-4" /> : <TrendingDownIcon className="size-4" />}
+                      {metric.change > 0 ? '+' : ''}{metric.change.toFixed(1)}%
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -73,10 +147,10 @@ export default function TreasuryPanelSection() {
       <Card>
         <CardHeader>
           <CardTitle>Exposure Analysis</CardTitle>
-          <CardDescription>Monitor user liability and payout exposure</CardDescription>
+          <CardDescription>Monitor liability and payout exposure from real transaction data</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          {exposureMetrics.map((metric) => (
+          {exposureMetrics.map(metric => (
             <div key={metric.label} className="space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">{metric.label}</span>
@@ -95,7 +169,7 @@ export default function TreasuryPanelSection() {
       <div>
         <h3 className="text-lg font-semibold mb-4">Revenue Analytics</h3>
         <div className="grid gap-4 md:grid-cols-2">
-          {analyticsMetrics.map((metric) => (
+          {analyticsMetrics.map(metric => (
             <Card key={metric.label}>
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-medium text-muted-foreground">{metric.label}</CardTitle>
@@ -103,9 +177,11 @@ export default function TreasuryPanelSection() {
               <CardContent>
                 <div className="flex items-end justify-between">
                   <div className="text-2xl font-bold">{metric.value}</div>
-                  <Badge variant="secondary" className="bg-green-100 text-green-800">
-                    {metric.change}
-                  </Badge>
+                  {metric.change && (
+                    <Badge variant="secondary" className={metric.change.startsWith('+') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
+                      {metric.change}
+                    </Badge>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -113,53 +189,52 @@ export default function TreasuryPanelSection() {
         </div>
       </div>
 
-      {/* Operational Runway */}
+      {/* Health Summary */}
       <Card>
         <CardHeader>
-          <CardTitle>Operational Runway & Health</CardTitle>
-          <CardDescription>Monitor burn rate and reserve health</CardDescription>
+          <CardTitle>Treasury Health</CardTitle>
+          <CardDescription>Derived from real on-chain order data and transaction records</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid gap-6 md:grid-cols-2">
-            {runwayMetrics.map((metric) => (
-              <div key={metric.label} className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">{metric.label}</span>
-                  <Badge
-                    variant="outline"
-                    className={`${
-                      metric.trend === 'increasing'
-                        ? 'bg-green-50 text-green-700 border-green-200'
-                        : metric.trend === 'decreasing'
-                          ? 'bg-red-50 text-red-700 border-red-200'
-                          : 'bg-blue-50 text-blue-700 border-blue-200'
-                    }`}
-                  >
-                    {metric.trend.charAt(0).toUpperCase() + metric.trend.slice(1)}
-                  </Badge>
-                </div>
-                <p className="text-2xl font-bold">{metric.value}</p>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">Reserves Health</span>
+                <Badge variant="outline" className={healthPct >= 50 ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'}>
+                  {healthPct >= 50 ? 'Healthy' : 'At Risk'}
+                </Badge>
               </div>
-            ))}
+              <p className="text-2xl font-bold">{healthPct}%</p>
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">Pending Exposure</span>
+                <Badge variant="outline" className={pendingExp < balance * 0.3 ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-yellow-50 text-yellow-700 border-yellow-200'}>
+                  {pendingExp < balance * 0.3 ? 'Stable' : 'Monitor'}
+                </Badge>
+              </div>
+              <p className="text-2xl font-bold">{fmt(pendingExp)}</p>
+            </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Health Warning */}
-      <Card className="border-yellow-200 bg-yellow-50">
-        <CardHeader className="flex flex-row items-center gap-4 pb-3">
-          <AlertTriangleIcon className="size-5 text-yellow-600" />
-          <div>
-            <CardTitle className="text-yellow-900">Treasury Health Alert</CardTitle>
-            <CardDescription className="text-yellow-700">Insurance reserve below optimal level</CardDescription>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-yellow-800">
-            Current insurance reserve is 10% below the recommended threshold. Consider reallocating funds from operating capital to maintain risk coverage.
-          </p>
-        </CardContent>
-      </Card>
+      {balance < 0 && (
+        <Card className="border-yellow-200 bg-yellow-50">
+          <CardHeader className="flex flex-row items-center gap-4 pb-3">
+            <AlertTriangleIcon className="size-5 text-yellow-600" />
+            <div>
+              <CardTitle className="text-yellow-900">Treasury Health Alert</CardTitle>
+              <CardDescription className="text-yellow-700">Withdrawals exceed deposits — net balance is negative</CardDescription>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-yellow-800">
+              Current net balance is {fmt(balance)}. Review pending settlements and withdrawal queue immediately.
+            </p>
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 }

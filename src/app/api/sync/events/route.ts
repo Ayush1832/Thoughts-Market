@@ -971,6 +971,10 @@ async function processEvent(
   const newEventRows = await db
     .insert(eventsTable)
     .values(newEventPayload)
+    .onConflictDoUpdate({
+      target: eventsTable.slug,
+      set: { updated_at: new Date() },
+    })
     .returning({ id: eventsTable.id })
   const newEvent = newEventRows[0]
 
@@ -1398,7 +1402,7 @@ async function processOutcomes(conditionId: string, outcomes: any[]) {
     token_id: outcome.token_id || (`${conditionId}${index}`),
   }))
 
-  await db.insert(outcomesTable).values(outcomeData)
+  await db.insert(outcomesTable).values(outcomeData).onConflictDoNothing()
 }
 
 function normalizeIncomingTags(tagNames: any[] | null | undefined) {

@@ -1,8 +1,8 @@
 import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
 import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
-import { UserRepository } from '@/lib/db/queries/user'
 import { toggleAlertConfig } from '@/lib/db/queries/finance'
+import { UserRepository } from '@/lib/db/queries/user'
 
 export async function PATCH(
   request: NextRequest,

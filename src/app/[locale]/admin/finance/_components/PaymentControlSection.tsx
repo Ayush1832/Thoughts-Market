@@ -1,11 +1,10 @@
 'use client'
 
+import { AlertCircleIcon, ArrowDownIcon, ArrowUpIcon, CheckCircleIcon, ClockIcon, PlusIcon, XCircleIcon } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
-import { ArrowDownIcon, ArrowUpIcon, AlertCircleIcon, CheckCircleIcon, XCircleIcon, ClockIcon, PlusIcon } from 'lucide-react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Table,
   TableBody,
@@ -14,6 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 interface Transaction {
   id: string
@@ -42,11 +42,11 @@ function fmt(n: number) {
 }
 
 function trendLabel(t: number) {
-  if (!t) return ''
+  if (!t) { return '' }
   return `${t > 0 ? '+' : ''}${t.toFixed(1)}%`
 }
 
-const getStatusIcon = (status: string) => {
+function getStatusIcon(status: string) {
   switch (status) {
     case 'completed': return <CheckCircleIcon className="size-4 text-green-500" />
     case 'pending': return <ClockIcon className="size-4 text-yellow-500" />
@@ -56,7 +56,7 @@ const getStatusIcon = (status: string) => {
   }
 }
 
-const getStatusBadge = (status: string) => {
+function getStatusBadge(status: string) {
   switch (status) {
     case 'completed': return <Badge className="bg-green-600">Completed</Badge>
     case 'pending': return <Badge className="bg-yellow-600 text-white">Pending</Badge>
@@ -90,7 +90,7 @@ export default function PaymentControlSection() {
         fetch(`/en/admin/api/finance/transactions?limit=50${txParam}${statusParam}`),
       ])
 
-      if (statsRes.ok) setStats(await statsRes.json())
+      if (statsRes.ok) { setStats(await statsRes.json()) }
       if (txRes.ok) {
         const { data } = await txRes.json()
         setTransactions(data ?? [])
@@ -113,7 +113,7 @@ export default function PaymentControlSection() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status }),
       })
-      if (res.ok) fetchData(activeTab)
+      if (res.ok) { fetchData(activeTab) }
     }
     finally {
       setUpdating(null)
@@ -138,10 +138,10 @@ export default function PaymentControlSection() {
           ? Array.from({ length: 5 }).map((_, i) => (
               <Card key={i}>
                 <CardHeader className="pb-2">
-                  <div className="h-4 w-32 bg-muted animate-pulse rounded" />
+                  <div className="h-4 w-32 animate-pulse rounded-sm bg-muted" />
                 </CardHeader>
                 <CardContent>
-                  <div className="h-8 w-24 bg-muted animate-pulse rounded" />
+                  <div className="h-8 w-24 animate-pulse rounded-sm bg-muted" />
                 </CardContent>
               </Card>
             ))
@@ -150,7 +150,10 @@ export default function PaymentControlSection() {
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">{stat.label}</CardTitle>
                   {stat.trend && (
-                    <span className={`text-xs font-semibold ${stat.trend.startsWith('+') ? 'text-green-600' : 'text-red-600'}`}>
+                    <span className={`text-xs font-semibold ${stat.trend.startsWith('+')
+                      ? 'text-green-600'
+                      : `text-red-600`}`}
+                    >
                       {stat.trend}
                     </span>
                   )}
@@ -188,22 +191,22 @@ export default function PaymentControlSection() {
               <TabsContent key={tab} value={tab} className="mt-4">
                 {loading
                   ? (
-                      <div className="flex items-center justify-center py-12 text-muted-foreground text-sm">
+                      <div className="flex items-center justify-center py-12 text-sm text-muted-foreground">
                         Loading transactions...
                       </div>
                     )
                   : transactions.length === 0
                     ? (
-                        <div className="flex flex-col items-center justify-center py-12 gap-3 text-muted-foreground">
+                        <div className="flex flex-col items-center justify-center gap-3 py-12 text-muted-foreground">
                           <p className="text-sm">No transactions yet.</p>
                           <Button size="sm" variant="outline" onClick={() => {}}>
-                            <PlusIcon className="size-4 mr-1" />
+                            <PlusIcon className="mr-1 size-4" />
                             Add Transaction
                           </Button>
                         </div>
                       )
                     : (
-                        <div className="rounded-md border overflow-x-auto">
+                        <div className="overflow-x-auto rounded-md border">
                           <Table>
                             <TableHeader>
                               <TableRow>
@@ -220,11 +223,16 @@ export default function PaymentControlSection() {
                             <TableBody>
                               {transactions.map(tx => (
                                 <TableRow key={tx.id}>
-                                  <TableCell className="font-mono text-xs">{tx.id.slice(0, 10)}…</TableCell>
+                                  <TableCell className="font-mono text-xs">
+                                    {tx.id.slice(0, 10)}
+                                    …
+                                  </TableCell>
                                   <TableCell className="capitalize">{tx.type}</TableCell>
                                   <TableCell className="font-medium">
                                     {tx.type === 'deposit' || tx.type === 'settlement' ? '+' : '-'}
-                                    {Number(tx.amount).toLocaleString()} {tx.currency}
+                                    {Number(tx.amount).toLocaleString()}
+                                    {' '}
+                                    {tx.currency}
                                   </TableCell>
                                   <TableCell className="font-mono text-xs">
                                     {tx.wallet_address ? `${tx.wallet_address.slice(0, 8)}…` : '—'}

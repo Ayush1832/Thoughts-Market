@@ -1,5 +1,4 @@
-import { and, count, desc, eq, gte, lt, sql, sum } from 'drizzle-orm'
-import { db } from '@/lib/drizzle'
+import { and, count, desc, eq, gte, lt, sql } from 'drizzle-orm'
 import {
   finance_alert_configs,
   finance_alert_events,
@@ -7,7 +6,7 @@ import {
   finance_transactions,
 } from '@/lib/db/schema/finance/tables'
 import { orders } from '@/lib/db/schema/orders/tables'
-import { markets } from '@/lib/db/schema/events/tables'
+import { db } from '@/lib/drizzle'
 
 // ─── Transactions ─────────────────────────────────────────────────────────────
 
@@ -22,8 +21,8 @@ export async function listTransactions(opts: {
 }) {
   const { type, status, limit = 50, offset = 0 } = opts
   const conditions = []
-  if (type) conditions.push(eq(finance_transactions.type, type))
-  if (status) conditions.push(eq(finance_transactions.status, status))
+  if (type) { conditions.push(eq(finance_transactions.type, type)) }
+  if (status) { conditions.push(eq(finance_transactions.status, status)) }
 
   const rows = await db
     .select()

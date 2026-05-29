@@ -1,8 +1,8 @@
 import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
 import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
-import { UserRepository } from '@/lib/db/queries/user'
 import { createAlertEvent, getAlertEventCounts, listAlertEvents } from '@/lib/db/queries/finance'
+import { UserRepository } from '@/lib/db/queries/user'
 
 export async function GET(request: NextRequest) {
   try {

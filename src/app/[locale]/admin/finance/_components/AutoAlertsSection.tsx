@@ -1,11 +1,11 @@
 'use client'
 
+import { AlertCircleIcon, AlertTriangleIcon, BellIcon, CheckCircleIcon } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Switch } from '@/components/ui/switch'
-import { AlertTriangleIcon, AlertCircleIcon, BellIcon, CheckCircleIcon } from 'lucide-react'
 import {
   Table,
   TableBody,
@@ -45,7 +45,7 @@ interface Counts {
   totalConfigs: number
 }
 
-const getAlertIcon = (type: string) => {
+function getAlertIcon(type: string) {
   switch (type) {
     case 'critical': return <AlertTriangleIcon className="size-5 text-red-600" />
     case 'warning': return <AlertCircleIcon className="size-5 text-yellow-600" />
@@ -53,7 +53,7 @@ const getAlertIcon = (type: string) => {
   }
 }
 
-const getSeverityBadge = (severity: string) => {
+function getSeverityBadge(severity: string) {
   switch (severity) {
     case 'high': return <Badge variant="destructive">High</Badge>
     case 'medium': return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">Medium</Badge>
@@ -81,7 +81,7 @@ export default function AutoAlertsSection() {
         setEvents(evts ?? [])
         setCounts(cts)
       }
-      if (configsRes.ok) setConfigs(await configsRes.json())
+      if (configsRes.ok) { setConfigs(await configsRes.json()) }
     }
     finally {
       setLoading(false)
@@ -142,40 +142,44 @@ export default function AutoAlertsSection() {
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
               <AlertTriangleIcon className="size-4 text-red-600" />
               Active Alerts
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">{counts.activeCount}</div>
-            <p className="text-xs text-muted-foreground mt-1">Requires immediate attention</p>
+            <p className="mt-1 text-xs text-muted-foreground">Requires immediate attention</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
               <BellIcon className="size-4 text-blue-600" />
               Alert Configs
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{counts.enabledConfigs}/{counts.totalConfigs}</div>
-            <p className="text-xs text-muted-foreground mt-1">Monitoring rules active</p>
+            <div className="text-3xl font-bold">
+              {counts.enabledConfigs}
+              /
+              {counts.totalConfigs}
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">Monitoring rules active</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
               <CheckCircleIcon className="size-4 text-green-600" />
               Resolved
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">{counts.resolvedCount}</div>
-            <p className="text-xs text-muted-foreground mt-1">This month</p>
+            <p className="mt-1 text-xs text-muted-foreground">This month</p>
           </CardContent>
         </Card>
       </div>
@@ -190,20 +194,26 @@ export default function AutoAlertsSection() {
           <CardContent>
             <div className="space-y-4">
               {activeEvents.map(alert => (
-                <div key={alert.id} className="border-l-4 border-red-500 bg-white p-4 rounded-r-md">
+                <div key={alert.id} className="rounded-r-md border-l-4 border-red-500 bg-white p-4">
                   <div className="flex items-start justify-between gap-4">
-                    <div className="flex gap-3 flex-1">
+                    <div className="flex flex-1 gap-3">
                       {getAlertIcon(alert.type)}
                       <div className="flex-1">
-                        <h4 className="font-semibold text-sm">{alert.title}</h4>
-                        <p className="text-sm text-muted-foreground mt-1">{alert.message}</p>
+                        <h4 className="text-sm font-semibold">{alert.title}</h4>
+                        <p className="mt-1 text-sm text-muted-foreground">{alert.message}</p>
                         {alert.threshold && alert.current_value && (
-                          <div className="flex gap-4 mt-2 text-xs text-muted-foreground">
-                            <span>Threshold: {alert.threshold}</span>
-                            <span>Current: {alert.current_value}</span>
+                          <div className="mt-2 flex gap-4 text-xs text-muted-foreground">
+                            <span>
+                              Threshold:
+                              {alert.threshold}
+                            </span>
+                            <span>
+                              Current:
+                              {alert.current_value}
+                            </span>
                           </div>
                         )}
-                        <p className="text-xs text-muted-foreground mt-2">
+                        <p className="mt-2 text-xs text-muted-foreground">
                           {new Date(alert.triggered_at).toLocaleString()}
                         </p>
                       </div>
@@ -243,7 +253,7 @@ export default function AutoAlertsSection() {
           {loading
             ? <div className="py-8 text-center text-sm text-muted-foreground">Loading configurations...</div>
             : (
-                <div className="rounded-md border overflow-x-auto">
+                <div className="overflow-x-auto rounded-md border">
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -259,7 +269,7 @@ export default function AutoAlertsSection() {
                       {configs.map(config => (
                         <TableRow key={config.id}>
                           <TableCell className="font-medium">{config.name}</TableCell>
-                          <TableCell className="text-sm text-muted-foreground max-w-xs">{config.description}</TableCell>
+                          <TableCell className="max-w-xs text-sm text-muted-foreground">{config.description}</TableCell>
                           <TableCell className="font-mono text-sm">{config.threshold}</TableCell>
                           <TableCell>{getSeverityBadge(config.severity)}</TableCell>
                           <TableCell className="text-sm">
@@ -293,15 +303,15 @@ export default function AutoAlertsSection() {
         </CardHeader>
         <CardContent>
           {allEvents.length === 0
-            ? <p className="text-sm text-muted-foreground py-4 text-center">No alerts recorded yet.</p>
+            ? <p className="py-4 text-center text-sm text-muted-foreground">No alerts recorded yet.</p>
             : (
                 <div className="space-y-3">
                   {allEvents.map(alert => (
-                    <div key={alert.id} className="flex items-center justify-between p-3 border rounded-md">
-                      <div className="flex items-center gap-3 flex-1">
+                    <div key={alert.id} className="flex items-center justify-between rounded-md border p-3">
+                      <div className="flex flex-1 items-center gap-3">
                         {getAlertIcon(alert.type)}
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium truncate">{alert.title}</p>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium">{alert.title}</p>
                           <p className="text-xs text-muted-foreground">
                             {new Date(alert.triggered_at).toLocaleString()}
                           </p>

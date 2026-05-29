@@ -1,9 +1,9 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { AlertTriangleIcon, TrendingDownIcon, TrendingUpIcon } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Badge } from '@/components/ui/badge'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 
 interface TreasuryStats {
@@ -18,13 +18,13 @@ interface TreasuryStats {
 }
 
 function fmt(n: number) {
-  if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(2)}M`
-  if (n >= 1_000) return `$${(n / 1_000).toFixed(1)}K`
+  if (n >= 1_000_000) { return `$${(n / 1_000_000).toFixed(2)}M` }
+  if (n >= 1_000) { return `$${(n / 1_000).toFixed(1)}K` }
   return `$${n.toFixed(2)}`
 }
 
 function pct(value: number, max: number) {
-  if (max <= 0) return 0
+  if (max <= 0) { return 0 }
   return Math.min(Math.round((value / max) * 100), 100)
 }
 
@@ -35,7 +35,9 @@ export default function TreasuryPanelSection() {
   useEffect(() => {
     fetch('/en/admin/api/finance/treasury')
       .then(r => r.ok ? r.json() : null)
-      .then(d => { if (d) setData(d) })
+      .then((d) => {
+        if (d) { setData(d) }
+      })
       .finally(() => setLoading(false))
   }, [])
 
@@ -45,7 +47,7 @@ export default function TreasuryPanelSection() {
         {Array.from({ length: 4 }).map((_, i) => (
           <Card key={i}>
             <CardContent className="pt-6">
-              <div className="h-20 bg-muted animate-pulse rounded" />
+              <div className="h-20 animate-pulse rounded-sm bg-muted" />
             </CardContent>
           </Card>
         ))}
@@ -120,7 +122,7 @@ export default function TreasuryPanelSection() {
     <div className="space-y-6">
       {/* Treasury Reserves Overview */}
       <div>
-        <h3 className="text-lg font-semibold mb-4">Treasury Overview</h3>
+        <h3 className="mb-4 text-lg font-semibold">Treasury Overview</h3>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {treasuryMetrics.map(metric => (
             <Card key={metric.label}>
@@ -131,9 +133,14 @@ export default function TreasuryPanelSection() {
                 <div className="flex items-end justify-between">
                   <div className="text-2xl font-bold">{metric.value}</div>
                   {metric.change !== 0 && (
-                    <div className={`flex items-center gap-1 text-sm font-semibold ${metric.isPositive ? 'text-green-600' : 'text-red-600'}`}>
+                    <div className={`flex items-center gap-1 text-sm font-semibold ${metric.isPositive
+                      ? `text-green-600`
+                      : `text-red-600`}`}
+                    >
                       {metric.isPositive ? <TrendingUpIcon className="size-4" /> : <TrendingDownIcon className="size-4" />}
-                      {metric.change > 0 ? '+' : ''}{metric.change.toFixed(1)}%
+                      {metric.change > 0 ? '+' : ''}
+                      {metric.change.toFixed(1)}
+                      %
                     </div>
                   )}
                 </div>
@@ -155,11 +162,17 @@ export default function TreasuryPanelSection() {
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">{metric.label}</span>
                 <span className="text-sm font-semibold text-muted-foreground">
-                  {metric.value} / {metric.max}
+                  {metric.value}
+                  {' '}
+                  /
+                  {metric.max}
                 </span>
               </div>
               <Progress value={metric.percentage} className="h-2" />
-              <p className="text-xs text-muted-foreground">{metric.percentage}% utilized</p>
+              <p className="text-xs text-muted-foreground">
+                {metric.percentage}
+                % utilized
+              </p>
             </div>
           ))}
         </CardContent>
@@ -167,7 +180,7 @@ export default function TreasuryPanelSection() {
 
       {/* Revenue Analytics */}
       <div>
-        <h3 className="text-lg font-semibold mb-4">Revenue Analytics</h3>
+        <h3 className="mb-4 text-lg font-semibold">Revenue Analytics</h3>
         <div className="grid gap-4 md:grid-cols-2">
           {analyticsMetrics.map(metric => (
             <Card key={metric.label}>
@@ -178,7 +191,12 @@ export default function TreasuryPanelSection() {
                 <div className="flex items-end justify-between">
                   <div className="text-2xl font-bold">{metric.value}</div>
                   {metric.change && (
-                    <Badge variant="secondary" className={metric.change.startsWith('+') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
+                    <Badge
+                      variant="secondary"
+                      className={metric.change.startsWith('+')
+                        ? 'bg-green-100 text-green-800'
+                        : `bg-red-100 text-red-800`}
+                    >
                       {metric.change}
                     </Badge>
                   )}
@@ -200,16 +218,29 @@ export default function TreasuryPanelSection() {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">Reserves Health</span>
-                <Badge variant="outline" className={healthPct >= 50 ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'}>
+                <Badge
+                  variant="outline"
+                  className={healthPct >= 50
+                    ? 'border-green-200 bg-green-50 text-green-700'
+                    : `border-red-200 bg-red-50 text-red-700`}
+                >
                   {healthPct >= 50 ? 'Healthy' : 'At Risk'}
                 </Badge>
               </div>
-              <p className="text-2xl font-bold">{healthPct}%</p>
+              <p className="text-2xl font-bold">
+                {healthPct}
+                %
+              </p>
             </div>
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">Pending Exposure</span>
-                <Badge variant="outline" className={pendingExp < balance * 0.3 ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-yellow-50 text-yellow-700 border-yellow-200'}>
+                <Badge
+                  variant="outline"
+                  className={pendingExp < balance * 0.3
+                    ? `border-blue-200 bg-blue-50 text-blue-700`
+                    : `border-yellow-200 bg-yellow-50 text-yellow-700`}
+                >
                   {pendingExp < balance * 0.3 ? 'Stable' : 'Monitor'}
                 </Badge>
               </div>
@@ -230,7 +261,10 @@ export default function TreasuryPanelSection() {
           </CardHeader>
           <CardContent>
             <p className="text-sm text-yellow-800">
-              Current net balance is {fmt(balance)}. Review pending settlements and withdrawal queue immediately.
+              Current net balance is
+              {' '}
+              {fmt(balance)}
+              . Review pending settlements and withdrawal queue immediately.
             </p>
           </CardContent>
         </Card>

@@ -1,9 +1,9 @@
 import type { NextRequest } from 'next/server'
+import type { TxStatus, TxType } from '@/lib/db/queries/finance'
 import { NextResponse } from 'next/server'
 import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
-import { UserRepository } from '@/lib/db/queries/user'
 import { createTransaction, listTransactions } from '@/lib/db/queries/finance'
-import type { TxStatus, TxType } from '@/lib/db/queries/finance'
+import { UserRepository } from '@/lib/db/queries/user'
 
 export async function GET(request: NextRequest) {
   try {

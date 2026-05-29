@@ -1,10 +1,11 @@
 'use client'
 
+import { EditIcon, SaveIcon, XIcon } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
 import {
   Table,
   TableBody,
@@ -14,7 +15,6 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { EditIcon, SaveIcon, XIcon } from 'lucide-react'
 
 interface FeeConfig {
   id: number
@@ -48,7 +48,7 @@ export default function FeesManagementSection() {
     setLoading(true)
     try {
       const res = await fetch('/en/admin/api/finance/fees')
-      if (res.ok) setFees(await res.json())
+      if (res.ok) { setFees(await res.json()) }
     }
     finally {
       setLoading(false)
@@ -111,7 +111,7 @@ export default function FeesManagementSection() {
         </CardHeader>
         <CardContent>
           {error && (
-            <p className="text-sm text-red-600 mb-3">{error}</p>
+            <p className="mb-3 text-sm text-red-600">{error}</p>
           )}
           <Tabs defaultValue="all" className="w-full">
             <TabsList className="grid w-full grid-cols-6">
@@ -127,7 +127,7 @@ export default function FeesManagementSection() {
                       <div className="py-12 text-center text-sm text-muted-foreground">Loading fees...</div>
                     )
                   : (
-                      <div className="rounded-md border overflow-x-auto">
+                      <div className="overflow-x-auto rounded-md border">
                         <Table>
                           <TableHeader>
                             <TableRow>
@@ -144,7 +144,7 @@ export default function FeesManagementSection() {
                             {filtered(cat).map(fee => (
                               <TableRow key={fee.id}>
                                 <TableCell className="font-medium">{fee.name}</TableCell>
-                                <TableCell className="text-sm text-muted-foreground max-w-xs">{fee.description}</TableCell>
+                                <TableCell className="max-w-xs text-sm text-muted-foreground">{fee.description}</TableCell>
                                 <TableCell>
                                   {editingId === fee.id
                                     ? (
@@ -159,11 +159,15 @@ export default function FeesManagementSection() {
                                         />
                                       )
                                     : (
-                                        <span className="font-semibold">{Number(fee.rate_percent).toFixed(2)}%</span>
+                                        <span className="font-semibold">
+                                          {Number(fee.rate_percent).toFixed(2)}
+                                          %
+                                        </span>
                                       )}
                                 </TableCell>
                                 <TableCell className="text-muted-foreground">
-                                  {Number(fee.previous_rate_percent).toFixed(2)}%
+                                  {Number(fee.previous_rate_percent).toFixed(2)}
+                                  %
                                 </TableCell>
                                 <TableCell>
                                   <Badge variant={fee.status === 'active' ? 'default' : fee.status === 'pending' ? 'secondary' : 'outline'}>
@@ -178,7 +182,7 @@ export default function FeesManagementSection() {
                                     ? (
                                         <div className="flex gap-2">
                                           <Button size="sm" disabled={saving} onClick={() => handleSave(fee.id)}>
-                                            <SaveIcon className="size-4 mr-1" />
+                                            <SaveIcon className="mr-1 size-4" />
                                             {saving ? 'Saving…' : 'Save'}
                                           </Button>
                                           <Button size="sm" variant="outline" onClick={handleCancel}>
@@ -188,7 +192,7 @@ export default function FeesManagementSection() {
                                       )
                                     : (
                                         <Button size="sm" variant="outline" onClick={() => handleEdit(fee)}>
-                                          <EditIcon className="size-4 mr-1" />
+                                          <EditIcon className="mr-1 size-4" />
                                           Edit
                                         </Button>
                                       )}
@@ -217,9 +221,12 @@ export default function FeesManagementSection() {
               <div key={item.label} className="space-y-2">
                 <div className="flex justify-between">
                   <span className="text-sm font-medium">{item.label}</span>
-                  <span className="text-sm font-semibold">{item.pct}%</span>
+                  <span className="text-sm font-semibold">
+                    {item.pct}
+                    %
+                  </span>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
+                <div className="h-2 w-full rounded-full bg-gray-200">
                   <div className={`${item.color} h-2 rounded-full`} style={{ width: `${item.pct}%` }} />
                 </div>
               </div>

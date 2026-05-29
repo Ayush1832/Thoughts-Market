@@ -5,22 +5,24 @@ import HeaderLogo from '@/components/HeaderLogo'
 
 export default async function Header() {
   return (
-    <header className="sticky top-0 z-30 bg-background">
-      <div
-        className={`
-          relative z-50 container mx-auto flex min-h-15 w-full items-center justify-between gap-4 py-3 pb-1
-          md:min-h-17 md:pb-2
-        `}
-      >
-        <HeaderLogo />
-        <div className="hidden w-full items-center gap-2 lg:flex">
-          <HeaderSearch />
-          <HowItWorksDeferred />
+    <header className="sticky top-0 z-30 border-b border-border/40 bg-background/95 backdrop-blur-sm">
+      <div className="flex min-h-14 w-full items-center gap-4 px-4 lg:px-6">
+        {/* Logo: only on mobile (hidden on lg+ where sidebar shows it) */}
+        <div className="shrink-0 lg:hidden">
+          <HeaderLogo />
         </div>
-        <div className="min-w-0 shrink md:min-w-fit md:shrink-0">
-          <div className="flex min-w-0 items-center gap-2">
-            <HeaderMenu />
+
+        {/* Search: full width on desktop */}
+        <div className="flex flex-1 items-center gap-2">
+          <div className="hidden w-full max-w-xl items-center gap-2 lg:flex">
+            <HeaderSearch />
+            <HowItWorksDeferred />
           </div>
+        </div>
+
+        {/* Right: menu / wallet */}
+        <div className="flex shrink-0 items-center gap-2">
+          <HeaderMenu />
         </div>
       </div>
     </header>

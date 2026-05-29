@@ -1,11 +1,11 @@
 'use client'
 
 import type { ReactNode } from 'react'
-import { Suspense } from 'react'
 import { GoogleAnalytics } from '@next/third-parties/google'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ThemeProvider } from 'next-themes'
 import dynamic from 'next/dynamic'
+import { Suspense } from 'react'
 import { Toaster } from '@/components/ui/sonner'
 import { useSiteIdentity } from '@/hooks/useSiteIdentity'
 import ProgressIndicatorProvider from '@/providers/ProgressIndicatorProvider'
@@ -38,7 +38,7 @@ export function AppProviders({ children }: AppProvidersProps) {
 
   return (
     <ProgressIndicatorProvider>
-      <ThemeProvider attribute="class">
+      <ThemeProvider attribute="class" defaultTheme="dark">
         <QueryClientProvider client={queryClient}>
           <Suspense fallback={null}>
             {content}

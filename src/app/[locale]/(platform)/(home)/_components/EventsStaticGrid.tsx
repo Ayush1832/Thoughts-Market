@@ -38,9 +38,14 @@ export default function EventsStaticGrid({
   currentTimestamp = null,
 }: EventsStaticGridProps) {
   return (
-    <div className={cn('grid gap-3', getStaticGridColumnsClassName(maxColumns), { 'opacity-80': isFetching })}>
-      {events.map(event => (
-        <div key={event.id} data-home-event-id={String(event.id)}>
+    <div className={cn('grid gap-3', getStaticGridColumnsClassName(maxColumns), { 'opacity-60 pointer-events-none': isFetching })}>
+      {events.map((event, index) => (
+        <div
+          key={event.id}
+          data-home-event-id={String(event.id)}
+          className="animate-fade-in"
+          style={{ animationDelay: `${Math.min(index * 40, 400)}ms`, animationFillMode: 'both' }}
+        >
           <EventCard
             event={event}
             priceOverridesByMarket={priceOverridesByMarket}

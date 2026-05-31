@@ -18,8 +18,10 @@ function createDb(): DrizzleDb {
 
   const client = globalForDb.client ?? postgres(url, {
     prepare: false,
-    connect_timeout: 10,
+    connect_timeout: 8,
     idle_timeout: 20,
+    max: 5,
+    max_lifetime: 60 * 10,
   })
   globalForDb.client = client
 

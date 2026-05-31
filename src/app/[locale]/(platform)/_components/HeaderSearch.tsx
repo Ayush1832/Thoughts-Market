@@ -271,7 +271,7 @@ export default function HeaderSearch({
   useCancelPendingBlurOnUnmount(clearPendingBlurFrame)
 
   return (
-    <div className="w-full lg:max-w-[600px] lg:min-w-[400px]">
+    <div className="w-full min-w-0 lg:max-w-[600px]">
       <div
         className="relative w-full"
         ref={searchRef}

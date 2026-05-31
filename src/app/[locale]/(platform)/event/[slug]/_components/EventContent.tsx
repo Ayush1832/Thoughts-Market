@@ -3,6 +3,7 @@ import type { Event, EventLiveChartConfig, EventSeriesEntry } from '@/types'
 import EventBackToTopButton from '@/app/[locale]/(platform)/event/[slug]/_components/EventBackToTopButton'
 import EventCategoryNote from '@/app/[locale]/(platform)/event/[slug]/_components/EventCategoryNote'
 import EventChartSection from '@/app/[locale]/(platform)/event/[slug]/_components/EventChartSection'
+import EventStatsBar from '@/app/[locale]/(platform)/event/[slug]/_components/EventStatsBar'
 import EventDesktopSidebar from '@/app/[locale]/(platform)/event/[slug]/_components/EventDesktopSidebar'
 import EventHeader from '@/app/[locale]/(platform)/event/[slug]/_components/EventHeader'
 import EventMarketChannelProvider from '@/app/[locale]/(platform)/event/[slug]/_components/EventMarketChannelProvider'
@@ -82,6 +83,7 @@ export default function EventContent({
           className={cn(shouldHideChart ? 'grid gap-2' : 'grid gap-3')}
         >
           <EventCategoryNote event={event} />
+          <EventStatsBar event={event} />
           <EventHeader event={event} />
 
           <div className={cn(shouldHideChart ? 'w-full' : 'min-h-96 w-full')}>

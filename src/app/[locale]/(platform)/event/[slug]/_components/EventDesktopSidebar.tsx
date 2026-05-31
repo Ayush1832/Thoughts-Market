@@ -34,7 +34,7 @@ export default function EventDesktopSidebar({
     <aside
       className={cn(`
         hidden gap-4
-        lg:sticky lg:top-38 lg:grid lg:max-h-[calc(100vh-7rem)] lg:self-start lg:overflow-y-auto
+        lg:sticky lg:top-28 lg:grid lg:max-h-[calc(100vh-7rem)] lg:self-start lg:overflow-y-auto
       `)}
     >
       <div className="grid gap-6">

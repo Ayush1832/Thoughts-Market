@@ -8,7 +8,7 @@ export default async function NotFound() {
   const discordLink = runtimeTheme.site.discordLink
 
   return (
-    <div className="flex h-screen w-full flex-col items-center justify-center p-8">
+    <div className="dark flex h-screen w-full flex-col items-center justify-center p-8" style={{ background: 'oklch(0.1 0.018 268)', color: 'oklch(0.96 0.008 248)' }}>
       <div className="h-auto w-24">
         <svg
           xmlns="http://www.w3.org/2000/svg"

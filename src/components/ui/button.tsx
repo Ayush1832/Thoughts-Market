@@ -42,13 +42,17 @@ const buttonVariants = cva(
           'hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50',
         link: 'text-primary underline-offset-4 hover:underline',
         yes: `
-          bg-yes/15 font-semibold text-yes-foreground transition-colors
-          hover:bg-yes-foreground hover:text-white
+          bg-yes/15 font-semibold text-yes-foreground
+          transition-all duration-200
+          hover:bg-yes/25 hover:text-yes hover:shadow-md hover:shadow-yes/20 hover:-translate-y-px
+          active:translate-y-0 active:shadow-none
           dark:hover:bg-yes dark:hover:text-white
         `,
         no: `
-          bg-no/15 font-semibold text-no-foreground transition-colors
-          hover:bg-no-foreground hover:text-white
+          bg-no/15 font-semibold text-no-foreground
+          transition-all duration-200
+          hover:bg-no/25 hover:text-no hover:shadow-md hover:shadow-no/20 hover:-translate-y-px
+          active:translate-y-0 active:shadow-none
           dark:hover:bg-no dark:hover:text-white
         `,
       },

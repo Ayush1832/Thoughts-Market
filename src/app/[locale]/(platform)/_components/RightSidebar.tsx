@@ -1,7 +1,9 @@
 import type { Event } from '@/types'
 import { BrainCircuitIcon, ChevronRightIcon } from 'lucide-react'
 import AppLink from '@/components/AppLink'
+import Sparkline from '@/components/Sparkline'
 import { listHomeEventsPage } from '@/lib/home-events-page'
+import RightSidebarClient from './RightSidebarClient'
 
 async function getLiveMarkets(): Promise<Event[]> {
   try {
@@ -18,7 +20,10 @@ function AiConfidenceCard() {
   const insight = 'Crypto markets show 67% directional win rate this week.'
 
   return (
-    <div className="space-y-3 rounded-2xl border border-border/50 bg-card p-4">
+    <div
+      className="relative space-y-3 overflow-hidden rounded-2xl border border-primary/20 p-4"
+      style={{ background: 'linear-gradient(135deg, oklch(0.55 0.2 280 / 0.12), oklch(0.65 0.16 200 / 0.06) 60%, transparent)' }}
+    >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
           <BrainCircuitIcon className="size-4 text-primary" />
@@ -29,24 +34,14 @@ function AiConfidenceCard() {
           %
         </span>
       </div>
-
-      {/* Gradient progress bar */}
-      <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+      <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted/60">
         <div
           className="h-full rounded-full"
-          style={{
-            width: `${percentage}%`,
-            background: 'linear-gradient(90deg, oklch(0.55 0.2 255), oklch(0.65 0.2 290))',
-          }}
+          style={{ width: `${percentage}%`, background: 'linear-gradient(90deg, oklch(0.55 0.2 280), oklch(0.7 0.16 200))' }}
         />
       </div>
-
       <p className="text-xs/relaxed text-muted-foreground">{insight}</p>
-
-      <AppLink
-        href="/"
-        className="flex items-center gap-1 text-xs font-medium text-primary transition-colors hover:text-primary/80"
-      >
+      <AppLink href="/" className="flex items-center gap-1 text-xs font-medium text-primary transition-colors hover:text-primary/80">
         Explore takes
         <ChevronRightIcon className="size-3" />
       </AppLink>
@@ -56,57 +51,62 @@ function AiConfidenceCard() {
 
 function LiveMarketMini({ event }: { event: any }) {
   const market = event.markets?.[0]
-  const chance = market?.outcomes?.[0]
-    ? Math.round((Number(market.outcomes[0].token_id || 0) % 100 + 30) % 100)
-    : null
-  const isUp = chance !== null && chance >= 50
+  const seedNum = market?.outcomes?.[0]
+    ? Number(market.outcomes[0].token_id || 0) % 100
+    : (event.title ?? '').length * 7 % 100
+  const chance = Math.round((seedNum + 30) % 100)
+  const isUp = chance >= 50
   const slug = event.slug ?? ''
   const initial = (event.title ?? 'M')[0].toUpperCase()
+  const volume = Number(market?.volume ?? 0)
+  const pctChange = (((seedNum % 60) - 30) / 10).toFixed(1)
 
   const colors: Record<string, string> = {
-    E: 'bg-blue-500',
-    B: 'bg-orange-500',
-    S: 'bg-purple-500',
-    X: 'bg-slate-500',
-    D: 'bg-yellow-500',
-    M: 'bg-blue-400',
-    H: 'bg-green-500',
+    E: 'from-blue-500 to-indigo-500',
+    B: 'from-orange-500 to-amber-500',
+    S: 'from-purple-500 to-fuchsia-500',
+    X: 'from-slate-500 to-slate-600',
+    D: 'from-yellow-400 to-orange-400',
+    M: 'from-blue-400 to-cyan-400',
+    H: 'from-green-500 to-emerald-500',
   }
-  const iconColor = colors[initial] ?? 'bg-primary'
+  const iconColor = colors[initial] ?? 'from-primary to-primary/70'
 
   return (
-    <AppLink
-      href={`/event/${slug}`}
-      className="group flex items-center gap-3 rounded-xl p-3 transition-colors hover:bg-muted/50"
-    >
-      <div className={`size-8 shrink-0 rounded-full ${iconColor}
-        flex items-center justify-center text-xs font-bold text-white
-      `}
-      >
-        {initial}
-      </div>
-      <div className="min-w-0 flex-1">
+    <AppLink href={`/event/${slug}`} className="group block rounded-2xl border border-border/40 bg-card p-3 transition-all duration-200 hover:border-primary/30 hover:bg-secondary/40">
+      {/* header: icon + title */}
+      <div className="flex items-center gap-2.5">
+        <div className={`flex size-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-2xs font-bold text-white ${iconColor}`}>
+          {initial}
+        </div>
         <p className="truncate text-xs font-medium text-foreground transition-colors group-hover:text-primary">
           {event.title}
         </p>
-        <div className="mt-1 flex items-center gap-2">
-          <span className="text-2xs text-muted-foreground">
-            $
-            {Number(event.markets?.[0]?.volume ?? 0).toLocaleString()}
-            {' '}
-            VOL
+      </div>
+
+      {/* sparkline chart */}
+      <div className="mt-2 h-10 w-full">
+        <Sparkline seed={slug || event.title || 'm'} trend={isUp ? 'up' : 'down'} className="h-full w-full" />
+      </div>
+
+      {/* footer: volume + price */}
+      <div className="mt-1.5 flex items-center justify-between">
+        <span className="text-2xs text-muted-foreground">
+          $
+          {volume >= 1000 ? `${(volume / 1000).toFixed(1)}K` : volume.toFixed(0)}
+          {' '}
+          VOL
+        </span>
+        <div className="flex items-center gap-1.5">
+          <span className="text-xs font-bold text-foreground">
+            {chance}
+            ¢
           </span>
-          {chance !== null && (
-            <span className={`text-2xs font-semibold ${isUp ? 'text-green-400' : 'text-red-400'}`}>
-              {chance}
-              ¢
-              {isUp ? '+' : '-'}
-              {Math.abs(chance - 50) * 0.1 + 0.5 | 0}
-              .
-              {Math.abs(chance - 50) % 10}
-              %
-            </span>
-          )}
+          <span className={`rounded px-1.5 py-0.5 text-2xs font-semibold ${isUp ? 'bg-green-500/15 text-green-400' : 'bg-red-500/15 text-red-400'}`}>
+            {isUp ? '+' : ''}
+            {pctChange}
+            %
+          </span>
         </div>
       </div>
     </AppLink>
@@ -117,21 +117,14 @@ export default async function RightSidebar() {
   const liveMarkets = await getLiveMarkets()
 
   return (
-    <aside className="
-      sticky top-0 hidden h-screen w-80 shrink-0 flex-col overflow-y-auto border-l border-border/50 bg-card
-      xl:flex
-      2xl:w-96
-    "
-    >
-      <div className="flex-1 space-y-5 px-4 py-5">
-        {/* AI Confidence */}
+    <RightSidebarClient>
+      <div className="space-y-5 px-4 py-4">
         <AiConfidenceCard />
 
-        {/* Live Daily Markets */}
         {liveMarkets.length > 0 && (
           <div className="space-y-2">
             <div className="flex items-center justify-between px-1">
-              <h3 className="text-xs font-semibold tracking-widest text-muted-foreground/70 uppercase">
+              <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/70">
                 Live Daily Markets
               </h3>
               <span className="flex items-center gap-1 text-2xs text-red-400">
@@ -139,8 +132,7 @@ export default async function RightSidebar() {
                 LIVE
               </span>
             </div>
-
-            <div className="divide-y divide-border/30 overflow-hidden rounded-2xl border border-border/50 bg-card">
+            <div className="space-y-2.5">
               {liveMarkets.map(event => (
                 <LiveMarketMini key={event.id} event={event} />
               ))}
@@ -148,9 +140,8 @@ export default async function RightSidebar() {
           </div>
         )}
 
-        {/* Stats */}
         <div className="rounded-2xl border border-border/50 bg-card p-4">
-          <h3 className="mb-3 text-xs font-semibold tracking-widest text-muted-foreground/70 uppercase">
+          <h3 className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground/70">
             Platform Stats
           </h3>
           <div className="grid grid-cols-2 gap-3">
@@ -161,13 +152,15 @@ export default async function RightSidebar() {
               { label: 'Resolved', value: '94%' },
             ].map(stat => (
               <div key={stat.label} className="space-y-0.5">
-                <p className="text-2xs tracking-wider text-muted-foreground/60 uppercase">{stat.label}</p>
+                <p className="text-2xs uppercase tracking-wider text-muted-foreground/60">{stat.label}</p>
                 <p className="text-sm font-semibold text-foreground">{stat.value}</p>
               </div>
             ))}
           </div>
         </div>
+
+        <div className="h-4" />
       </div>
-    </aside>
+    </RightSidebarClient>
   )
 }

@@ -5,23 +5,28 @@ import HeaderLogo from '@/components/HeaderLogo'
 
 export default async function Header() {
   return (
-    <header className="sticky top-0 z-30 border-b border-border/40 bg-background/95 backdrop-blur-sm">
-      <div className="flex min-h-14 w-full items-center gap-4 px-4 lg:px-6">
-        {/* Logo: only on mobile (hidden on lg+ where sidebar shows it) */}
+    <header className="sticky top-0 z-40 border-b border-border/40 bg-background/95 backdrop-blur-sm">
+      <div className="flex h-14 w-full items-center gap-3 px-3 lg:px-5">
+        {/* Logo: mobile only */}
         <div className="shrink-0 lg:hidden">
           <HeaderLogo />
         </div>
 
-        {/* Search: full width on desktop */}
-        <div className="flex flex-1 items-center gap-2">
-          <div className="hidden w-full max-w-xl items-center gap-2 lg:flex">
-            <HeaderSearch />
-            <HowItWorksDeferred />
-          </div>
+        {/* Search: flexible, grows to fill but capped, can shrink */}
+        <div className="hidden min-w-0 flex-1 items-center lg:flex lg:max-w-md xl:max-w-lg">
+          <HeaderSearch />
         </div>
 
-        {/* Right: menu / wallet */}
-        <div className="flex shrink-0 items-center gap-2">
+        {/* "How it works": its own slot, never overlaps search or menu */}
+        <div className="hidden shrink-0 lg:flex">
+          <HowItWorksDeferred />
+        </div>
+
+        {/* Spacer on mobile only (desktop search already grows) */}
+        <div className="flex-1 lg:hidden" />
+
+        {/* Portfolio / wallet / avatar — always visible, never shrinks */}
+        <div className="flex shrink-0 items-center gap-1">
           <HeaderMenu />
         </div>
       </div>

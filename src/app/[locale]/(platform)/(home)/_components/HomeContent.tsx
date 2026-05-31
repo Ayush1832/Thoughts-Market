@@ -22,20 +22,26 @@ export default async function HomeContent({
   let initialEvents: Event[] = []
 
   try {
-    const { data: events, error, currentTimestamp } = await listHomeEventsPage({
-      tag: initialTagSlug,
-      mainTag: initialMainTagSlug,
-      search: '',
-      userId: '',
-      bookmarked: false,
-      locale: resolvedLocale,
-      currentTimestamp: null,
-    })
+    // 4-second timeout — if DB is slow/unreachable, SSR returns empty and
+    // the client-side React Query hydrates the feed without blocking the page.
+    const result = await Promise.race([
+      listHomeEventsPage({
+        tag: initialTagSlug,
+        mainTag: initialMainTagSlug,
+        search: '',
+        userId: '',
+        bookmarked: false,
+        locale: resolvedLocale,
+        currentTimestamp: null,
+      }),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('SSR DB timeout')), 4000),
+      ),
+    ])
 
-    initialCurrentTimestamp = currentTimestamp ?? null
-
-    if (!error) {
-      initialEvents = events ?? []
+    initialCurrentTimestamp = result.currentTimestamp ?? null
+    if (!result.error) {
+      initialEvents = result.data ?? []
     }
   }
   catch {

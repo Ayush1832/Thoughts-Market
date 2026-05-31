@@ -1,23 +1,25 @@
+const S = ({ className }: { className: string }) => (
+  <div className={`animate-skeleton rounded-md ${className}`} />
+)
+
 export default function EventCardSkeleton() {
   return (
-    <div className="h-45 animate-pulse rounded-xl border bg-card p-4 shadow-md shadow-black/4">
+    <div className="h-45 rounded-2xl border border-border/40 bg-card p-4">
       <div className="mb-3 flex items-start gap-2">
-        <div className="size-10 rounded-sm bg-muted dark:bg-secondary"></div>
+        <S className="size-10 shrink-0 rounded-xl" />
         <div className="flex-1 space-y-2">
-          <div className="size-3/4 rounded-sm bg-muted dark:bg-secondary"></div>
-          <div className="h-3 w-1/2 rounded-sm bg-muted dark:bg-secondary"></div>
+          <S className="h-3.5 w-3/4" />
+          <S className="h-3 w-1/2" />
         </div>
-        <div className="h-12 w-14 rounded-sm bg-muted dark:bg-secondary"></div>
+        <S className="h-12 w-14 rounded-xl" />
       </div>
-
       <div className="mt-6 mb-3 grid grid-cols-2 gap-2">
-        <div className="h-12 rounded-sm bg-muted dark:bg-secondary"></div>
-        <div className="h-12 rounded-sm bg-muted dark:bg-secondary"></div>
+        <S className="h-10 rounded-xl" />
+        <S className="h-10 rounded-xl" />
       </div>
-
       <div className="flex items-center justify-between">
-        <div className="h-3 w-16 rounded-sm bg-muted dark:bg-secondary"></div>
-        <div className="h-3 w-6 rounded-sm bg-muted dark:bg-secondary"></div>
+        <S className="h-3 w-16" />
+        <S className="h-3 w-6" />
       </div>
     </div>
   )

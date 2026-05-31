@@ -35,16 +35,25 @@ export default async function PlatformLayout({ params, children }: LayoutProps<'
         <PlatformViewerState />
         <FilterProvider>
           <PlatformNavigationProvider tags={tags} childParentMap={childParentMap}>
+            {/* Signature radial glow — purple/cyan, top-left, like the reference */}
+            <div
+              aria-hidden
+              className="pointer-events-none fixed inset-0 -z-10 hidden dark:block"
+              style={{
+                background:
+                  'radial-gradient(900px circle at 20% 0%, oklch(0.55 0.2 280 / 0.12), transparent 60%), radial-gradient(700px circle at 80% 5%, oklch(0.65 0.16 200 / 0.08), transparent 55%)',
+              }}
+            />
             {/* 3-column layout on desktop, single column on mobile */}
             <div className="flex min-h-screen w-full">
               {/* Left Sidebar */}
               <LeftSidebar />
 
-              {/* Main Content */}
-              <div className="flex min-w-0 flex-1 flex-col">
+              {/* Main Content — min-w-0 is critical: forces flex child to shrink below content size */}
+              <div className="flex min-w-0 w-0 flex-1 flex-col">
                 <Header />
                 <NavigationTabs />
-                <main className="flex-1 p-4 lg:px-6 lg:py-5">
+                <main className="flex-1 p-3 lg:p-5">
                   {children}
                 </main>
               </div>

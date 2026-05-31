@@ -8,6 +8,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import EventsGrid from '@/app/[locale]/(platform)/(home)/_components/EventsGrid'
 import FilterToolbar from '@/app/[locale]/(platform)/(home)/_components/FilterToolbar'
 import FriendPlayLobby from '@/app/[locale]/(platform)/(home)/_components/FriendPlayLobby'
+import HeroEventCard from '@/app/[locale]/(platform)/(home)/_components/HeroEventCard'
 import HomeSecondaryNavigation from '@/app/[locale]/(platform)/(home)/_components/HomeSecondaryNavigation'
 import { DEFAULT_FILTERS, useFilters } from '@/app/[locale]/(platform)/_providers/FilterProvider'
 import { usePlatformNavigationData } from '@/app/[locale]/(platform)/_providers/PlatformNavigationProvider'
@@ -15,6 +16,7 @@ import { Button } from '@/components/ui/button'
 import { usePathname, useRouter } from '@/i18n/navigation'
 import { parsePlatformPathname, resolvePlatformNavigationSelection } from '@/lib/platform-navigation'
 import { buildDynamicHomeCategorySlugSet } from '@/lib/platform-routing'
+import { cn } from '@/lib/utils'
 
 const CategorySidebar = dynamic(
   () => import('@/app/[locale]/(platform)/(home)/_components/CategorySidebar'),
@@ -350,20 +352,48 @@ function HomeClientContent({
             showFilterCheckboxes={pathState.isHomePage}
           />
 
+          {/* Hero featured event */}
+          {initialEvents[0] && !hasCategorySidebar && (
+            <HeroEventCard event={initialEvents[0]} />
+          )}
+
+          {/* Friends Play */}
           <div id="play-with-friends">
             {showFriendLobby
               ? (
                   <FriendPlayLobby onClose={() => setShowFriendLobby(false)} />
                 )
               : (
-                  <div className="rounded-3xl border border-border/60 bg-muted p-6 shadow-sm">
-                    <div className="flex items-center justify-between gap-4">
+                  <div
+                    className={cn(
+                      'group relative overflow-hidden rounded-3xl border border-border/40',
+                      'bg-gradient-to-br from-card via-card to-primary/5',
+                      'p-6 transition-all duration-300',
+                      'hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5',
+                    )}
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-4">
                       <div>
-                        <p className="text-sm tracking-[0.2em] text-muted-foreground uppercase">Friends lobby</p>
-                        <h2 className="mt-2 text-2xl font-semibold text-foreground">Play with friends</h2>
-                        <p className="mt-2 max-w-2xl text-sm text-muted-foreground">Create a shared room on your dashboard, invite up to 50 people, and start the game once at least 3 have joined.</p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-lg font-bold text-foreground">Friends Play</p>
+                          <span className="text-muted-foreground">·</span>
+                          <p className="text-sm text-muted-foreground">Your edge over the house</p>
+                        </div>
+                        <p className="mt-1 text-xs text-muted-foreground/70">
+                          Private rooms, custom stakes. Up to 50 players. On-chain settlement.
+                        </p>
                       </div>
-                      <Button onClick={() => setShowFriendLobby(true)} variant="secondary" size="lg">Play with friends</Button>
+                      <Button
+                        onClick={() => setShowFriendLobby(true)}
+                        className="
+                          rounded-xl border border-border/50 bg-secondary/80 px-5 text-foreground
+                          transition-all duration-200
+                          hover:border-primary/40 hover:bg-secondary hover:text-primary
+                        "
+                        size="sm"
+                      >
+                        + New room
+                      </Button>
                     </div>
                   </div>
                 )}
@@ -376,7 +406,7 @@ function HomeClientContent({
             onClearFilters={handleClearFilters}
             routeMainTag={targetMainTag}
             routeTag={targetTag}
-            maxColumns={hasCategorySidebar ? 3 : undefined}
+            maxColumns={hasCategorySidebar ? 2 : 3}
           />
         </div>
       </div>

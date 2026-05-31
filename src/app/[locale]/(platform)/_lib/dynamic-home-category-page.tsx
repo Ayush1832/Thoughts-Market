@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import type { SupportedLocale } from '@/i18n/locales'
 import { notFound } from 'next/navigation'
 import HomeContent from '@/app/[locale]/(platform)/(home)/_components/HomeContent'
+import CategoryHeroBanner from '@/app/[locale]/(platform)/_components/CategoryHeroBanner'
 import {
   buildLocalizedPagePath,
   buildPredictionResultsOgImageUrl,
@@ -128,7 +129,18 @@ export async function DynamicHomeCategoryPageContent({
     notFound()
   }
 
-  return <HomeContent locale={locale} initialTag={category.slug} />
+  return (
+    <>
+      <CategoryHeroBanner
+        slug={category.slug}
+        name={(category as any).name ?? slug}
+        activeMarketsCount={(category as any).active_markets_count ?? undefined}
+        eventPageNote={(category as any).event_page_note ?? null}
+        childs={(category as any).childs ?? []}
+      />
+      <HomeContent locale={locale} initialTag={category.slug} />
+    </>
+  )
 }
 
 export async function DynamicHomeSubcategoryPageContent({
@@ -154,11 +166,24 @@ export async function DynamicHomeSubcategoryPageContent({
     notFound()
   }
 
+  const resolvedCategory = resolvedSubcategory.category
+  const resolvedSub = resolvedSubcategory.subcategory
+
   return (
-    <HomeContent
-      locale={locale}
-      initialTag={resolvedSubcategory.subcategory.slug}
-      initialMainTag={resolvedSubcategory.category.slug}
-    />
+    <>
+      <CategoryHeroBanner
+        slug={resolvedCategory.slug}
+        name={(resolvedCategory as any).name ?? resolvedCategory.slug}
+        activeMarketsCount={(resolvedCategory as any).active_markets_count ?? undefined}
+        eventPageNote={(resolvedCategory as any).event_page_note ?? null}
+        childs={(resolvedCategory as any).childs ?? []}
+        activeSubcategory={resolvedSub.slug}
+      />
+      <HomeContent
+        locale={locale}
+        initialTag={resolvedSub.slug}
+        initialMainTag={resolvedCategory.slug}
+      />
+    </>
   )
 }

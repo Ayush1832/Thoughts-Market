@@ -367,7 +367,7 @@ function HomeClientContent({
                   <div
                     className={cn(
                       'group relative overflow-hidden rounded-3xl border border-border/40',
-                      'bg-gradient-to-br from-card via-card to-primary/5',
+                      'bg-linear-to-br from-card via-card to-primary/5',
                       'p-6 transition-all duration-300',
                       'hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5',
                     )}
@@ -386,8 +386,8 @@ function HomeClientContent({
                       <Button
                         onClick={() => setShowFriendLobby(true)}
                         className="
-                          rounded-xl border border-border/50 bg-secondary/80 px-5 text-foreground
-                          transition-all duration-200
+                          rounded-xl border border-border/50 bg-secondary/80 px-5 text-foreground transition-all
+                          duration-200
                           hover:border-primary/40 hover:bg-secondary hover:text-primary
                         "
                         size="sm"

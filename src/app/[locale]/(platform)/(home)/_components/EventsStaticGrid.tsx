@@ -38,7 +38,7 @@ export default function EventsStaticGrid({
   currentTimestamp = null,
 }: EventsStaticGridProps) {
   return (
-    <div className={cn('grid gap-3', getStaticGridColumnsClassName(maxColumns), { 'opacity-60 pointer-events-none': isFetching })}>
+    <div className={cn('grid gap-3', getStaticGridColumnsClassName(maxColumns), { 'pointer-events-none opacity-60': isFetching })}>
       {events.map((event, index) => (
         <div
           key={event.id}

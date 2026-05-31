@@ -105,7 +105,7 @@ export default function CategoryHeroBanner({
     <div className="mb-5 space-y-4">
       {/* Hero card */}
       <div className={cn(
-        'relative overflow-hidden rounded-2xl border border-border/30 bg-gradient-to-r p-6',
+        'relative overflow-hidden rounded-2xl border border-border/30 bg-linear-to-r p-6',
         meta.gradient,
       )}
       >
@@ -113,7 +113,7 @@ export default function CategoryHeroBanner({
           {/* Left: icon + name + description */}
           <div className="flex items-center gap-4">
             <div className={cn(
-              'flex size-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br text-2xl shadow-lg',
+              'flex size-14 shrink-0 items-center justify-center rounded-2xl bg-linear-to-br text-2xl shadow-lg',
               meta.iconBg,
             )}
             >
@@ -130,19 +130,19 @@ export default function CategoryHeroBanner({
             {activeMarketsCount !== undefined && (
               <>
                 <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">Markets</p>
+                  <p className="text-2xs font-semibold tracking-widest text-muted-foreground/60 uppercase">Markets</p>
                   <p className="mt-0.5 text-lg font-bold text-foreground">{activeMarketsCount}</p>
                 </div>
                 <div className="h-8 w-px bg-border/40" />
               </>
             )}
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">24H Vol</p>
+              <p className="text-2xs font-semibold tracking-widest text-muted-foreground/60 uppercase">24H Vol</p>
               <p className="mt-0.5 text-lg font-bold text-red-400">—</p>
             </div>
             <div className="h-8 w-px bg-border/40" />
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">Traders</p>
+              <p className="text-2xs font-semibold tracking-widest text-muted-foreground/60 uppercase">Traders</p>
               <p className="mt-0.5 text-lg font-bold text-foreground">—</p>
             </div>
           </div>

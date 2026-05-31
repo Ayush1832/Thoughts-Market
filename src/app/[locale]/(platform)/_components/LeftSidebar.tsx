@@ -69,7 +69,10 @@ const COMMUNITIES = [
 function NavBadge({ variant, badge, count }: { variant?: string, badge?: string, count?: number }) {
   if (variant === 'live') {
     return (
-      <span className={cn('flex items-center gap-1 rounded-sm bg-red-500/20 px-1.5 py-0.5 text-2xs font-bold tracking-wider text-red-400')}>
+      <span className={cn(`
+        flex items-center gap-1 rounded-sm bg-red-500/20 px-1.5 py-0.5 text-2xs font-bold tracking-wider text-red-400
+      `)}
+      >
         <span className="size-1.5 animate-pulse rounded-full bg-red-400" />
         {badge}
       </span>
@@ -91,7 +94,10 @@ function NavBadge({ variant, badge, count }: { variant?: string, badge?: string,
   }
   if (variant === 'count' && count !== undefined && count > 0) {
     return (
-      <span className={cn('flex size-5 items-center justify-center rounded-full bg-muted text-2xs font-semibold text-muted-foreground')}>
+      <span className={cn(`
+        flex size-5 items-center justify-center rounded-full bg-muted text-2xs font-semibold text-muted-foreground
+      `)}
+      >
         {count}
       </span>
     )
@@ -103,7 +109,12 @@ export default function LeftSidebar() {
   const pathname = usePathname()
 
   return (
-    <aside className={cn('sticky top-0 z-40 hidden h-screen w-64 shrink-0 flex-col overflow-y-auto border-r border-border/50 bg-card lg:flex xl:w-72')}>
+    <aside className={cn(`
+      sticky top-0 z-40 hidden h-screen w-64 shrink-0 flex-col overflow-y-auto border-r border-border/50 bg-card
+      lg:flex
+      xl:w-72
+    `)}
+    >
       {/* Logo — h-14 matches the main header height exactly */}
       <div className="flex h-14 shrink-0 items-center gap-3 border-b border-border/40 px-5">
         <HeaderLogo />
@@ -151,7 +162,10 @@ export default function LeftSidebar() {
               <AppLink
                 key={community.label}
                 href={community.href}
-                className={cn('flex items-center gap-3 rounded-lg p-2 text-sm text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground')}
+                className={cn(`
+                  flex items-center gap-3 rounded-lg p-2 text-sm text-muted-foreground transition-colors
+                  hover:bg-muted/60 hover:text-foreground
+                `)}
               >
                 <HashIcon className="size-3.5 text-muted-foreground/60" />
                 {community.label}

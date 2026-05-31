@@ -12,18 +12,18 @@ interface HeroEventCardProps {
 }
 
 function formatVolume(n: number): string {
-  if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`
-  if (n >= 1_000) return `$${(n / 1_000).toFixed(0)}K`
+  if (n >= 1_000_000) { return `$${(n / 1_000_000).toFixed(1)}M` }
+  if (n >= 1_000) { return `$${(n / 1_000).toFixed(0)}K` }
   return `$${n.toFixed(0)}`
 }
 
 function formatCloses(endDate: string | null): string {
-  if (!endDate) return '—'
+  if (!endDate) { return '—' }
   const diff = new Date(endDate).getTime() - Date.now()
-  if (diff <= 0) return 'Closed'
+  if (diff <= 0) { return 'Closed' }
   const days = Math.floor(diff / 86_400_000)
   const hours = Math.floor((diff % 86_400_000) / 3_600_000)
-  if (days > 0) return `${days}d · ${hours}h`
+  if (days > 0) { return `${days}d · ${hours}h` }
   return `${hours}h`
 }
 
@@ -52,12 +52,15 @@ export default function HeroEventCard({ event }: HeroEventCardProps) {
       <div
         className={cn(
           'relative overflow-hidden rounded-3xl border border-border/30',
-          'bg-gradient-to-br from-card via-card to-secondary/30',
+          'bg-linear-to-br from-card via-card to-secondary/30',
           'transition-all duration-300 hover:border-primary/30 hover:shadow-2xl hover:shadow-primary/10',
         )}
       >
         {/* bg glow */}
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent" />
+        <div className="
+          pointer-events-none absolute inset-0 bg-linear-to-br from-primary/5 via-transparent to-transparent
+        "
+        />
 
         <div className="relative p-5 md:p-7">
           {/* top row */}
@@ -65,16 +68,23 @@ export default function HeroEventCard({ event }: HeroEventCardProps) {
             {/* icon + badges */}
             <div className="flex items-center gap-3">
               {event.icon_url && (
-                <div className="relative size-11 shrink-0 overflow-hidden rounded-xl border border-border/40 bg-muted/40">
+                <div className="
+                  relative size-11 shrink-0 overflow-hidden rounded-xl border border-border/40 bg-muted/40
+                "
+                >
                   <Image src={event.icon_url} alt={event.title} fill className="object-cover" sizes="44px" />
                 </div>
               )}
               <div className="flex items-center gap-2">
-                <span className="flex items-center gap-1.5 rounded-full bg-green-500/15 px-2.5 py-1 text-xs font-semibold text-green-400">
+                <span className="
+                  flex items-center gap-1.5 rounded-full bg-green-500/15 px-2.5 py-1 text-xs font-semibold
+                  text-green-400
+                "
+                >
                   <span className="size-1.5 animate-pulse rounded-full bg-green-400" />
                   LIVE
                 </span>
-                <span className="rounded-full bg-primary/15 px-2.5 py-1 text-xs font-medium capitalize text-primary">
+                <span className="rounded-full bg-primary/15 px-2.5 py-1 text-xs font-medium text-primary capitalize">
                   {event.series_recurrence ?? 'Daily Market'}
                 </span>
               </div>
@@ -83,17 +93,17 @@ export default function HeroEventCard({ event }: HeroEventCardProps) {
             {/* stats */}
             <div className="flex flex-wrap items-center gap-5 text-center">
               <div>
-                <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">24H Vol</p>
+                <p className="text-2xs font-semibold tracking-widest text-muted-foreground/60 uppercase">24H Vol</p>
                 <p className="mt-0.5 text-sm font-bold text-foreground">{formatVolume(volume)}</p>
               </div>
               <div className="h-7 w-px bg-border/40" />
               <div>
-                <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">Traders</p>
+                <p className="text-2xs font-semibold tracking-widest text-muted-foreground/60 uppercase">Traders</p>
                 <p className="mt-0.5 text-sm font-bold text-foreground">{traders.toLocaleString()}</p>
               </div>
               <div className="h-7 w-px bg-border/40" />
               <div>
-                <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">Closes</p>
+                <p className="text-2xs font-semibold tracking-widest text-muted-foreground/60 uppercase">Closes</p>
                 <p className="mt-0.5 text-sm font-bold text-yellow-400">{closesLabel}</p>
               </div>
             </div>
@@ -101,7 +111,12 @@ export default function HeroEventCard({ event }: HeroEventCardProps) {
 
           {/* clickable title */}
           <AppLink href={`/event/${event.slug}`} className="group mt-5 block">
-            <h2 className="text-2xl font-bold leading-tight tracking-tight text-foreground transition-colors group-hover:text-primary md:text-3xl">
+            <h2 className="
+              text-2xl/tight font-bold tracking-tight text-foreground transition-colors
+              group-hover:text-primary
+              md:text-3xl
+            "
+            >
               {event.title}
             </h2>
           </AppLink>

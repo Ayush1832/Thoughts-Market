@@ -50,7 +50,7 @@ export default async function PlatformLayout({ params, children }: LayoutProps<'
               <LeftSidebar />
 
               {/* Main Content — min-w-0 is critical: forces flex child to shrink below content size */}
-              <div className="flex min-w-0 w-0 flex-1 flex-col">
+              <div className="flex w-0 min-w-0 flex-1 flex-col">
                 <Header />
                 <NavigationTabs />
                 <main className="flex-1 p-3 lg:p-5">

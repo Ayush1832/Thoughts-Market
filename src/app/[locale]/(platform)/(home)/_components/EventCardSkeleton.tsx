@@ -1,6 +1,6 @@
-const S = ({ className }: { className: string }) => (
-  <div className={`animate-skeleton rounded-md ${className}`} />
-)
+function S({ className }: { className: string }) {
+  return <div className={`animate-skeleton rounded-md ${className}`} />
+}
 
 export default function EventCardSkeleton() {
   return (

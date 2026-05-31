@@ -10,7 +10,7 @@ export default async function EventLayout({ params, children }: LayoutProps<'/[l
   setRequestLocale(locale)
 
   return (
-    <main className="container grid min-h-screen gap-8 pb-12 pt-2 lg:grid-cols-[minmax(0,3fr)_21.25rem]">
+    <main className="container grid min-h-screen gap-8 pt-2 pb-12 lg:grid-cols-[minmax(0,3fr)_21.25rem]">
       {children}
     </main>
   )

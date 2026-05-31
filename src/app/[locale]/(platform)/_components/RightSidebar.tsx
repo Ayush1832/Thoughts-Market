@@ -41,7 +41,10 @@ function AiConfidenceCard() {
         />
       </div>
       <p className="text-xs/relaxed text-muted-foreground">{insight}</p>
-      <AppLink href="/" className="flex items-center gap-1 text-xs font-medium text-primary transition-colors hover:text-primary/80">
+      <AppLink
+        href="/"
+        className="flex items-center gap-1 text-xs font-medium text-primary transition-colors hover:text-primary/80"
+      >
         Explore takes
         <ChevronRightIcon className="size-3" />
       </AppLink>
@@ -73,10 +76,20 @@ function LiveMarketMini({ event }: { event: any }) {
   const iconColor = colors[initial] ?? 'from-primary to-primary/70'
 
   return (
-    <AppLink href={`/event/${slug}`} className="group block rounded-2xl border border-border/40 bg-card p-3 transition-all duration-200 hover:border-primary/30 hover:bg-secondary/40">
+    <AppLink
+      href={`/event/${slug}`}
+      className="
+        group block rounded-2xl border border-border/40 bg-card p-3 transition-all duration-200
+        hover:border-primary/30 hover:bg-secondary/40
+      "
+    >
       {/* header: icon + title */}
       <div className="flex items-center gap-2.5">
-        <div className={`flex size-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-2xs font-bold text-white ${iconColor}`}>
+        <div className={`
+          flex size-7 shrink-0 items-center justify-center rounded-full bg-linear-to-br text-2xs font-bold text-white
+          ${iconColor}
+        `}
+        >
           {initial}
         </div>
         <p className="truncate text-xs font-medium text-foreground transition-colors group-hover:text-primary">
@@ -86,7 +99,7 @@ function LiveMarketMini({ event }: { event: any }) {
 
       {/* sparkline chart */}
       <div className="mt-2 h-10 w-full">
-        <Sparkline seed={slug || event.title || 'm'} trend={isUp ? 'up' : 'down'} className="h-full w-full" />
+        <Sparkline seed={slug || event.title || 'm'} trend={isUp ? 'up' : 'down'} className="size-full" />
       </div>
 
       {/* footer: volume + price */}
@@ -102,7 +115,10 @@ function LiveMarketMini({ event }: { event: any }) {
             {chance}
             ¢
           </span>
-          <span className={`rounded px-1.5 py-0.5 text-2xs font-semibold ${isUp ? 'bg-green-500/15 text-green-400' : 'bg-red-500/15 text-red-400'}`}>
+          <span className={`rounded-sm px-1.5 py-0.5 text-2xs font-semibold ${isUp
+            ? 'bg-green-500/15 text-green-400'
+            : `bg-red-500/15 text-red-400`}`}
+          >
             {isUp ? '+' : ''}
             {pctChange}
             %
@@ -118,13 +134,13 @@ export default async function RightSidebar() {
 
   return (
     <RightSidebarClient>
-      <div className="space-y-5 px-4 py-4">
+      <div className="space-y-5 p-4">
         <AiConfidenceCard />
 
         {liveMarkets.length > 0 && (
           <div className="space-y-2">
             <div className="flex items-center justify-between px-1">
-              <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/70">
+              <h3 className="text-xs font-semibold tracking-widest text-muted-foreground/70 uppercase">
                 Live Daily Markets
               </h3>
               <span className="flex items-center gap-1 text-2xs text-red-400">
@@ -141,7 +157,7 @@ export default async function RightSidebar() {
         )}
 
         <div className="rounded-2xl border border-border/50 bg-card p-4">
-          <h3 className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground/70">
+          <h3 className="mb-3 text-xs font-semibold tracking-widest text-muted-foreground/70 uppercase">
             Platform Stats
           </h3>
           <div className="grid grid-cols-2 gap-3">
@@ -152,7 +168,7 @@ export default async function RightSidebar() {
               { label: 'Resolved', value: '94%' },
             ].map(stat => (
               <div key={stat.label} className="space-y-0.5">
-                <p className="text-2xs uppercase tracking-wider text-muted-foreground/60">{stat.label}</p>
+                <p className="text-2xs tracking-wider text-muted-foreground/60 uppercase">{stat.label}</p>
                 <p className="text-sm font-semibold text-foreground">{stat.value}</p>
               </div>
             ))}

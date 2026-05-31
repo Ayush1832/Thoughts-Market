@@ -11,21 +11,21 @@ interface EventStatsBarProps {
 }
 
 function formatVolume(n: number): string {
-  if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`
-  if (n >= 1_000) return `$${(n / 1_000).toFixed(0)}K`
+  if (n >= 1_000_000) { return `$${(n / 1_000_000).toFixed(1)}M` }
+  if (n >= 1_000) { return `$${(n / 1_000).toFixed(0)}K` }
   return `$${n.toFixed(0)}`
 }
 
 function formatDate(iso: string | null): string {
-  if (!iso) return '—'
+  if (!iso) { return '—' }
   return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
-function StatCard({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
+function StatCard({ label, value, accent }: { label: string, value: string, accent?: boolean }) {
   return (
-    <div className="flex-1 rounded-2xl border border-border/40 bg-card px-4 py-3 min-w-0">
-      <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">{label}</p>
-      <p className={cn('mt-1 text-lg font-bold truncate', accent ? 'text-primary' : 'text-foreground')}>
+    <div className="min-w-0 flex-1 rounded-2xl border border-border/40 bg-card px-4 py-3">
+      <p className="text-2xs font-semibold tracking-widest text-muted-foreground/60 uppercase">{label}</p>
+      <p className={cn('mt-1 truncate text-lg font-bold', accent ? 'text-primary' : 'text-foreground')}>
         {value}
       </p>
     </div>
@@ -50,14 +50,18 @@ export default function EventStatsBar({ event }: EventStatsBarProps) {
   const categorySlug = categoryTag?.slug ?? null
 
   return (
-    <div className="space-y-3 animate-fade-in">
+    <div className="animate-fade-in space-y-3">
       {/* Breadcrumb row */}
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={() => router.back()}
-            className="flex items-center gap-1.5 rounded-lg border border-border/40 bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            className="
+              flex items-center gap-1.5 rounded-lg border border-border/40 bg-card px-3 py-1.5 text-xs font-medium
+              text-muted-foreground transition-colors
+              hover:bg-muted hover:text-foreground
+            "
           >
             <ArrowLeftIcon className="size-3" />
             Back
@@ -66,7 +70,11 @@ export default function EventStatsBar({ event }: EventStatsBarProps) {
           {categoryLabel && categorySlug && (
             <AppLink
               href={`/${categorySlug}`}
-              className="rounded-lg border border-border/40 bg-card px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              className="
+                rounded-lg border border-border/40 bg-card px-3 py-1.5 text-xs font-semibold tracking-wider
+                text-muted-foreground uppercase transition-colors
+                hover:bg-muted hover:text-foreground
+              "
             >
               {categoryLabel}
             </AppLink>
@@ -87,7 +95,11 @@ export default function EventStatsBar({ event }: EventStatsBarProps) {
 
         <button
           type="button"
-          className="flex items-center gap-1.5 rounded-lg border border-border/40 bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          className="
+            flex items-center gap-1.5 rounded-lg border border-border/40 bg-card px-3 py-1.5 text-xs font-medium
+            text-muted-foreground transition-colors
+            hover:bg-muted hover:text-foreground
+          "
           onClick={() => navigator.share?.({ url: window.location.href, title: event.title }).catch(() => {})}
         >
           <ShareIcon className="size-3" />

@@ -4,6 +4,7 @@ import AppLink from '@/components/AppLink'
 import Sparkline from '@/components/Sparkline'
 import { listHomeEventsPage } from '@/lib/home-events-page'
 import RightSidebarClient from './RightSidebarClient'
+import AtlasGlobe from '@/components/AtlasGlobe'
 
 async function getLiveMarkets(): Promise<Event[]> {
   try {
@@ -174,6 +175,8 @@ export default async function RightSidebar() {
             ))}
           </div>
         </div>
+
+        <AtlasGlobe />
 
         <div className="h-4" />
       </div>

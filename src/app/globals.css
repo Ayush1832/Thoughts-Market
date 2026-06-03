@@ -207,6 +207,39 @@
 
   body {
     @apply bg-background text-foreground;
+    font-feature-settings: "cv11", "ss01";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* ── Global dark-mode card/input polish ── */
+  .dark {
+    /* inputs feel like real dark inputs */
+    input:not([type="checkbox"]):not([type="radio"]),
+    textarea,
+    select {
+      background-color: oklch(0.18 0.02 264);
+      border-color: oklch(1 0 0 / 10%);
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    input:focus, textarea:focus, select:focus {
+      border-color: oklch(0.62 0.21 262 / 60%);
+      box-shadow: 0 0 0 3px oklch(0.62 0.21 262 / 12%);
+    }
+  }
+
+  /* ── Dialog / Modal backdrop ── */
+  [data-slot='dialog-overlay'] {
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    background-color: oklch(0.05 0.01 266 / 70%) !important;
+  }
+
+  /* ── Smooth page transitions ── */
+  a, button {
+    transition-property: color, background-color, border-color, opacity, transform, box-shadow;
+    transition-duration: 150ms;
+    transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   button:not([disabled]),
@@ -235,6 +268,27 @@
   }
 }
 
+/* ─── Global component overrides ─── */
+
+/* Dialogs: glass dark background */
+[data-slot='dialog-content'] {
+  background: oklch(0.16 0.02 266 / 95%) !important;
+  border: 1px solid oklch(1 0 0 / 10%) !important;
+  box-shadow: 0 25px 50px -12px oklch(0 0 0 / 50%), 0 0 0 1px oklch(1 0 0 / 5%) !important;
+  backdrop-filter: blur(20px) !important;
+}
+
+/* Navigation tabs: active pill */
+[data-active="true"] {
+  background: oklch(0.62 0.21 262 / 15%);
+  color: oklch(0.62 0.21 262);
+}
+
+/* Smooth selection highlight */
+::selection {
+  background: oklch(0.62 0.21 262 / 30%);
+}
+
 @utility container {
   @apply max-w-333 mx-auto px-4 2xl:px-0;
 }
@@ -248,7 +302,27 @@
 }
 
 @utility animate-fade-in {
-  animation: fade-in 0.4s ease-out forwards;
+  animation: fade-in 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@utility animate-slide-in-right {
+  animation: slide-in-right 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@utility animate-scale-in {
+  animation: scale-in 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@utility animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+@utility animate-count-up {
+  animation: count-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@utility animate-glow-pulse {
+  animation: glow-pulse 2s ease-in-out infinite;
 }
 
 @utility animate-slide-up {
@@ -353,38 +427,75 @@
 }
 
 @keyframes fade-in {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0);   }
 }
 
 @keyframes slide-up {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+
+@keyframes slide-in-right {
+  from { opacity: 0; transform: translateX(16px); }
+  to   { opacity: 1; transform: translateX(0);    }
+}
+
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1);    }
 }
 
 @keyframes shimmer {
   from { background-position: 200% 0; }
-  to { background-position: -200% 0; }
+  to   { background-position: -200% 0; }
 }
 
 @keyframes progress-fill {
   from { width: 0; }
-  to { width: var(--progress-width, 50%); }
+  to   { width: var(--progress-width, 50%); }
 }
 
 @keyframes glow-pulse {
   0%, 100% { box-shadow: 0 0 0 0 oklch(0.62 0.21 262 / 0); }
-  50% { box-shadow: 0 0 16px 2px oklch(0.62 0.21 262 / 0.18); }
+  50%       { box-shadow: 0 0 20px 3px oklch(0.62 0.21 262 / 0.2); }
 }
 
-/* smooth skeleton shimmer */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-6px); }
+}
+
 @keyframes skeleton {
-  0% { background-position: -400px 0; }
-  100% { background-position: 400px 0; }
+  0%   { background-position: -400px 0; }
+  100% { background-position:  400px 0; }
+}
+
+@keyframes count-up {
+  from { opacity: 0; transform: translateY(4px) scale(0.95); }
+  to   { opacity: 1; transform: translateY(0)   scale(1);    }
 }
 
 @utility animate-skeleton {
   background: linear-gradient(90deg, var(--muted) 25%, oklch(1 0 0 / 5%) 50%, var(--muted) 75%);
   background-size: 800px 100%;
   animation: skeleton 1.4s ease-in-out infinite;
+}
+
+@keyframes atlas-blink {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.3; transform: scale(0.6); }
+}
+
+@keyframes atlas-ring {
+  0%   { transform: scale(1); opacity: 0.7; }
+  100% { transform: scale(2.8); opacity: 0; }
+}
+
+@utility animate-atlas-blink {
+  animation: atlas-blink 2.2s ease-in-out infinite;
+}
+
+@utility animate-atlas-ring {
+  animation: atlas-ring 2s ease-out infinite;
 }

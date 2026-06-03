@@ -367,32 +367,31 @@ function HomeClientContent({
                   <div
                     className={cn(
                       'group relative overflow-hidden rounded-3xl border border-border/40',
-                      'bg-linear-to-br from-card via-card to-primary/5',
-                      'p-6 transition-all duration-300',
+                      'bg-gradient-to-br from-card via-card to-primary/5',
+                      'px-5 py-4 transition-all duration-300',
                       'hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5',
                     )}
                   >
                     <div className="flex flex-wrap items-center justify-between gap-4">
                       <div>
                         <div className="flex items-center gap-2">
-                          <p className="text-lg font-bold text-foreground">Friends Play</p>
-                          <span className="text-muted-foreground">·</span>
-                          <p className="text-sm text-muted-foreground">Your edge over the house</p>
+                          <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">Friends Play</p>
+                          <span className="text-muted-foreground/40">·</span>
+                          <p className="text-xs text-muted-foreground">Your edge over the house</p>
                         </div>
-                        <p className="mt-1 text-xs text-muted-foreground/70">
+                        <p className="mt-0.5 text-sm text-muted-foreground/60">
                           Private rooms, custom stakes. Up to 50 players. On-chain settlement.
                         </p>
                       </div>
                       <Button
                         onClick={() => setShowFriendLobby(true)}
-                        className="
-                          rounded-xl border border-border/50 bg-secondary/80 px-5 text-foreground transition-all
-                          duration-200
-                          hover:border-primary/40 hover:bg-secondary hover:text-primary
-                        "
+                        className={cn(
+                          'rounded-xl border border-border/40 bg-card px-4 text-xs font-semibold text-foreground',
+                          'transition-all duration-200 hover:border-primary/40 hover:bg-muted hover:text-primary',
+                        )}
                         size="sm"
                       >
-                        + New room
+                        Open rooms
                       </Button>
                     </div>
                   </div>

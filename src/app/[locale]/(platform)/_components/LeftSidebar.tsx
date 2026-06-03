@@ -132,14 +132,19 @@ export default function LeftSidebar() {
               key={item.label}
               href={item.href}
               className={cn(
-                'flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors',
+                'group flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-sm font-medium',
+                'transition-all duration-200',
                 isActive
-                  ? 'bg-primary/15 text-primary'
-                  : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground',
+                  ? 'bg-primary/15 text-primary shadow-sm shadow-primary/10'
+                  : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground hover:translate-x-0.5',
               )}
             >
               <div className="flex items-center gap-3">
-                <span className={cn(isActive ? 'text-primary' : 'text-muted-foreground')}>
+                <span className={cn(
+                  'transition-all duration-200',
+                  isActive ? 'text-primary scale-110' : 'text-muted-foreground/70 group-hover:text-foreground',
+                )}
+                >
                   {item.icon}
                 </span>
                 {item.label}

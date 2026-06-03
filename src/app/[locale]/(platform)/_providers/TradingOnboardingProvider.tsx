@@ -6,6 +6,7 @@ import type { User } from '@/types'
 import { useExtracted } from 'next-intl'
 import { usePathname } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useSiteIdentity } from '@/hooks/useSiteIdentity'
 import { createPublicClient, erc20Abi, erc1155Abi, http, UserRejectedRequestError } from 'viem'
 import { useSignTypedData } from 'wagmi'
 import { markApprovalStateWithoutTransactionAction } from '@/app/[locale]/(platform)/_actions/approve-tokens'
@@ -273,6 +274,7 @@ function TradingOnboardingProviderContent({
   children,
   user,
 }: TradingOnboardingProviderContentProps) {
+  const site = useSiteIdentity()
   const [activeModal, setActiveModal] = useState<OnboardingModal>(null)
   const [dismissedModal, setDismissedModal] = useState<OnboardingModal>(null)
   const [fundModalOpen, setFundModalOpen] = useState(false)
@@ -948,14 +950,10 @@ function TradingOnboardingProviderContent({
       return
     }
 
-    if (status.hasDeployedDepositWallet) {
-      setDepositModalOpen(true)
-      return
-    }
-
-    setShouldShowFundAfterTradingReady(true)
-    openNextRequirement()
-  }, [openAppKit, openNextRequirement, status.hasDeployedDepositWallet, user])
+    // Open deposit modal for all connected users — even without a deployed deposit wallet.
+    // The "Buy Crypto" (Meld) button will use the connected wallet address as fallback.
+    setDepositModalOpen(true)
+  }, [openAppKit, user])
 
   const startWithdrawFlow = useCallback(() => {
     if (!user) {
@@ -995,15 +993,22 @@ function TradingOnboardingProviderContent({
   ])
 
   const meldUrl = useMemo(() => {
-    if (!status.hasDeployedDepositWallet || !user?.deposit_wallet_address) {
+    // Use the same address logic as the QR code in WalletModal:
+    // 1. site.feeRecipientWallet (platform deposit address set in Admin → General)
+    // 2. user's deployed deposit wallet
+    // 3. user's connected wallet as last resort
+    const targetAddress = site.feeRecipientWallet
+      || user?.deposit_wallet_address
+      || user?.address
+    if (!targetAddress) {
       return null
     }
     const params = new URLSearchParams({
       destinationCurrencyCodeLocked: 'USDC_POLYGON',
-      walletAddressLocked: user.deposit_wallet_address,
+      walletAddressLocked: targetAddress,
     })
     return `https://meldcrypto.com/?${params.toString()}`
-  }, [status.hasDeployedDepositWallet, user?.deposit_wallet_address])
+  }, [site.feeRecipientWallet, user?.deposit_wallet_address, user?.address])
 
   return (
     <TradingOnboardingContext value={contextValue}>

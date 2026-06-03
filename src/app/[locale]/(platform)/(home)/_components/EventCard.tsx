@@ -155,9 +155,10 @@ export default function EventCard({
   return (
     <Card
       className={cn(`
-        group flex h-45 flex-col overflow-hidden rounded-2xl border-border/40 shadow-sm shadow-black/10 transition-all
+        group flex h-45 flex-col overflow-hidden rounded-2xl border-border/30 transition-all
         duration-200
-        hover:-translate-y-1 hover:border-primary/20 hover:shadow-md hover:shadow-primary/5
+        hover:-translate-y-1.5 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/10
+        dark:bg-card/80 dark:backdrop-blur-sm
         dark:hover:bg-secondary/80
       `)}
     >

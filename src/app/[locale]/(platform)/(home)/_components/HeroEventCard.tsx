@@ -2,8 +2,9 @@
 
 import type { Event } from '@/types'
 import Image from 'next/image'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useState } from 'react'
 import AppLink from '@/components/AppLink'
+import { useHasHydrated } from '@/hooks/useHasHydrated'
 import { cn } from '@/lib/utils'
 
 interface HeroEventCardProps {
@@ -12,26 +13,32 @@ interface HeroEventCardProps {
 }
 
 function formatVolume(n: number): string {
-  if (n >= 1_000_000) { return `$${(n / 1_000_000).toFixed(1)}M` }
-  if (n >= 1_000) { return `$${(n / 1_000).toFixed(0)}K` }
+  if (n >= 1_000_000)
+    return `$${(n / 1_000_000).toFixed(1)}M`
+  if (n >= 1_000)
+    return `$${(n / 1_000).toFixed(0)}K`
   return `$${n.toFixed(0)}`
 }
 
 function formatCloses(endDate: string | null): string {
-  if (!endDate) { return '—' }
+  if (!endDate)
+    return '—'
   const diff = new Date(endDate).getTime() - Date.now()
-  if (diff <= 0) { return 'Closed' }
+  if (diff <= 0)
+    return 'Closed'
   const days = Math.floor(diff / 86_400_000)
   const hours = Math.floor((diff % 86_400_000) / 3_600_000)
-  if (days > 0) { return `${days}d · ${hours}h` }
+  if (days > 0)
+    return `${days}d · ${hours}h`
   return `${hours}h`
 }
 
 export default function HeroEventCard({ event }: HeroEventCardProps) {
   const market = event.markets?.[0]
   const [hovering, setHovering] = useState<'up' | 'down' | null>(null)
-  // Closes label depends on Date.now() — compute only after mount to avoid hydration mismatch
-  const [closesLabel, setClosesLabel] = useState('—')
+  // useHasHydrated prevents hydration mismatch for Date.now()-dependent values
+  const hydrated = useHasHydrated()
+  const closesLabel = hydrated ? formatCloses(event.end_date) : '—'
   const yesOutcome = market?.outcomes?.find(o => o.outcome_index === 0)
   const noOutcome = market?.outcomes?.find(o => o.outcome_index === 1)
   const yesLabel = yesOutcome?.outcome_text ?? 'Up'
@@ -43,23 +50,22 @@ export default function HeroEventCard({ event }: HeroEventCardProps) {
   const handleMouseEnter = useCallback((side: 'up' | 'down') => setHovering(side), [])
   const handleMouseLeave = useCallback(() => setHovering(null), [])
 
-  useEffect(() => {
-    setClosesLabel(formatCloses(event.end_date))
-  }, [event.end_date])
-
   return (
     <div className="animate-slide-up">
       <div
         className={cn(
           'relative overflow-hidden rounded-3xl border border-border/30',
-          'bg-linear-to-br from-card via-card to-secondary/30',
-          'transition-all duration-300 hover:border-primary/30 hover:shadow-2xl hover:shadow-primary/10',
+          'bg-gradient-to-br from-card via-card to-secondary/20',
+          'transition-all duration-300',
+          'hover:border-primary/40 hover:shadow-2xl hover:shadow-primary/15 hover:-translate-y-0.5',
         )}
       >
-        {/* bg glow */}
-        <div className="
-          pointer-events-none absolute inset-0 bg-linear-to-br from-primary/5 via-transparent to-transparent
-        "
+        {/* Animated radial glow background */}
+        <div
+          className="pointer-events-none absolute inset-0 opacity-60"
+          style={{
+            background: 'radial-gradient(ellipse at 20% 0%, oklch(0.62 0.21 262 / 0.12) 0%, transparent 60%), radial-gradient(ellipse at 80% 100%, oklch(0.72 0.18 155 / 0.06) 0%, transparent 50%)',
+          }}
         />
 
         <div className="relative p-5 md:p-7">

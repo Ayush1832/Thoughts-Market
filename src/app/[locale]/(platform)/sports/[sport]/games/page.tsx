@@ -61,7 +61,7 @@ export async function generateMetadata({
 
   return {
     title: t('{sportTitle} Prediction Markets & Live Odds', { sportTitle: sportContext.sportTitle }),
-    description: t('Trade on live {sportTitle} matches in real time on {siteName}. Bet on moneyline, spread, and total markets. Real-time odds and scores.', { sportTitle: sportContext.sportTitle, siteName }),
+    description: t('Trade on live {sportTitle} matches in real time on {siteName}. Predict moneyline, spread, and total markets. Real-time odds and scores.', { sportTitle: sportContext.sportTitle, siteName }),
   }
 }
 

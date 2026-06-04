@@ -2,7 +2,7 @@
 
 import type { LucideIcon } from 'lucide-react'
 import type { Route } from 'next'
-import { BadgePercentIcon, BellIcon, CoinsIcon, FingerprintIcon, PackageIcon, UserIcon } from 'lucide-react'
+import { BadgePercentIcon, BellIcon, CoinsIcon, FingerprintIcon, LaptopIcon, LockIcon, PackageIcon, ShieldIcon, TriangleAlertIcon, UserIcon } from 'lucide-react'
 import { useExtracted } from 'next-intl'
 import AppLink from '@/components/AppLink'
 import { Button } from '@/components/ui/button'
@@ -24,8 +24,12 @@ export default function SettingsSidebar() {
     { id: 'account', label: t('Account'), href: '/settings/account' as Route, icon: FingerprintIcon },
     { id: 'notifications', label: t('Notifications'), href: '/settings/notifications' as Route, icon: BellIcon },
     { id: 'trading', label: t('Trading'), href: '/settings/trading' as Route, icon: CoinsIcon },
+    { id: 'privacy', label: t('Privacy'), href: '/settings/privacy' as Route, icon: ShieldIcon },
+    { id: 'security', label: t('Security'), href: '/settings/security' as Route, icon: LockIcon },
+    { id: 'sessions', label: t('Sessions'), href: '/settings/sessions' as Route, icon: LaptopIcon },
     { id: 'affiliate', label: t('Affiliate'), href: '/settings/affiliate' as Route, icon: BadgePercentIcon },
     { id: 'sdks', label: t('SDKs'), href: '/settings/sdks' as Route, icon: PackageIcon },
+    { id: 'danger', label: t('Danger zone'), href: '/settings/danger-zone' as Route, icon: TriangleAlertIcon },
   ]
   const activeItem = menuItems.find(item => pathname === item.href)
   const active = activeItem?.id ?? 'profile'

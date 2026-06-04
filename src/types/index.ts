@@ -198,6 +198,12 @@ interface UserSettings {
   trading?: {
     market_order_type?: ClobOrderType
   }
+  privacy?: {
+    profile_visibility?: 'public' | 'friends' | 'private'
+    show_on_leaderboard?: boolean
+    share_history_with_friends?: boolean
+    blocked?: string[]
+  }
   tradingAuth?: {
     relayer?: TradingAuthStatus
     clob?: TradingAuthStatus

@@ -111,7 +111,7 @@ export default function LeftSidebar() {
         'border-r border-tm-border bg-tm-surface',
         'transition-[width] duration-300 ease-in-out',
         'lg:flex',
-        collapsed ? 'w-[64px]' : 'w-64 xl:w-72',
+        collapsed ? 'w-[60px]' : 'w-52 xl:w-56',
       )}
     >
       {/* ── Logo row + collapse toggle ── */}
@@ -226,13 +226,6 @@ export default function LeftSidebar() {
           </div>
         )}
       </nav>
-
-      {/* ── Bottom version tag — hidden when collapsed ── */}
-      {!collapsed && (
-        <div className="border-t border-tm-border px-5 py-4">
-          <p className="text-[11px] text-tm-secondary/40">v2 · Polygon Mainnet</p>
-        </div>
-      )}
     </aside>
   )
 }

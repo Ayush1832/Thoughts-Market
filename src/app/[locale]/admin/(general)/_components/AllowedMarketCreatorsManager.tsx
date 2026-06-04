@@ -276,7 +276,7 @@ export default function AllowedMarketCreatorsManager({
           <div className="space-y-1">
             <Label>{t('Allowed mirrored market sources')}</Label>
             <p className="text-xs text-muted-foreground">
-              {t('Add the URL of another prediction market running on Kuest to import its wallets automatically, or add a wallet with a display name.')}
+              {t('Add the URL of another prediction market running on Thoughts Market to import its wallets automatically, or add a wallet with a display name.')}
             </p>
           </div>
 
@@ -355,7 +355,7 @@ export default function AllowedMarketCreatorsManager({
           <DialogHeader>
             <DialogTitle>{t('Add mirrored market source')}</DialogTitle>
             <DialogDescription>
-              {t('Choose whether you want to add a Kuest site URL or a wallet with a display name.')}
+              {t('Choose whether you want to add a Thoughts Market site URL or a wallet with a display name.')}
             </DialogDescription>
           </DialogHeader>
 
@@ -384,7 +384,7 @@ export default function AllowedMarketCreatorsManager({
             {dialogMode === 'site'
               ? (
                   <div className="grid gap-2">
-                    <Label htmlFor="allowed-market-source-url">{t('Kuest site URL or domain')}</Label>
+                    <Label htmlFor="allowed-market-source-url">{t('Thoughts Market site URL or domain')}</Label>
                     <Input
                       id="allowed-market-source-url"
                       value={siteUrl}
@@ -444,7 +444,7 @@ export default function AllowedMarketCreatorsManager({
       >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>{t('Remove demo.kuest.com?')}</DialogTitle>
+            <DialogTitle>{t('Remove demo.thoughtsmarket.com?')}</DialogTitle>
             <DialogDescription>
               {t('Are you sure? You will stop receiving mirrored markets from Polymarket.')}
             </DialogDescription>

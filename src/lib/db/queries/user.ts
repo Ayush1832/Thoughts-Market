@@ -160,6 +160,46 @@ export const UserRepository = {
     })
   },
 
+  async updateUserPrivacySettings(currentUser: User, privacy: {
+    profile_visibility: 'public' | 'friends' | 'private'
+    show_on_leaderboard: boolean
+    share_history_with_friends: boolean
+    blocked: string[]
+  }) {
+    return await runQuery(async () => {
+      const normalizedSettings = sql`
+        CASE
+          WHEN jsonb_typeof(coalesce(${users.settings}, '{}'::jsonb)) = 'object'
+            THEN coalesce(${users.settings}, '{}'::jsonb)
+          ELSE '{}'::jsonb
+        END
+      `
+
+      const result = await db
+        .update(users)
+        .set({
+          settings: sql`
+            jsonb_set(
+              ${normalizedSettings},
+              '{privacy}',
+              ${JSON.stringify(privacy)}::jsonb,
+              true
+            )
+          `,
+        })
+        .where(eq(users.id, currentUser.id))
+        .returning({ id: users.id })
+
+      const data = result[0] || null
+
+      if (!data) {
+        return { data: null, error: DEFAULT_ERROR_MESSAGE }
+      }
+
+      return { data, error: null }
+    })
+  },
+
   async deleteUserAccountById(userId: string) {
     return await runQuery(async () => {
       await db.transaction(async (tx) => {

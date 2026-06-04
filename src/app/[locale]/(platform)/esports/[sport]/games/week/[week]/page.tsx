@@ -81,7 +81,7 @@ export async function generateMetadata({
       sportTitle: sportContext.sportTitle,
       week: String(parsedWeek),
     }),
-    description: t('Trade on live {sportTitle} esports matches in real time on {siteName}. Bet on moneyline, spread, and total markets. Watch streams while you trade.', { sportTitle: sportContext.sportTitle, siteName }),
+    description: t('Trade on live {sportTitle} esports matches in real time on {siteName}. Predict moneyline, spread, and total markets. Watch streams while you trade.', { sportTitle: sportContext.sportTitle, siteName }),
   }
 }
 

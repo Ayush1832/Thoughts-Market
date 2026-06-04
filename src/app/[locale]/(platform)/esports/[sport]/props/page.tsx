@@ -58,7 +58,7 @@ export async function generateMetadata({
 
   return {
     title: t('{sportTitle} Props Prediction Markets & Live Odds', { sportTitle: sportContext.sportTitle }),
-    description: t('Trade on live {sportTitle} esports player props in real time on {siteName}. Bet on kills, assists, maps, rounds, and more specialty markets while you watch.', { sportTitle: sportContext.sportTitle, siteName }),
+    description: t('Trade on live {sportTitle} esports player props in real time on {siteName}. Predict kills, assists, maps, rounds, and more specialty markets while you watch.', { sportTitle: sportContext.sportTitle, siteName }),
   }
 }
 

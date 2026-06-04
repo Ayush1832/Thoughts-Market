@@ -163,7 +163,7 @@ export default function HeroEventCard({ event }: HeroEventCardProps) {
                 hovering === 'up' ? 'scale-[1.02]' : 'active:scale-[0.98]',
               )}
             >
-              <span className="flex items-center gap-2 text-sm">↑ BET {yesLabel.toUpperCase()}</span>
+              <span className="flex items-center gap-2 text-sm">↑ PREDICT {yesLabel.toUpperCase()}</span>
               <span className="text-lg font-bold">{upChance}¢</span>
             </button>
             <button
@@ -177,7 +177,7 @@ export default function HeroEventCard({ event }: HeroEventCardProps) {
                 hovering === 'down' ? 'scale-[1.02]' : 'active:scale-[0.98]',
               )}
             >
-              <span className="flex items-center gap-2 text-sm">↓ BET {noLabel.toUpperCase()}</span>
+              <span className="flex items-center gap-2 text-sm">↓ PREDICT {noLabel.toUpperCase()}</span>
               <span className="text-lg font-bold">{downChance}¢</span>
             </button>
           </div>

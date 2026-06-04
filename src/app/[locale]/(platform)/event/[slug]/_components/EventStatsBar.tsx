@@ -21,11 +21,26 @@ function formatDate(iso: string | null): string {
   return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
-function StatCard({ label, value, accent }: { label: string, value: string, accent?: boolean }) {
+function StatCard({ label, value, accent, index = 0 }: { label: string, value: string, accent?: boolean, index?: number }) {
   return (
-    <div className="min-w-0 flex-1 rounded-2xl border border-border/40 bg-card px-4 py-3">
-      <p className="text-2xs font-semibold tracking-widest text-muted-foreground/60 uppercase">{label}</p>
-      <p className={cn('mt-1 truncate text-lg font-bold', accent ? 'text-primary' : 'text-foreground')}>
+    <div
+      className={cn(
+        'group animate-tm-pop relative min-w-0 flex-1 overflow-hidden rounded-2xl border px-4 py-3',
+        'transition-all duration-300 hover:-translate-y-0.5',
+        accent
+          ? 'border-[#4f8ef7]/30 bg-[#4f8ef7]/[0.06] hover:border-[#4f8ef7]/60 hover:shadow-lg hover:shadow-[#4f8ef7]/15'
+          : 'border-tm-border bg-tm-surface hover:border-[#4f8ef7]/40 hover:shadow-lg hover:shadow-[#4f8ef7]/10',
+      )}
+      style={{ animationDelay: `${index * 70}ms` }}
+    >
+      {/* hover sheen sweep */}
+      <span className="tm-sheen" aria-hidden />
+      <p className="text-2xs font-semibold tracking-widest text-tm-secondary/70 uppercase">{label}</p>
+      <p className={cn(
+        'tabnum mt-1 truncate text-lg font-bold transition-colors',
+        accent ? 'text-[#4f8ef7] group-hover:text-[#00d4ff]' : 'text-tm-primary',
+      )}
+      >
         {value}
       </p>
     </div>
@@ -58,9 +73,9 @@ export default function EventStatsBar({ event }: EventStatsBarProps) {
             type="button"
             onClick={() => router.back()}
             className="
-              flex items-center gap-1.5 rounded-lg border border-border/40 bg-card px-3 py-1.5 text-xs font-medium
-              text-muted-foreground transition-colors
-              hover:bg-muted hover:text-foreground
+              flex items-center gap-1.5 rounded-lg border border-tm-border bg-tm-surface px-3 py-1.5 text-xs font-medium
+              text-tm-secondary transition-all duration-200
+              hover:-translate-y-px hover:border-[#4f8ef7]/40 hover:bg-tm-elevated hover:text-tm-primary
             "
           >
             <ArrowLeftIcon className="size-3" />
@@ -71,9 +86,9 @@ export default function EventStatsBar({ event }: EventStatsBarProps) {
             <AppLink
               href={`/${categorySlug}`}
               className="
-                rounded-lg border border-border/40 bg-card px-3 py-1.5 text-xs font-semibold tracking-wider
-                text-muted-foreground uppercase transition-colors
-                hover:bg-muted hover:text-foreground
+                rounded-lg border border-tm-border bg-tm-surface px-3 py-1.5 text-xs font-semibold tracking-wider
+                text-tm-secondary uppercase transition-all duration-200
+                hover:-translate-y-px hover:border-[#4f8ef7]/40 hover:bg-tm-elevated hover:text-tm-primary
               "
             >
               {categoryLabel}
@@ -84,11 +99,16 @@ export default function EventStatsBar({ event }: EventStatsBarProps) {
             className={cn(
               'flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold',
               isActive
-                ? 'bg-green-500/15 text-green-400'
-                : 'bg-muted text-muted-foreground',
+                ? 'border border-green-500/30 bg-green-500/15 text-green-400 shadow-[0_0_10px_rgba(34,197,94,0.15)]'
+                : 'bg-tm-elevated text-tm-secondary',
             )}
           >
-            {isActive && <span className="size-1.5 animate-pulse rounded-full bg-green-400" />}
+            {isActive && (
+              <span className="relative flex size-1.5">
+                <span className="absolute inline-flex size-1.5 animate-ping rounded-full bg-green-400 opacity-75" />
+                <span className="relative inline-flex size-1.5 rounded-full bg-green-400" />
+              </span>
+            )}
             {isActive ? 'OPEN' : event.status.toUpperCase()}
           </span>
         </div>
@@ -131,16 +151,17 @@ export default function EventStatsBar({ event }: EventStatsBarProps) {
       {/* Stat cards */}
       <div className="flex flex-wrap gap-2">
         {probability !== null && (
-          <StatCard label="Probability" value={`${probability}%`} accent />
+          <StatCard label="Probability" value={`${probability}%`} accent index={0} />
         )}
-        <StatCard label="24H Volume" value={formatVolume(volume)} />
+        <StatCard label="24H Volume" value={formatVolume(volume)} index={1} />
         {event.end_date && (
-          <StatCard label="Closes" value={formatDate(event.end_date)} />
+          <StatCard label="Closes" value={formatDate(event.end_date)} index={2} />
         )}
         {market && (
           <StatCard
             label="Markets"
             value={String(event.total_markets_count)}
+            index={3}
           />
         )}
       </div>

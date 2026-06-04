@@ -369,9 +369,8 @@ function MobileBottomNavContent({ pathname }: MobileBottomNavContentProps) {
       <nav className="fixed inset-x-0 bottom-0 z-40 lg:hidden" aria-label="Primary navigation">
         <div
           className={`
-            border-t border-border/70 bg-background/95 pb-[calc(env(safe-area-inset-bottom)+0.25rem)]
-            shadow-[0_-20px_48px_-36px_rgba(15,23,42,0.55)] backdrop-blur-sm
-            supports-backdrop-filter:bg-background/90
+            border-t border-tm-border bg-tm-surface/95 pb-[calc(env(safe-area-inset-bottom)+0.25rem)]
+            shadow-[0_-20px_48px_-12px_rgba(13,15,26,0.8)] backdrop-blur-sm
           `}
         >
           <div className="grid h-16.5 grid-cols-4">
@@ -421,7 +420,7 @@ function MobileNavLink({ active, href, icon: Icon, label }: MobileNavLinkProps) 
           flex size-full flex-col items-center justify-center gap-1 px-2 text-[11px] leading-none font-semibold
           transition-colors
         `,
-        active ? 'text-foreground' : 'text-muted-foreground',
+        active ? 'text-[#4f8ef7]' : 'text-tm-secondary',
       )}
     >
       <Icon className="size-[17px]" />
@@ -452,7 +451,7 @@ function MobilePortfolioNavLink({ active }: { active: boolean }) {
           flex size-full flex-col items-center justify-center gap-1 px-2 text-[11px] leading-none font-semibold
           transition-colors
         `,
-        active ? 'text-foreground' : 'text-muted-foreground',
+        active ? 'text-[#4f8ef7]' : 'text-tm-secondary',
       )}
     >
       <ChartLineIcon className="size-[17px]" />
@@ -487,7 +486,7 @@ function MobileNavButton({ active, icon: Icon, label, onClick, onPointerDown }: 
           transition-colors
           focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:outline-none
         `,
-        active ? 'text-foreground' : 'text-muted-foreground',
+        active ? 'text-[#4f8ef7]' : 'text-tm-secondary',
       )}
       aria-label={label}
     >

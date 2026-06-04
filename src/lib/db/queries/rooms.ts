@@ -202,4 +202,43 @@ export const RoomsRepository = {
       return { data: publicRooms, error: null }
     })
   },
+
+  // Admin: every room regardless of status/privacy, newest first.
+  async listAllRooms(limit = 100) {
+    return runQuery(async () => {
+      const allRooms = await db
+        .select({
+          id: rooms.id,
+          code: rooms.code,
+          name: rooms.name,
+          status: rooms.status,
+          max_participants: rooms.max_participants,
+          pot_amount: rooms.pot_amount,
+          is_private: rooms.is_private,
+          host_id: rooms.host_id,
+          created_at: rooms.created_at,
+          started_at: rooms.started_at,
+          host_username: users.username,
+          host_address: users.address,
+          participant_count: sql<number>`(
+            SELECT count(*)::int FROM room_participants rp
+            WHERE rp.room_id = ${rooms.id} AND rp.left_at IS NULL
+          )`,
+        })
+        .from(rooms)
+        .innerJoin(users, eq(rooms.host_id, users.id))
+        .orderBy(desc(rooms.created_at))
+        .limit(limit)
+
+      return { data: allRooms, error: null }
+    })
+  },
+
+  // Admin: hard-delete a room (participants cascade via FK).
+  async deleteRoom(roomId: string) {
+    return runQuery(async () => {
+      await db.delete(rooms).where(eq(rooms.id, roomId))
+      return { data: true, error: null }
+    })
+  },
 }

@@ -54,10 +54,10 @@ export default function HeroEventCard({ event }: HeroEventCardProps) {
     <div className="animate-slide-up">
       <div
         className={cn(
-          'relative overflow-hidden rounded-3xl border border-border/30',
-          'bg-gradient-to-br from-card via-card to-secondary/20',
+          'relative overflow-hidden rounded-3xl border border-tm-border',
+          'bg-tm-surface',
           'transition-all duration-300',
-          'hover:border-primary/40 hover:shadow-2xl hover:shadow-primary/15 hover:-translate-y-0.5',
+          'hover:border-[#4f8ef7]/40 hover:shadow-2xl hover:shadow-[#4f8ef7]/15 hover:-translate-y-0.5',
         )}
       >
         {/* Animated radial glow background */}
@@ -83,11 +83,12 @@ export default function HeroEventCard({ event }: HeroEventCardProps) {
               )}
               <div className="flex items-center gap-2">
                 <span className="
-                  flex items-center gap-1.5 rounded-full bg-green-500/15 px-2.5 py-1 text-xs font-semibold
-                  text-green-400
+                  flex items-center gap-1.5 rounded-full border border-[#00d4ff]/30
+                  bg-[#00d4ff]/10 px-2.5 py-1 text-xs font-semibold text-[#00d4ff]
+                  shadow-[0_0_10px_rgba(0,212,255,0.15)]
                 "
                 >
-                  <span className="size-1.5 animate-pulse rounded-full bg-green-400" />
+                  <span className="size-1.5 animate-pulse rounded-full bg-[#00d4ff]" />
                   LIVE
                 </span>
                 <span className="rounded-full bg-primary/15 px-2.5 py-1 text-xs font-medium text-primary capitalize">
@@ -141,10 +142,10 @@ export default function HeroEventCard({ event }: HeroEventCardProps) {
                 % DOWN
               </span>
             </div>
-            <div className="h-2 w-full overflow-hidden rounded-full bg-muted/60">
+            <div className="h-2 w-full overflow-hidden rounded-full bg-tm-elevated">
               <div
-                className="h-full rounded-full transition-all duration-700"
-                style={{ width: `${upChance}%`, background: 'linear-gradient(90deg, oklch(0.55 0.18 160), oklch(0.65 0.18 160))' }}
+                className="h-full rounded-full transition-[width] duration-700"
+                style={{ width: `${upChance}%`, background: 'linear-gradient(90deg, #00b4d8, #00d4ff)' }}
               />
             </div>
           </div>
@@ -156,46 +157,28 @@ export default function HeroEventCard({ event }: HeroEventCardProps) {
               onMouseEnter={() => handleMouseEnter('up')}
               onMouseLeave={handleMouseLeave}
               className={cn(
-                'flex items-center justify-between rounded-2xl border px-4 py-3.5 font-semibold',
-                'border-green-500/30 bg-green-500/10 text-green-400',
-                'transition-all duration-200 hover:border-green-400/60 hover:bg-green-500/20',
-                hovering === 'up' && 'scale-[1.02]',
+                'flex items-center justify-between rounded-xl px-4 py-3.5 font-bold text-white tabnum',
+                'border border-teal-500/30 bg-teal-700/80',
+                'transition-all duration-200 hover:bg-teal-600 hover:shadow-[0_0_20px_rgba(20,184,166,0.3)]',
+                hovering === 'up' ? 'scale-[1.02]' : 'active:scale-[0.98]',
               )}
             >
-              <span className="flex items-center gap-2 text-sm">
-                ↑
-                {' '}
-                BET
-                {' '}
-                {yesLabel.toUpperCase()}
-              </span>
-              <span className="text-lg font-bold text-green-300">
-                {upChance}
-                ¢
-              </span>
+              <span className="flex items-center gap-2 text-sm">↑ BET {yesLabel.toUpperCase()}</span>
+              <span className="text-lg font-bold">{upChance}¢</span>
             </button>
             <button
               type="button"
               onMouseEnter={() => handleMouseEnter('down')}
               onMouseLeave={handleMouseLeave}
               className={cn(
-                'flex items-center justify-between rounded-2xl border px-4 py-3.5 font-semibold',
-                'border-red-500/30 bg-red-500/10 text-red-400',
-                'transition-all duration-200 hover:border-red-400/60 hover:bg-red-500/20',
-                hovering === 'down' && 'scale-[1.02]',
+                'flex items-center justify-between rounded-xl px-4 py-3.5 font-bold text-white tabnum',
+                'border border-red-500/30 bg-red-700/80',
+                'transition-all duration-200 hover:bg-red-600 hover:shadow-[0_0_20px_rgba(239,68,68,0.3)]',
+                hovering === 'down' ? 'scale-[1.02]' : 'active:scale-[0.98]',
               )}
             >
-              <span className="flex items-center gap-2 text-sm">
-                ↓
-                {' '}
-                BET
-                {' '}
-                {noLabel.toUpperCase()}
-              </span>
-              <span className="text-lg font-bold text-red-300">
-                {downChance}
-                ¢
-              </span>
+              <span className="flex items-center gap-2 text-sm">↓ BET {noLabel.toUpperCase()}</span>
+              <span className="text-lg font-bold">{downChance}¢</span>
             </button>
           </div>
         </div>

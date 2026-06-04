@@ -5,7 +5,7 @@ import HeaderLogo from '@/components/HeaderLogo'
 
 export default async function Header() {
   return (
-    <header className="sticky top-0 z-40 border-b border-border/40 bg-background/95 backdrop-blur-sm">
+    <header className="sticky top-0 z-40 border-b border-tm-border bg-tm-surface/95 backdrop-blur-sm">
       <div className="flex h-14 w-full items-center gap-3 px-3 lg:px-5">
         {/* Logo: mobile only */}
         <div className="shrink-0 lg:hidden">

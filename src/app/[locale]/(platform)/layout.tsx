@@ -41,7 +41,7 @@ export default async function PlatformLayout({ params, children }: LayoutProps<'
               className="pointer-events-none fixed inset-0 -z-10 hidden dark:block"
               style={{
                 background:
-                  'radial-gradient(900px circle at 20% 0%, oklch(0.55 0.2 280 / 0.12), transparent 60%), radial-gradient(700px circle at 80% 5%, oklch(0.65 0.16 200 / 0.08), transparent 55%)',
+                  'radial-gradient(900px circle at 20% 0%, rgba(79,142,247,0.09), transparent 60%), radial-gradient(700px circle at 80% 5%, rgba(0,212,255,0.06), transparent 55%)',
               }}
             />
             {/* 3-column layout on desktop, single column on mobile */}

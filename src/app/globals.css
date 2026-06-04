@@ -186,6 +186,13 @@
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
+  /* Thoughts Market theme-aware surfaces (light/dark switch via the vars above) */
+  --color-tm-base: var(--bg-base);
+  --color-tm-surface: var(--bg-surface);
+  --color-tm-elevated: var(--bg-elevated);
+  --color-tm-border: var(--tm-border);
+  --color-tm-primary: var(--text-primary);
+  --color-tm-secondary: var(--text-secondary);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -498,4 +505,153 @@
 
 @utility animate-atlas-ring {
   animation: atlas-ring 2s ease-out infinite;
+}
+
+/* ── Thoughts Market Design Tokens ─────────────────────────────────────────── */
+/* Accents are shared across themes; surfaces/borders/text adapt per theme. */
+:root {
+  --accent-blue:   #4f8ef7;
+  --accent-cyan:   #00d4ff;
+  --accent-green:  #22c55e;
+  --accent-red:    #ef4444;
+  --accent-purple: #a855f7;
+
+  /* Light theme surfaces */
+  --bg-base:       #ffffff;
+  --bg-surface:    #ffffff;
+  --bg-elevated:   #f1f3f9;
+  --tm-border:     #e5e8f0;
+  --text-primary:  #0f1320;
+  --text-secondary:#5b6178;
+}
+
+/* Dark theme surfaces — the deep Thoughts Market navy */
+.dark,
+[data-theme-mode='dark'] {
+  --bg-base:       #0d0f1a;
+  --bg-surface:    #13162a;
+  --bg-elevated:   #1a1e35;
+  --tm-border:     #2a2f50;
+  --text-primary:  #f0f2ff;
+  --text-secondary:#8b90b8;
+}
+
+/* ── Custom scrollbar ────────────────────────────────────────────────────── */
+::-webkit-scrollbar           { width: 5px; height: 5px; }
+::-webkit-scrollbar-track     { background: transparent; }
+::-webkit-scrollbar-thumb     { background: var(--tm-border); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent-blue); }
+
+/* ── Keyframes ───────────────────────────────────────────────────────────── */
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+
+@keyframes pulse-glow-blue {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(79, 142, 247, 0); }
+  50%       { box-shadow: 0 0 22px 5px rgba(79, 142, 247, 0.35); }
+}
+
+/* ── Animation utilities ─────────────────────────────────────────────────── */
+@utility animate-slide-up {
+  animation: slide-up 0.38s ease both;
+}
+
+@utility animate-shimmer {
+  background: linear-gradient(90deg, var(--bg-surface) 25%, var(--bg-elevated) 50%, var(--bg-surface) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.8s linear infinite;
+}
+
+/* Staggered card entry — applied via nth-child on a .tm-grid parent */
+@utility tm-grid {
+  display: grid;
+}
+.tm-grid > *:nth-child(1)  { animation: slide-up 0.38s 0ms   ease both; }
+.tm-grid > *:nth-child(2)  { animation: slide-up 0.38s 50ms  ease both; }
+.tm-grid > *:nth-child(3)  { animation: slide-up 0.38s 100ms ease both; }
+.tm-grid > *:nth-child(4)  { animation: slide-up 0.38s 150ms ease both; }
+.tm-grid > *:nth-child(5)  { animation: slide-up 0.38s 200ms ease both; }
+.tm-grid > *:nth-child(6)  { animation: slide-up 0.38s 250ms ease both; }
+.tm-grid > *:nth-child(n+7){ animation: slide-up 0.38s 300ms ease both; }
+
+/* Tabular numbers for all price / stat text */
+.tabnum { font-variant-numeric: tabular-nums; }
+
+/* ── Extra animation keyframes ───────────────────────────────────────────── */
+@keyframes tm-float {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-4px); }
+}
+
+@keyframes tm-gradient-shift {
+  0%   { background-position:   0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position:   0% 50%; }
+}
+
+@keyframes tm-glow-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(0, 212, 255, 0); }
+  50%       { box-shadow: 0 0 16px 1px rgba(0, 212, 255, 0.25); }
+}
+
+@keyframes tm-pop-in {
+  0%   { opacity: 0; transform: scale(0.92) translateY(8px); }
+  60%  { opacity: 1; transform: scale(1.015) translateY(0); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes tm-sheen {
+  0%   { transform: translateX(-120%) skewX(-18deg); }
+  100% { transform: translateX(220%)  skewX(-18deg); }
+}
+
+/* ── Extra animation utilities ───────────────────────────────────────────── */
+@utility animate-tm-float {
+  animation: tm-float 4s ease-in-out infinite;
+}
+
+@utility animate-tm-glow {
+  animation: tm-glow-pulse 2.6s ease-in-out infinite;
+}
+
+@utility animate-tm-pop {
+  animation: tm-pop-in 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Animated gradient text — apply with bg-clip-text + text-transparent */
+@utility tm-gradient-text {
+  background: linear-gradient(90deg, #4f8ef7, #00d4ff, #a855f7, #4f8ef7);
+  background-size: 280% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: tm-gradient-shift 6s ease infinite;
+}
+
+/* Sheen sweep — place an absolutely-positioned child with this class.
+   Parent needs `relative overflow-hidden group`. */
+@utility tm-sheen {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+  transform: translateX(-120%) skewX(-18deg);
+  pointer-events: none;
+}
+.group:hover .tm-sheen { animation: tm-sheen 0.85s ease; }
+
+/* Respect reduced-motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .animate-tm-float,
+  .animate-tm-glow,
+  .animate-tm-pop,
+  .tm-gradient-text,
+  .animate-slide-up,
+  .tm-grid > * { animation: none !important; }
 }

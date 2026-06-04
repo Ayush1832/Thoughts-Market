@@ -18,23 +18,30 @@ const SPOTS: [number, number, number, number, number, number][] = [
 // Arc connections [spotIndexA, spotIndexB]
 const ARCS: [number, number][] = [[0, 2], [0, 3], [1, 3], [6, 3]]
 
-// Deterministic seeded land point cloud (no Math.random — same every render)
-function buildLand(): [number, number][] {
-  const pts: [number, number][] = []
+// Deterministic seeded night-earth city-light cloud (lat, lon, brightness)
+// (no Math.random — identical every render, so no hydration mismatch)
+function buildLand(): [number, number, number][] {
+  const pts: [number, number, number][] = []
   const continents: [number, number, number, number, number][] = [
-    [ 25,  70, -130,  -65, 160], // North America
-    [-55,  12,  -82,  -34,  95], // South America
-    [ 35,  72,  -12,   40,  90], // Europe
-    [-35,  37,  -18,   52, 120], // Africa
-    [  0,  77,   38,  148, 220], // Asia
-    [-45, -10,  112,  154,  55], // Australia
-    [ 60,  80, -180,  180,  55], // Arctic
+    [ 25,  70, -130,  -65, 320], // North America
+    [-55,  12,  -82,  -34, 190], // South America
+    [ 35,  72,  -12,   40, 230], // Europe
+    [-35,  37,  -18,   52, 240], // Africa
+    [  0,  77,   38,  148, 440], // Asia
+    [-45, -10,  112,  154, 110], // Australia
+    [ 60,  80, -180,  180, 120], // Arctic
   ]
   let s = 42
   const next = () => { s = (s * 1664525 + 1013904223) & 0xffffffff; return (s >>> 0) / 0xffffffff }
   const rnd  = (a: number, b: number) => a + next() * (b - a)
-  for (const [la, lb, loa, lob, n] of continents)
-    for (let i = 0; i < n; i++) pts.push([rnd(la, lb), rnd(loa, lob)])
+  for (const [la, lb, loa, lob, n] of continents) {
+    for (let i = 0; i < n; i++) {
+      // Mostly faint glow with occasional bright "metropolis" sparks
+      const roll = next()
+      const brightness = roll > 0.9 ? 0.85 + next() * 0.15 : 0.22 + next() * 0.42
+      pts.push([rnd(la, lb), rnd(loa, lob), brightness])
+    }
+  }
   return pts
 }
 
@@ -109,20 +116,22 @@ export default function AtlasGlobe() {
     function frame() {
       ctx.clearRect(0, 0, W, H)
 
-      // Atmosphere halo
-      const halo = ctx.createRadialGradient(cx, cy, R * 0.88, cx, cy, R * 1.24)
-      halo.addColorStop(0, 'rgba(0,180,255,0.08)')
-      halo.addColorStop(1, 'rgba(0,0,0,0)')
+      // Atmosphere bloom — teal glow radiating beyond the disk
+      const halo = ctx.createRadialGradient(cx, cy, R * 0.82, cx, cy, R * 1.38)
+      halo.addColorStop(0,    'rgba(22,165,235,0.16)')
+      halo.addColorStop(0.45, 'rgba(0,150,220,0.10)')
+      halo.addColorStop(1,    'rgba(0,0,0,0)')
       ctx.beginPath()
-      ctx.arc(cx, cy, R * 1.24, 0, Math.PI * 2)
+      ctx.arc(cx, cy, R * 1.38, 0, Math.PI * 2)
       ctx.fillStyle = halo
       ctx.fill()
 
-      // Globe base gradient
-      const base = ctx.createRadialGradient(cx - 24, cy - 24, 0, cx + 8, cy + 8, R * 1.1)
-      base.addColorStop(0,    '#11264a')
-      base.addColorStop(0.45, '#071020')
-      base.addColorStop(1,    '#020810')
+      // Night-earth ocean disk — near-black centre, faint blue scattering at the limb
+      const base = ctx.createRadialGradient(cx - 16, cy - 20, R * 0.08, cx, cy, R)
+      base.addColorStop(0,    '#0a1a33')
+      base.addColorStop(0.55, '#06101f')
+      base.addColorStop(0.85, '#05132b')
+      base.addColorStop(1,    '#0c3461')
       ctx.beginPath()
       ctx.arc(cx, cy, R, 0, Math.PI * 2)
       ctx.fillStyle = base
@@ -142,8 +151,8 @@ export default function AtlasGlobe() {
         if (erx < 1) continue
         ctx.beginPath()
         ctx.ellipse(cx, ey, erx, erx * 0.055, 0, 0, Math.PI * 2)
-        ctx.strokeStyle = 'rgba(0,200,255,0.09)'
-        ctx.lineWidth = 0.55
+        ctx.strokeStyle = 'rgba(0,200,255,0.06)'
+        ctx.lineWidth = 0.5
         ctx.stroke()
       }
 
@@ -155,19 +164,37 @@ export default function AtlasGlobe() {
         ctx.beginPath()
         ctx.ellipse(cx, cy, erx, R, 0, 0, Math.PI * 2)
         ctx.strokeStyle = Math.cos(lo) >= 0
-          ? 'rgba(0,200,255,0.08)'
-          : 'rgba(0,200,255,0.02)'
-        ctx.lineWidth = 0.55
+          ? 'rgba(0,200,255,0.055)'
+          : 'rgba(0,200,255,0.015)'
+        ctx.lineWidth = 0.5
         ctx.stroke()
       }
 
-      // Continent dot cloud
-      for (const [lat, lon] of LAND) {
+      // City-light clusters — teal points, bright metropolises bloom
+      for (const [lat, lon, brightness] of LAND) {
         const p = project(lat, lon, rot, R, cx, cy)
         if (p.z < 0) continue
+        const edgeFade = Math.min(1, (p.z / R) * 1.5) // fade toward the limb for sphere depth
+        const a = edgeFade * brightness
+        if (a < 0.04) continue
+        const isCity = brightness > 0.82
+
+        // soft bloom around the brightest cities
+        if (isCity) {
+          const bloom = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, 3.4)
+          bloom.addColorStop(0, `rgba(150,240,255,${a * 0.55})`)
+          bloom.addColorStop(1, 'rgba(150,240,255,0)')
+          ctx.beginPath()
+          ctx.arc(p.x, p.y, 3.4, 0, Math.PI * 2)
+          ctx.fillStyle = bloom
+          ctx.fill()
+        }
+
         ctx.beginPath()
-        ctx.arc(p.x, p.y, 1.05, 0, Math.PI * 2)
-        ctx.fillStyle = `rgba(30,190,255,${(p.z / R) * 0.28})`
+        ctx.arc(p.x, p.y, isCity ? 1.2 : 0.8, 0, Math.PI * 2)
+        ctx.fillStyle = isCity
+          ? `rgba(195,247,255,${a})`
+          : `rgba(40,200,235,${a * 0.85})`
         ctx.fill()
       }
 
@@ -194,15 +221,22 @@ export default function AtlasGlobe() {
 
       ctx.restore() // end clip
 
-      // Globe rim gradient
+      // Faint full atmosphere ring all around the limb
+      ctx.beginPath()
+      ctx.arc(cx, cy, R - 0.5, 0, Math.PI * 2)
+      ctx.strokeStyle = 'rgba(40,190,255,0.18)'
+      ctx.lineWidth = 2.5
+      ctx.stroke()
+
+      // Globe rim gradient — bright teal edge, directional for 3D feel
       const rim = ctx.createLinearGradient(cx - R, cy - R, cx + R, cy + R)
-      rim.addColorStop(0,   'rgba(0,230,255,0.55)')
-      rim.addColorStop(0.4, 'rgba(0,150,255,0.20)')
-      rim.addColorStop(1,   'rgba(0,50,160,0.06)')
+      rim.addColorStop(0,   'rgba(80,235,255,0.7)')
+      rim.addColorStop(0.4, 'rgba(0,160,255,0.28)')
+      rim.addColorStop(1,   'rgba(0,60,170,0.08)')
       ctx.beginPath()
       ctx.arc(cx, cy, R, 0, Math.PI * 2)
       ctx.strokeStyle = rim
-      ctx.lineWidth = 1.4
+      ctx.lineWidth = 1.5
       ctx.stroke()
 
       // Specular highlight (top-left)

@@ -43,14 +43,14 @@ const buttonVariants = cva(
         link: 'text-primary underline-offset-4 hover:underline',
         yes: `
           bg-yes/15 font-semibold text-yes-foreground transition-all duration-200
-          hover:-translate-y-px hover:bg-yes/25 hover:text-yes hover:shadow-md hover:shadow-yes/20
-          active:translate-y-0 active:shadow-none
+          hover:-translate-y-px hover:bg-yes/25 hover:text-yes hover:shadow-md hover:shadow-yes/25
+          active:translate-y-0 active:scale-[0.98] active:shadow-none
           dark:hover:bg-yes dark:hover:text-white
         `,
         no: `
           bg-no/15 font-semibold text-no-foreground transition-all duration-200
-          hover:-translate-y-px hover:bg-no/25 hover:text-no hover:shadow-md hover:shadow-no/20
-          active:translate-y-0 active:shadow-none
+          hover:-translate-y-px hover:bg-no/25 hover:text-no hover:shadow-md hover:shadow-no/25
+          active:translate-y-0 active:scale-[0.98] active:shadow-none
           dark:hover:bg-no dark:hover:text-white
         `,
       },

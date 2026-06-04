@@ -180,8 +180,8 @@ export default function NavigationTabs() {
   useScrollActiveTabIntoView({ activeIndex, containerRef, tabItemRef })
 
   return (
-    <nav className="sticky top-14 z-30 bg-background/95 backdrop-blur-sm">
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-border" />
+    <nav className="sticky top-14 z-30 bg-tm-surface/95 backdrop-blur-sm">
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-tm-border" />
       <div className="flex w-full min-w-0 px-3 lg:px-5">
         <div
           id="navigation-main-tags"
@@ -220,7 +220,7 @@ export default function NavigationTabs() {
                 }}
               />
 
-              {index === 1 && <div className="mx-3 h-5 w-px shrink-0 bg-border" />}
+              {index === 1 && <div className="mx-3 h-5 w-px shrink-0 bg-tm-border" />}
             </div>
           ))}
 

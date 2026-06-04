@@ -2,7 +2,7 @@
 
 import type { LucideIcon } from 'lucide-react'
 import type { Route } from 'next'
-import { BadgePercentIcon, CalendarIcon, DollarSignIcon, FilmIcon, HeadphonesIcon, LanguagesIcon, MessageSquareIcon, NewspaperIcon, SettingsIcon, ShieldCheckIcon, SwatchBookIcon, TagsIcon, TextSelectIcon, TrendingUpIcon, UsersIcon } from 'lucide-react'
+import { BadgePercentIcon, CalendarIcon, DollarSignIcon, FilmIcon, HeadphonesIcon, LanguagesIcon, MessageSquareIcon, NewspaperIcon, SettingsIcon, ShieldCheckIcon, SwatchBookIcon, SwordsIcon, TagsIcon, TextSelectIcon, TrendingUpIcon, UsersIcon } from 'lucide-react'
 import { useExtracted } from 'next-intl'
 import AppLink from '@/components/AppLink'
 import { Button } from '@/components/ui/button'
@@ -27,6 +27,7 @@ export default function AdminSidebar() {
     { id: 'finance', label: t('Finance'), href: '/admin/finance' as Route, icon: DollarSignIcon },
     { id: 'affiliate', label: t('Affiliate'), href: '/admin/affiliate' as Route, icon: BadgePercentIcon },
     { id: 'events', label: t('Events'), href: '/admin/events' as Route, icon: CalendarIcon },
+    { id: 'p2p', label: t('Peer to Peer'), href: '/admin/p2p' as Route, icon: SwordsIcon },
     { id: 'users', label: t('Users'), href: '/admin/users' as Route, icon: UsersIcon },
     { id: 'roles', label: t('Roles'), href: '/admin/roles' as Route, icon: ShieldCheckIcon },
     { id: 'support', label: t('Support'), href: '/admin/support' as Route, icon: HeadphonesIcon },

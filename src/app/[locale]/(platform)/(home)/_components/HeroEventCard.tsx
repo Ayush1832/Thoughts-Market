@@ -54,17 +54,18 @@ export default function HeroEventCard({ event }: HeroEventCardProps) {
     <div className="animate-slide-up">
       <div
         className={cn(
-          'relative overflow-hidden rounded-3xl border border-tm-border',
-          'bg-tm-surface',
+          'relative overflow-hidden rounded-3xl border border-white/[0.08]',
+          'bg-white/[0.04] backdrop-blur-2xl',
+          'shadow-[0_1px_0_rgba(255,255,255,0.1)_inset,0_30px_80px_-24px_rgba(0,0,0,0.7)]',
           'transition-all duration-300',
-          'hover:border-[#4f8ef7]/40 hover:shadow-2xl hover:shadow-[#4f8ef7]/15 hover:-translate-y-0.5',
+          'hover:border-[#7d6cff]/40 hover:-translate-y-0.5',
         )}
       >
-        {/* Animated radial glow background */}
+        {/* Iridescent nebula glow background */}
         <div
-          className="pointer-events-none absolute inset-0 opacity-60"
+          className="pointer-events-none absolute inset-0 opacity-80"
           style={{
-            background: 'radial-gradient(ellipse at 20% 0%, oklch(0.62 0.21 262 / 0.12) 0%, transparent 60%), radial-gradient(ellipse at 80% 100%, oklch(0.72 0.18 155 / 0.06) 0%, transparent 50%)',
+            background: 'radial-gradient(120% 80% at 0% 0%, rgba(125,108,255,0.12), transparent 55%), radial-gradient(120% 80% at 100% 100%, rgba(84,227,255,0.08), transparent 55%)',
           }}
         />
 
@@ -119,48 +120,50 @@ export default function HeroEventCard({ event }: HeroEventCardProps) {
           {/* clickable title */}
           <AppLink href={`/event/${event.slug}`} className="group mt-5 block">
             <h2 className="
-              text-2xl/tight font-bold tracking-tight text-foreground transition-colors
-              group-hover:text-primary
-              md:text-3xl
+              font-display text-3xl/tight tracking-tight text-foreground transition-colors
+              group-hover:text-[#54e3ff]
+              md:text-4xl
             "
             >
               {event.title}
             </h2>
           </AppLink>
 
-          {/* progress bar */}
+          {/* probability bar */}
           <div className="mt-5 space-y-2">
             <div className="flex items-center justify-between text-sm font-semibold">
-              <span className="text-green-400">
+              <span className="text-[#5ee5ff]">
                 UP
                 {' '}
                 {upChance}
                 %
               </span>
-              <span className="text-red-400">
+              <span className="text-[#ff6b8a]">
                 {downChance}
                 % DOWN
               </span>
             </div>
-            <div className="h-2 w-full overflow-hidden rounded-full bg-tm-elevated">
+            <div className="h-2.5 w-full overflow-hidden rounded-full bg-white/[0.06]">
               <div
                 className="h-full rounded-full transition-[width] duration-700"
-                style={{ width: `${upChance}%`, background: 'linear-gradient(90deg, #00b4d8, #00d4ff)' }}
+                style={{ width: `${upChance}%`, background: 'linear-gradient(90deg, #5ee5ff, #54e3ff)' }}
               />
             </div>
           </div>
 
-          {/* bet buttons */}
+          {/* predict buttons — cyan (up) / pink (down) */}
           <div className="mt-4 grid grid-cols-2 gap-3">
             <button
               type="button"
               onMouseEnter={() => handleMouseEnter('up')}
               onMouseLeave={handleMouseLeave}
               className={cn(
-                'flex items-center justify-between rounded-xl px-4 py-3.5 font-bold text-white tabnum',
-                'border border-teal-500/30 bg-teal-700/80',
-                'transition-all duration-200 hover:bg-teal-600 hover:shadow-[0_0_20px_rgba(20,184,166,0.3)]',
-                hovering === 'up' ? 'scale-[1.02]' : 'active:scale-[0.98]',
+                'tabnum flex items-center justify-between rounded-2xl px-5 py-3.5 text-base font-semibold',
+                'border border-[#5ee5ff]/35 text-[#5ee5ff]',
+                'bg-[linear-gradient(180deg,rgba(94,229,255,0.22),rgba(94,229,255,0.08))]',
+                'shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_8px_24px_-10px_rgba(94,229,255,0.35)]',
+                'transition-all duration-150 hover:-translate-y-px',
+                hovering === 'up' ? '-translate-y-px' : 'active:translate-y-0',
               )}
             >
               <span className="flex items-center gap-2 text-sm">↑ PREDICT {yesLabel.toUpperCase()}</span>
@@ -171,10 +174,12 @@ export default function HeroEventCard({ event }: HeroEventCardProps) {
               onMouseEnter={() => handleMouseEnter('down')}
               onMouseLeave={handleMouseLeave}
               className={cn(
-                'flex items-center justify-between rounded-xl px-4 py-3.5 font-bold text-white tabnum',
-                'border border-red-500/30 bg-red-700/80',
-                'transition-all duration-200 hover:bg-red-600 hover:shadow-[0_0_20px_rgba(239,68,68,0.3)]',
-                hovering === 'down' ? 'scale-[1.02]' : 'active:scale-[0.98]',
+                'tabnum flex items-center justify-between rounded-2xl px-5 py-3.5 text-base font-semibold',
+                'border border-[#ff6b8a]/35 text-[#ff6b8a]',
+                'bg-[linear-gradient(180deg,rgba(255,107,138,0.22),rgba(255,107,138,0.08))]',
+                'shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_8px_24px_-10px_rgba(255,107,138,0.35)]',
+                'transition-all duration-150 hover:-translate-y-px',
+                hovering === 'down' ? '-translate-y-px' : 'active:translate-y-0',
               )}
             >
               <span className="flex items-center gap-2 text-sm">↓ PREDICT {noLabel.toUpperCase()}</span>

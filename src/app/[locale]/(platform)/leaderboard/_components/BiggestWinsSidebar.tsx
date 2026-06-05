@@ -25,6 +25,7 @@ export default function BiggestWinsSidebar({
   return (
     <aside className={`
       w-full overflow-hidden rounded-2xl border bg-background shadow-md
+      dark:border-white/[0.07] dark:bg-white/[0.03] dark:backdrop-blur-xl
       lg:sticky lg:top-35 lg:h-fit lg:self-start
     `}
     >

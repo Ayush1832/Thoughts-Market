@@ -3,6 +3,7 @@
 import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react'
 import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
+import { stripLocalePrefix } from '@/lib/locale-path'
 import { cn } from '@/lib/utils'
 
 interface RightSidebarClientProps {
@@ -11,15 +12,18 @@ interface RightSidebarClientProps {
 
 function useAutoCollapse() {
   const pathname = usePathname()
-  const isEventPage = pathname.includes('/event/')
-  const [collapsed, setCollapsed] = useState(isEventPage)
+  // Expanded only on the home feed; auto-collapse on every other page.
+  const path = stripLocalePrefix(pathname)
+  const isHome = path === '/' || path === ''
+  const shouldCollapse = !isHome
+  const [collapsed, setCollapsed] = useState(shouldCollapse)
   const [manualOverride, setManualOverride] = useState(false)
 
   useEffect(() => {
     if (!manualOverride) {
-      setCollapsed(isEventPage)
+      setCollapsed(shouldCollapse)
     }
-  }, [isEventPage, manualOverride])
+  }, [shouldCollapse, manualOverride])
 
   const toggle = () => {
     setManualOverride(true)

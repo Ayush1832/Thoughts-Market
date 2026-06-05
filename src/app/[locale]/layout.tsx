@@ -11,7 +11,7 @@ import SiteStructuredData from '@/components/seo/SiteStructuredData'
 import TestModeBannerDeferred from '@/components/TestModeBannerDeferred'
 import { loadEnabledLocales } from '@/i18n/locale-settings'
 import { routing } from '@/i18n/routing'
-import { openSauceOne } from '@/lib/fonts'
+import { fontVariables } from '@/lib/fonts'
 import { loadGlobalAnnouncementSettings } from '@/lib/global-announcement-settings'
 import { IS_TEST_MODE } from '@/lib/network'
 import { resolvePwaThemeColors } from '@/lib/pwa-colors'
@@ -112,10 +112,19 @@ export default async function LocaleLayout({ params, children }: LayoutProps<'/[
   return (
     <html
       lang={locale}
-      className={openSauceOne.variable}
+      className={fontVariables}
       data-theme-preset={runtimeTheme.theme.presetId}
       suppressHydrationWarning
     >
+      <head>
+        {/* Prism prototype fonts — exact families used by the .pr-* design system */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap"
+          rel="stylesheet"
+        />
+      </head>
       <body className="flex min-h-screen flex-col font-sans">
         <SiteStructuredData locale={locale} site={runtimeTheme.site} />
         <PwaServiceWorker />

@@ -64,7 +64,7 @@ export default function SettingsPrivacyContent({ initial }: { initial: PrivacySe
 
   return (
     <>
-      <div className="rounded-2xl border border-border/50 p-5">
+      <div className="tm-glass p-5">
         <div className="mb-2">
           <h2 className="text-xl font-semibold">{t('Privacy')}</h2>
           <p className="text-sm text-muted-foreground">{t('What\'s visible to others.')}</p>

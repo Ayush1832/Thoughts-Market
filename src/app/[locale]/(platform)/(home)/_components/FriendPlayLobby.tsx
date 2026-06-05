@@ -233,7 +233,7 @@ export default function FriendPlayLobby({ onClose }: { onClose?: () => void }) {
   const isLive = selectedRoom?.status === 'playing'
 
   return (
-    <div className="overflow-hidden rounded-3xl border border-border/40 bg-card animate-fade-in">
+    <div className="overflow-hidden rounded-3xl border border-border/40 bg-card animate-fade-in dark:border-white/[0.07] dark:bg-white/[0.03] dark:backdrop-blur-xl">
       {/* ── Header ── */}
       <div className="flex items-center justify-between border-b border-border/40 px-5 py-4">
         <div>
@@ -314,14 +314,14 @@ export default function FriendPlayLobby({ onClose }: { onClose?: () => void }) {
                   className={cn(
                     'w-full rounded-2xl border p-3 text-left transition-all duration-150',
                     selectedRoom?.id === room.id
-                      ? 'border-primary/30 bg-secondary'
-                      : 'border-transparent hover:bg-muted/50',
+                      ? 'border-[#7d6cff]/30 bg-white/[0.06]'
+                      : 'border-transparent hover:bg-white/[0.04]',
                   )}
                 >
                   <div className="flex items-center gap-2.5">
                     <div className={cn(
                       'flex size-9 shrink-0 items-center justify-center rounded-xl text-sm font-bold text-white',
-                      room.status === 'playing' ? 'bg-gradient-to-br from-green-500 to-teal-500' : 'bg-gradient-to-br from-primary to-primary/70',
+                      room.status === 'playing' ? 'bg-gradient-to-br from-green-500 to-teal-500' : 'bg-gradient-to-br from-[#7d6cff] to-[#54e3ff]',
                     )}
                     >
                       {room.name[0]?.toUpperCase()}

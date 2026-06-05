@@ -555,7 +555,7 @@ function ProfitLossCard({
     : null
 
   return (
-    <Card className="relative h-full overflow-hidden rounded-lg bg-background">
+    <Card className="relative h-full overflow-hidden rounded-lg dark:bg-white/[0.03]">
       <CardContent className="relative flex h-full flex-col gap-2.5 p-3 sm:p-4">
         <div className="flex items-center justify-between gap-3 sm:gap-4">
           <div className="flex items-center gap-2">

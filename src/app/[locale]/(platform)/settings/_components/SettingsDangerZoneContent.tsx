@@ -57,7 +57,7 @@ export default function SettingsDangerZoneContent() {
 
   return (
     <div className="grid gap-6">
-      <div className="rounded-2xl border border-border/50 p-5">
+      <div className="tm-glass p-5">
         <Row
           title={t('Export all data')}
           description={t('Bets, positions, transactions — as a JSON file')}

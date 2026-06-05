@@ -156,9 +156,11 @@ export default function EventCard({
     <Card
       className={cn(`
         group flex h-45 flex-col overflow-hidden rounded-2xl
-        border border-tm-border bg-tm-surface
+        border border-white/[0.06] bg-white/[0.035] backdrop-blur-xl
+        shadow-[0_1px_0_rgba(255,255,255,0.06)_inset,0_20px_50px_-24px_rgba(0,0,0,0.6)]
         transition-all duration-200
-        hover:-translate-y-1 hover:border-[#4f8ef7]/50 hover:shadow-xl hover:shadow-[#4f8ef7]/10
+        hover:-translate-y-1 hover:border-[#7d6cff]/40 hover:bg-white/[0.05]
+        hover:shadow-[0_1px_0_rgba(255,255,255,0.1)_inset,0_24px_60px_-20px_rgba(125,108,255,0.35)]
         animate-slide-up
       `)}
     >

@@ -113,7 +113,7 @@ export default function SettingsSessionsContent() {
   }
 
   return (
-    <div className="rounded-2xl border border-border/50 p-5">
+    <div className="tm-glass p-5">
       <div className="mb-2">
         <h2 className="text-xl font-semibold">{t('Active sessions')}</h2>
         <p className="text-sm text-muted-foreground">{t('Sign out any device you no longer use.')}</p>

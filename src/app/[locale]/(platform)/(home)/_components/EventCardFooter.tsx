@@ -41,7 +41,7 @@ export default function EventCardFooter({
         {shouldShowNewBadge
           ? <NewBadge />
           : (
-              <span>
+              <span className="font-mono-pr">
                 {formatVolume(resolvedVolume)}
                 {' '}
                 Vol.

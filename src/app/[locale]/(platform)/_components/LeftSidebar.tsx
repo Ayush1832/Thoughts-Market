@@ -115,17 +115,21 @@ export default function LeftSidebar() {
       )}
     >
       {/* ── Logo row + collapse toggle ── */}
-      <div className="flex h-14 shrink-0 items-center border-b border-tm-border px-3">
-        {/* Logo fades out when collapsed */}
-        <div className={cn(
-          'flex-1 min-w-0 overflow-hidden transition-all duration-300',
-          collapsed ? 'w-0 opacity-0' : 'opacity-100',
-        )}
-        >
-          <HeaderLogo />
-        </div>
+      <div className={cn(
+        'shrink-0 border-b border-tm-border',
+        collapsed ? 'flex flex-col items-center gap-1 py-2' : 'flex h-14 items-center px-3',
+      )}
+      >
+        {/* Logo: full wordmark when expanded, icon-only mark when collapsed (never fully hidden) */}
+        {collapsed
+          ? <HeaderLogo iconOnly />
+          : (
+              <div className="min-w-0 flex-1 overflow-hidden">
+                <HeaderLogo />
+              </div>
+            )}
 
-        {/* Toggle button — always visible */}
+        {/* Collapse / expand toggle */}
         <button
           type="button"
           onClick={toggle}
@@ -134,12 +138,11 @@ export default function LeftSidebar() {
             'flex size-8 shrink-0 items-center justify-center rounded-lg',
             'text-tm-secondary transition-all duration-200',
             'hover:bg-tm-elevated hover:text-tm-primary',
-            collapsed && 'mx-auto',
           )}
         >
           {collapsed
             ? <ChevronRightIcon className="size-4" />
-            : <ChevronLeftIcon  className="size-4" />}
+            : <ChevronLeftIcon className="size-4" />}
         </button>
       </div>
 

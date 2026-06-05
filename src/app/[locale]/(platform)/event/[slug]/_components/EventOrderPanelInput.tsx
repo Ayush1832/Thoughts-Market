@@ -112,15 +112,10 @@ export default function EventOrderPanelInput({
     if (side === ORDER_SIDE.SELL) {
       const isDisabled = availableShares <= 0
       return ['25%', '50%', '75%'].map(percentage => (
-        <Button
+        <button
           type="button"
           key={percentage}
-          size="sm"
-          variant="outline"
-          className={cn(
-            'text-xs',
-            { 'cursor-not-allowed opacity-50': isDisabled },
-          )}
+          className={cn('pe-chip flex-1', { 'cursor-not-allowed opacity-50': isDisabled })}
           disabled={isDisabled}
           onClick={() => {
             if (isDisabled) {
@@ -134,17 +129,15 @@ export default function EventOrderPanelInput({
           }}
         >
           {percentage}
-        </Button>
+        </button>
       ))
     }
 
     return BUY_CHIPS.map(chip => (
-      <Button
+      <button
         type="button"
         key={chip}
-        size="sm"
-        variant="outline"
-        className="px-2 text-xs"
+        className="pe-chip flex-1"
         onClick={() => {
           const chipValue = Number.parseInt(chip.substring(2), 10)
           const newValue = amountNumber + chipValue
@@ -155,7 +148,7 @@ export default function EventOrderPanelInput({
         }}
       >
         {chip}
-      </Button>
+      </button>
     ))
   }
 
@@ -272,12 +265,10 @@ export default function EventOrderPanelInput({
         )}
       >
         {renderActionButtons()}
-        <Button
+        <button
           type="button"
-          size="sm"
-          variant="outline"
           className={cn(
-            'text-xs',
+            'pe-chip flex-1',
             { 'cursor-not-allowed opacity-50': side === ORDER_SIDE.SELL && availableShares <= 0 },
           )}
           disabled={side === ORDER_SIDE.SELL && availableShares <= 0}
@@ -297,7 +288,7 @@ export default function EventOrderPanelInput({
           }}
         >
           {t('Max')}
-        </Button>
+        </button>
       </div>
     </>
   )

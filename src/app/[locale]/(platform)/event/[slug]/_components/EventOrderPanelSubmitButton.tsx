@@ -45,13 +45,21 @@ export default function EventOrderPanelSubmitButton({
         onClick={onClick}
         className={cn(
           `
-            relative mt-2 w-full translate-y-0 overflow-hidden rounded-md text-base font-bold transition-transform
+            relative mt-2 w-full translate-y-0 overflow-hidden rounded-md text-base font-bold transition-all
             duration-150 ease-out
-            hover:translate-y-px
+            hover:-translate-y-px
             active:translate-y-0.5
             disabled:opacity-100
           `,
-          useSportsDepth ? 'hover:brightness-95' : 'hover:bg-primary',
+          useSportsDepth
+            ? 'hover:brightness-95'
+            // Prism iridescent confirm gradient + glow (default panel)
+            : `
+                border border-white/10 text-white
+                bg-[linear-gradient(135deg,#7d6cff,#54e3ff)]
+                shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_12px_30px_-12px_rgba(125,108,255,0.65)]
+                hover:brightness-110
+              `,
           selectedAccent?.buttonClassName,
         )}
         style={selectedAccent?.buttonStyle}

@@ -1,7 +1,35 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
+/* Prism prototype design system — exact .pr-* classes from the reference UI */
+@import './prism.css';
 
 @custom-variant dark (&:is(.dark *));
+
+/* Mirror the prototype's --pr-* design tokens to the root so .pr-* utility
+   classes resolve their variables anywhere (without needing a .pr ancestor,
+   whose layout rules — overflow/height — would break our shell). */
+:root {
+  --pr-bg:        #07080f;
+  --pr-bg-2:      #0c0d18;
+  --pr-ink:       #ffffff;
+  --pr-ink-soft:  #b8b8c8;
+  --pr-ink-mute:  #6a6a80;
+  --pr-line:      rgba(255,255,255,0.07);
+  --pr-line-2:    rgba(255,255,255,0.04);
+  --pr-card:      rgba(255,255,255,0.025);
+  --pr-card-2:    rgba(255,255,255,0.05);
+  --pr-up:        #5ee5ff;
+  --pr-up-bg:     rgba(94,229,255,0.14);
+  --pr-up-edge:   rgba(94,229,255,0.30);
+  --pr-down:      #ff6b8a;
+  --pr-down-bg:   rgba(255,107,138,0.14);
+  --pr-down-edge: rgba(255,107,138,0.30);
+  --pr-yes:       #4ade8a;
+  --pr-no:        #ff6b6b;
+  --pr-acc-violet:#7d6cff;
+  --pr-acc-cyan:  #54e3ff;
+  --pr-acc-pink:  #ff7ad9;
+}
 
 :root,
 [data-theme-mode='light'] {
@@ -42,25 +70,26 @@
 
 .dark,
 [data-theme-mode='dark'] {
-  --background: oklch(0.284 0.034 250.76);
-  --foreground: oklch(0.984 0.003 247.858);
-  --card: oklch(0.32 0.04 257);
-  --card-foreground: oklch(0.984 0.003 247.858);
-  --popover: oklch(0.284 0.034 250.76);
-  --popover-foreground: oklch(0.984 0.003 247.858);
-  --primary: oklch(0.685 0.169 237.323);
-  --primary-foreground: oklch(0.98 0 248);
-  --secondary: oklch(0.34 0.04 257);
-  --secondary-foreground: oklch(0.984 0.003 247.858);
-  --muted: oklch(0.379 0.041 260.031);
-  --muted-foreground: oklch(0.704 0.04 256.788);
-  --accent: oklch(0.379 0.041 260.031);
-  --accent-foreground: oklch(0.984 0.003 247.858);
-  --destructive: oklch(0.704 0.191 22.216);
-  --destructive-foreground: oklch(0.95 0.02 240);
-  --border: oklch(1 0 0 / 12%);
-  --input: oklch(0.37 0.04 257);
-  --ring: oklch(0.551 0.027 264.364);
+  /* Prism near-black + iridescent palette */
+  --background: #07080f;
+  --foreground: #ffffff;
+  --card: #0e0f1c;
+  --card-foreground: #ffffff;
+  --popover: #0c0d18;
+  --popover-foreground: #ffffff;
+  --primary: #7d6cff;
+  --primary-foreground: #ffffff;
+  --secondary: #181a2c;
+  --secondary-foreground: #ffffff;
+  --muted: #14151f;
+  --muted-foreground: #b8b8c8;
+  --accent: #181a2c;
+  --accent-foreground: #ffffff;
+  --destructive: #ff6b6b;
+  --destructive-foreground: #ffffff;
+  --border: oklch(1 0 0 / 8%);
+  --input: oklch(1 0 0 / 10%);
+  --ring: #7d6cff;
   --chart-1: oklch(0.488 0.243 264.376);
   --chart-2: oklch(0.696 0.17 162.48);
   --chart-3: oklch(0.769 0.188 70.08);
@@ -217,6 +246,36 @@
     font-feature-settings: "cv11", "ss01";
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    position: relative;
+  }
+
+  /* ── Prism nebula glow background (dark mode, behind everything) ── */
+  .dark body::before,
+  [data-theme-mode='dark'] body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+      radial-gradient(900px 700px at 8% -10%,  rgba(125,108,255,0.28), transparent 60%),
+      radial-gradient(800px 600px at 95% 0%,   rgba(84,227,255,0.16),  transparent 65%),
+      radial-gradient(900px 700px at 60% 110%, rgba(255,122,217,0.10), transparent 65%);
+  }
+  /* faint grid overlay, masked toward the center */
+  .dark body::after,
+  [data-theme-mode='dark'] body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.016) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.016) 1px, transparent 1px);
+    background-size: 56px 56px;
+    mask-image: radial-gradient(ellipse 70% 60% at 50% 35%, black, transparent 80%);
+    -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 35%, black, transparent 80%);
   }
 
   /* ── Global dark-mode card/input polish ── */
@@ -510,11 +569,14 @@
 /* ── Thoughts Market Design Tokens ─────────────────────────────────────────── */
 /* Accents are shared across themes; surfaces/borders/text adapt per theme. */
 :root {
-  --accent-blue:   #4f8ef7;
-  --accent-cyan:   #00d4ff;
-  --accent-green:  #22c55e;
-  --accent-red:    #ef4444;
-  --accent-purple: #a855f7;
+  /* Prism iridescent accents (violet / cyan / pink) + outcome colors */
+  --accent-blue:   #7d6cff; /* primary accent (violet) */
+  --accent-cyan:   #54e3ff;
+  --accent-green:  #4ade8a;
+  --accent-red:    #ff6b6b;
+  --accent-purple: #ff7ad9; /* pink */
+  --pr-up:         #5ee5ff;
+  --pr-down:       #ff6b8a;
 
   /* Light theme surfaces */
   --bg-base:       #ffffff;
@@ -525,15 +587,15 @@
   --text-secondary:#5b6178;
 }
 
-/* Dark theme surfaces — the deep Thoughts Market navy */
+/* Dark theme surfaces — Prism near-black + iridescent */
 .dark,
 [data-theme-mode='dark'] {
-  --bg-base:       #0d0f1a;
-  --bg-surface:    #13162a;
-  --bg-elevated:   #1a1e35;
-  --tm-border:     #2a2f50;
-  --text-primary:  #f0f2ff;
-  --text-secondary:#8b90b8;
+  --bg-base:       #07080f;
+  --bg-surface:    #0e0f1c;
+  --bg-elevated:   #181a2c;
+  --tm-border:     #23253a;
+  --text-primary:  #ffffff;
+  --text-secondary:#b8b8c8;
 }
 
 /* ── Custom scrollbar ────────────────────────────────────────────────────── */
@@ -583,6 +645,45 @@
 
 /* Tabular numbers for all price / stat text */
 .tabnum { font-variant-numeric: tabular-nums; }
+
+/* ── Prism typography helpers ────────────────────────────────────────────── */
+/* Instrument Serif display headings (the big editorial titles in the design). */
+@utility font-display {
+  font-family: var(--font-display), 'Instrument Serif', Georgia, serif;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+/* JetBrains Mono for stats/labels. */
+@utility font-mono-pr {
+  font-family: var(--font-mono), 'JetBrains Mono', ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+/* Iridescent gradient text (violet → cyan → pink). */
+@utility text-iridescent {
+  background: linear-gradient(90deg, #7d6cff, #54e3ff, #ff7ad9);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Prism glass panel — for surfaces that use raw bordered divs (not the Card
+   component). Light mode keeps a clean solid card; dark mode goes glass. */
+@utility tm-glass {
+  border-radius: 1rem;
+  border: 1px solid var(--border);
+  background: var(--card);
+}
+.dark .tm-glass,
+[data-theme-mode='dark'] .tm-glass {
+  border-color: rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.03);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  backdrop-filter: blur(20px) saturate(140%);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.06) inset,
+    0 24px 60px -24px rgba(0, 0, 0, 0.6);
+}
 
 /* ── Extra animation keyframes ───────────────────────────────────────────── */
 @keyframes tm-float {

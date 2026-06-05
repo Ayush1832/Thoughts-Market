@@ -1,0 +1,294 @@
+'use client'
+
+import { useEffect, useRef } from 'react'
+
+// [lat, lon, r, g, b, dotSize]
+const SPOTS: [number, number, number, number, number, number][] = [
+  [ 25,  121, 255,  77, 109, 5.5], // Taiwan      — red
+  [ 26,   50, 255, 190,  61, 4.5], // Middle East — gold
+  [ 37, -100, 168,  85, 247, 4.5], // USA/AI      — purple
+  [ 51,   10,   0, 210, 255, 3.5], // Europe      — cyan
+  [ 35,  139,   0, 210, 255, 3.5], // Japan       — cyan
+  [-23,  -46,   0, 210, 255, 3.0], // Brazil      — cyan
+  [ 55,   37, 255, 190,  61, 3.0], // Russia      — gold
+]
+const ARCS: [number, number][] = [[0, 2], [0, 3], [1, 3], [6, 3]]
+
+const EARTH_TEXTURE_SRCS = [
+  '/earth.jpg',
+  'https://unpkg.com/three-globe/example/img/earth-night.jpg',
+]
+const TEX_W = 1024
+const TEX_H = 512
+
+// Shared texture load across every globe instance (load once).
+let texCache: Uint8ClampedArray | null = null
+let texPromise: Promise<Uint8ClampedArray | null> | null = null
+
+function loadEarthTexture(): Promise<Uint8ClampedArray | null> {
+  if (texCache) return Promise.resolve(texCache)
+  if (texPromise) return texPromise
+  texPromise = new Promise((resolve) => {
+    let i = 0
+    const tryNext = () => {
+      if (i >= EARTH_TEXTURE_SRCS.length) { resolve(null); return }
+      const src = EARTH_TEXTURE_SRCS[i++]
+      const img = new Image()
+      img.crossOrigin = 'anonymous'
+      img.onload = () => {
+        try {
+          const off = document.createElement('canvas')
+          off.width = TEX_W
+          off.height = TEX_H
+          const octx = off.getContext('2d', { willReadFrequently: true })!
+          octx.drawImage(img, 0, 0, TEX_W, TEX_H)
+          texCache = octx.getImageData(0, 0, TEX_W, TEX_H).data
+          resolve(texCache)
+        }
+        catch { tryNext() }
+      }
+      img.onerror = tryNext
+      img.src = src
+    }
+    tryNext()
+  })
+  return texPromise
+}
+
+function smoothstep(e0: number, e1: number, x: number) {
+  const t = Math.min(1, Math.max(0, (x - e0) / (e1 - e0)))
+  return t * t * (3 - 2 * t)
+}
+
+interface GlobeCanvasProps {
+  size?: number
+  showGrid?: boolean
+  showHotspots?: boolean
+  showArcs?: boolean
+  className?: string
+}
+
+export default function GlobeCanvas({
+  size = 220,
+  showGrid = true,
+  showHotspots = true,
+  showArcs = true,
+  className,
+}: GlobeCanvasProps) {
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  // live toggle values read inside the animation loop without restarting it
+  const flags = useRef({ showGrid, showHotspots, showArcs })
+  flags.current = { showGrid, showHotspots, showArcs }
+
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')!
+
+    const W = size, H = size, cx = size / 2, cy = size / 2, R = size * 0.445
+    const INV_2PI = 1 / (2 * Math.PI)
+    const INV_PI = 1 / Math.PI
+
+    let sx = -0.82, sy = 0.18, sz = -0.54
+    { const l = Math.hypot(sx, sy, sz); sx /= l; sy /= l; sz /= l }
+
+    const pxOff: number[] = []
+    const latArr: number[] = []
+    const baseLon: number[] = []
+    const limbArr: number[] = []
+    for (let py = 0; py < H; py++) {
+      for (let px = 0; px < W; px++) {
+        const nx = (px + 0.5 - cx) / R
+        const ny = (py + 0.5 - cy) / R
+        const d2 = nx * nx + ny * ny
+        if (d2 > 1) continue
+        const nz = Math.sqrt(1 - d2)
+        const vy = -ny
+        pxOff.push((py * W + px) * 4)
+        latArr.push(Math.asin(Math.max(-1, Math.min(1, vy))))
+        baseLon.push(Math.atan2(nx, nz))
+        limbArr.push(0.42 + 0.58 * smoothstep(0, 0.42, nz))
+      }
+    }
+    const N = pxOff.length
+
+    const image = ctx.createImageData(W, H)
+    const data = image.data
+
+    let tex: Uint8ClampedArray | null = texCache
+    let rot = 0, phase = 0, raf = 0, alive = true
+
+    if (!tex) void loadEarthTexture().then((t) => { if (alive) tex = t })
+
+    function projectGeo(latDeg: number, lonDeg: number) {
+      const lat = (latDeg * Math.PI) / 180
+      const theta = (lonDeg * Math.PI) / 180 - rot
+      const cosLat = Math.cos(lat)
+      return {
+        x: cx + R * cosLat * Math.sin(theta),
+        y: cy - R * Math.sin(lat),
+        z: cosLat * Math.cos(theta),
+      }
+    }
+
+    function drawEarthPixels() {
+      for (let i = 0; i < N; i++) {
+        const off = pxOff[i]
+        const lat = latArr[i]
+        let u = (baseLon[i] + rot) * INV_2PI + 0.5
+        u -= Math.floor(u)
+        let tx = (u * TEX_W) | 0
+        if (tx >= TEX_W) tx = TEX_W - 1
+        let v = 0.5 - lat * INV_PI
+        if (v < 0) v = 0
+        else if (v >= 1) v = 0.999999
+        const ty = (v * TEX_H) | 0
+        const ti = (ty * TEX_W + tx) * 4
+
+        let r = tex![ti], g = tex![ti + 1], b = tex![ti + 2]
+        const lum = (r + g + b) / 3
+        if (lum < 30) { r = r * 0.5 + 4; g = g * 0.6 + 11; b = b * 0.7 + 30 }
+        const limb = limbArr[i]
+        data[off] = r * limb
+        data[off + 1] = g * limb
+        data[off + 2] = b * limb
+        data[off + 3] = 255
+      }
+    }
+
+    function drawFallbackSphere() {
+      const grad = ctx.createRadialGradient(cx - R * 0.27, cy - R * 0.3, R * 0.05, cx, cy, R)
+      grad.addColorStop(0, '#13284a')
+      grad.addColorStop(0.6, '#08152b')
+      grad.addColorStop(1, '#030a18')
+      ctx.beginPath()
+      ctx.arc(cx, cy, R, 0, Math.PI * 2)
+      ctx.fillStyle = grad
+      ctx.fill()
+    }
+
+    function drawGrid() {
+      ctx.save()
+      ctx.beginPath()
+      ctx.arc(cx, cy, R - 0.5, 0, Math.PI * 2)
+      ctx.clip()
+      for (let lat = -75; lat <= 75; lat += 15) {
+        const la = (lat * Math.PI) / 180
+        const ey = cy - R * Math.sin(la)
+        const erx = R * Math.cos(la)
+        if (erx < 1) continue
+        ctx.beginPath()
+        ctx.ellipse(cx, ey, erx, erx * 0.055, 0, 0, Math.PI * 2)
+        ctx.strokeStyle = 'rgba(0,200,255,0.10)'
+        ctx.lineWidth = 0.5
+        ctx.stroke()
+      }
+      for (let lon = 0; lon < 180; lon += 15) {
+        const lo = ((lon + rot) * Math.PI) / 180
+        const erx = Math.abs(R * Math.sin(lo))
+        if (erx < 1) continue
+        ctx.beginPath()
+        ctx.ellipse(cx, cy, erx, R, 0, 0, Math.PI * 2)
+        ctx.strokeStyle = Math.cos(lo) >= 0 ? 'rgba(0,200,255,0.10)' : 'rgba(0,200,255,0.03)'
+        ctx.lineWidth = 0.5
+        ctx.stroke()
+      }
+      ctx.restore()
+    }
+
+    function drawAtmosphere() {
+      ctx.save()
+      ctx.globalCompositeOperation = 'lighter'
+      const bloom = ctx.createRadialGradient(cx, cy, R * 0.92, cx, cy, R * 1.4)
+      bloom.addColorStop(0, 'rgba(30,150,230,0.20)')
+      bloom.addColorStop(0.5, 'rgba(0,120,210,0.10)')
+      bloom.addColorStop(1, 'rgba(0,0,0,0)')
+      ctx.beginPath(); ctx.arc(cx, cy, R * 1.4, 0, Math.PI * 2); ctx.fillStyle = bloom; ctx.fill()
+
+      const ring = ctx.createRadialGradient(cx, cy, R * 0.7, cx, cy, R)
+      ring.addColorStop(0, 'rgba(0,0,0,0)')
+      ring.addColorStop(0.82, 'rgba(40,180,255,0.05)')
+      ring.addColorStop(1, 'rgba(120,225,255,0.45)')
+      ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.fillStyle = ring; ctx.fill()
+
+      const dawn = ctx.createRadialGradient(
+        cx + sx * R * 0.9, cy - sy * R * 0.9, 0,
+        cx + sx * R * 0.9, cy - sy * R * 0.9, R * 0.95,
+      )
+      dawn.addColorStop(0, 'rgba(150,225,255,0.30)')
+      dawn.addColorStop(0.6, 'rgba(60,160,255,0.08)')
+      dawn.addColorStop(1, 'rgba(0,0,0,0)')
+      ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.fillStyle = dawn; ctx.fill()
+      ctx.restore()
+    }
+
+    function drawArcsAndHotspots() {
+      if (flags.current.showArcs) {
+        ctx.save()
+        ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.clip()
+        ctx.setLineDash([3, 4])
+        for (const [ia, ib] of ARCS) {
+          const a = SPOTS[ia], b = SPOTS[ib]
+          let started = false
+          ctx.beginPath()
+          for (let t = 0; t <= 40; t++) {
+            const f = t / 40
+            const p = projectGeo(a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f)
+            if (p.z < -0.15) { started = false; continue }
+            if (!started) { ctx.moveTo(p.x, p.y); started = true }
+            else ctx.lineTo(p.x, p.y)
+          }
+          ctx.strokeStyle = 'rgba(0,210,255,0.16)'
+          ctx.lineWidth = 0.9
+          ctx.stroke()
+        }
+        ctx.setLineDash([])
+        ctx.restore()
+      }
+
+      if (!flags.current.showHotspots) return
+      const scale = R / 98
+      for (let i = 0; i < SPOTS.length; i++) {
+        const [lat, lon, r, g, b, baseSz] = SPOTS[i]
+        const sz2 = baseSz * scale
+        const p = projectGeo(lat, lon)
+        const vis = Math.max(0, p.z)
+        if (vis < 0.05) continue
+        const pp = 0.5 + 0.5 * Math.sin(phase + i * 0.9)
+
+        const gr = sz2 + 7 * pp * scale
+        const glow = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, gr + 5)
+        glow.addColorStop(0, `rgba(${r},${g},${b},${vis * 0.32})`)
+        glow.addColorStop(1, `rgba(${r},${g},${b},0)`)
+        ctx.beginPath(); ctx.arc(p.x, p.y, gr + 5, 0, Math.PI * 2); ctx.fillStyle = glow; ctx.fill()
+
+        ctx.beginPath(); ctx.arc(p.x, p.y, sz2 + 10 * pp * scale, 0, Math.PI * 2)
+        ctx.strokeStyle = `rgba(${r},${g},${b},${vis * (1 - pp) * 0.5})`
+        ctx.lineWidth = 0.9; ctx.stroke()
+
+        ctx.beginPath(); ctx.arc(p.x, p.y, sz2, 0, Math.PI * 2)
+        ctx.fillStyle = `rgba(${r},${g},${b},${vis})`; ctx.fill()
+
+        ctx.beginPath(); ctx.arc(p.x, p.y, sz2 * 0.36, 0, Math.PI * 2)
+        ctx.fillStyle = `rgba(255,255,255,${vis * 0.9})`; ctx.fill()
+      }
+    }
+
+    function frame() {
+      ctx.clearRect(0, 0, W, H)
+      if (tex) { drawEarthPixels(); ctx.putImageData(image, 0, 0) }
+      else { drawFallbackSphere() }
+      if (flags.current.showGrid) drawGrid()
+      drawAtmosphere()
+      drawArcsAndHotspots()
+      rot += 0.0017
+      phase += 0.032
+      raf = requestAnimationFrame(frame)
+    }
+
+    frame()
+    return () => { alive = false; cancelAnimationFrame(raf) }
+  }, [size])
+
+  return <canvas ref={canvasRef} width={size} height={size} className={className} />
+}

@@ -42,26 +42,35 @@ export default function SettingsSidebar() {
           lg:grid lg:gap-1 lg:overflow-visible lg:rounded-none lg:bg-transparent
         `}
       >
-        {menuItems.map(item => (
-          <Button
-            key={item.id}
-            type="button"
-            variant="ghost"
-            className={cn(
-              `
-                h-auto shrink-0 snap-start flex-col gap-1.5 px-3 py-2 text-foreground
-                lg:h-11 lg:min-w-0 lg:flex-row lg:justify-start lg:gap-2 lg:px-4 lg:py-2
-              `,
-              { 'bg-accent hover:bg-accent': active === item.id },
-            )}
-            asChild
-          >
-            <AppLink intentPrefetch href={item.href}>
-              <item.icon className="size-6 text-muted-foreground lg:size-5" />
-              <span>{item.label}</span>
-            </AppLink>
-          </Button>
-        ))}
+        {menuItems.map((item) => {
+          const isActive = active === item.id
+          return (
+            <Button
+              key={item.id}
+              type="button"
+              variant="ghost"
+              className={cn(
+                `
+                  group relative h-auto shrink-0 snap-start flex-col gap-1.5 px-3 py-2 text-foreground
+                  lg:h-11 lg:min-w-0 lg:flex-row lg:justify-start lg:gap-2 lg:px-4 lg:py-2
+                `,
+                isActive
+                  ? `
+                      bg-white/[0.06] hover:bg-white/[0.08]
+                      lg:before:absolute lg:before:left-0 lg:before:inset-y-2 lg:before:w-0.5
+                      lg:before:rounded-r-full lg:before:bg-[#7d6cff]
+                    `
+                  : 'hover:bg-white/[0.04]',
+              )}
+              asChild
+            >
+              <AppLink intentPrefetch href={item.href}>
+                <item.icon className={cn('size-6 lg:size-5', isActive ? 'text-[#7d6cff]' : 'text-muted-foreground')} />
+                <span>{item.label}</span>
+              </AppLink>
+            </Button>
+          )
+        })}
       </nav>
     </aside>
   )

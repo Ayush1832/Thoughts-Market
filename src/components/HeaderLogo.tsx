@@ -8,9 +8,10 @@ import { useSiteIdentity } from '@/hooks/useSiteIdentity'
 
 interface HeaderLogoProps {
   labelSuffix?: string
+  iconOnly?: boolean
 }
 
-export default function HeaderLogo({ labelSuffix }: HeaderLogoProps) {
+export default function HeaderLogo({ labelSuffix, iconOnly = false }: HeaderLogoProps) {
   const site = useSiteIdentity()
   const { resolvedTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
@@ -26,6 +27,7 @@ export default function HeaderLogo({ labelSuffix }: HeaderLogoProps) {
     <AppLink
       intentPrefetch
       href="/"
+      aria-label={label}
       className={`
         flex h-12 shrink-0 items-center gap-3 text-xl font-medium text-foreground transition-opacity
         hover:opacity-80
@@ -47,7 +49,7 @@ export default function HeaderLogo({ labelSuffix }: HeaderLogoProps) {
         imageClassName="w-full h-full object-contain"
         size={40}
       />
-      <span>{label}</span>
+      {!iconOnly && <span>{label}</span>}
     </AppLink>
   )
 }

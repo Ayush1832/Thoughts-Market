@@ -96,13 +96,25 @@ export default function EventOrderPanelOutcomeButton({
   return (
     <Button
       type="button"
-      variant={isSelected ? variant : 'outline'}
+      variant="outline"
       size="outcomeLg"
       className={cn(
+        'transition-all duration-150 hover:-translate-y-px active:translate-y-0',
         isSelected
-        && (variant === 'yes'
-          ? 'bg-yes text-white hover:bg-yes-foreground'
-          : 'bg-no text-white hover:bg-no-foreground'),
+          ? (variant === 'yes'
+              ? `
+                  border-[#5ee5ff]/45 text-[#5ee5ff]
+                  bg-[linear-gradient(180deg,rgba(94,229,255,0.22),rgba(94,229,255,0.08))]
+                  shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_8px_24px_-10px_rgba(94,229,255,0.4)]
+                  hover:bg-[linear-gradient(180deg,rgba(94,229,255,0.28),rgba(94,229,255,0.1))]
+                `
+              : `
+                  border-[#ff6b8a]/45 text-[#ff6b8a]
+                  bg-[linear-gradient(180deg,rgba(255,107,138,0.22),rgba(255,107,138,0.08))]
+                  shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_8px_24px_-10px_rgba(255,107,138,0.4)]
+                  hover:bg-[linear-gradient(180deg,rgba(255,107,138,0.28),rgba(255,107,138,0.1))]
+                `)
+          : '',
       )}
       onClick={onSelect}
     >

@@ -1,5 +1,6 @@
 'use client'
 
+import type { WithdrawReceiveSelection } from '@/app/[locale]/(platform)/_components/wallet-modal/utils'
 import type { DepositWalletStatus } from '@/types'
 import { useExtracted } from 'next-intl'
 import { useCallback, useEffect, useMemo, useState } from 'react'
@@ -18,8 +19,9 @@ import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
 import { COLLATERAL_TOKEN_ADDRESS } from '@/lib/contracts'
 import { formatAmountInputValue } from '@/lib/formatters'
 import { isTradingAuthRequiredError } from '@/lib/trading-auth/errors'
+import { WITHDRAW_CHAIN_IDS } from '@/app/[locale]/(platform)/_components/wallet-modal/utils'
 import { signAndSubmitDepositWalletCalls } from '@/lib/wallet/client'
-import { buildSendErc20Call } from '@/lib/wallet/transactions'
+import { buildLiFiBridgeCalls, buildSendErc20Call, type WalletCall } from '@/lib/wallet/transactions'
 
 type DepositView = 'fund' | 'receive' | 'wallets' | 'amount' | 'confirm' | 'success'
 
@@ -152,7 +154,7 @@ function useWalletSendHandler({
   signTypedDataAsync: ReturnType<typeof useSignTypedData>['signTypedDataAsync']
   messages: WalletSendMessages
 }) {
-  return useCallback(async (event?: React.FormEvent<HTMLFormElement>) => {
+  return useCallback(async (event?: React.FormEvent<HTMLFormElement>, receive?: WithdrawReceiveSelection) => {
     event?.preventDefault()
     if (!user?.deposit_wallet_address) {
       toast.error(messages.depositWalletRequired)
@@ -168,19 +170,58 @@ function useWalletSendHandler({
       return
     }
 
+    const targetChain = receive?.receiveChain
+    const isCrossChain = Boolean(targetChain && targetChain !== 'Polygon')
+
     setIsWalletSending(true)
     try {
-      const call = buildSendErc20Call({
-        token: COLLATERAL_TOKEN_ADDRESS,
-        to: walletSendTo as `0x${string}`,
-        amount: walletSendAmount,
-        decimals: 6,
-      })
+      // Build the deposit-wallet calls for this withdrawal.
+      let calls: WalletCall[]
+      let metadata = 'send_tokens'
+
+      if (isCrossChain) {
+        const toChainId = WITHDRAW_CHAIN_IDS[targetChain as string]
+        if (!toChainId) {
+          toast.error(messages.invalidRecipient)
+          return
+        }
+        // Fetch a LI.FI cross-chain route: Polygon USDC (deposit wallet) → recipient on the destination chain.
+        const quoteRes = await fetch('/api/lifi/withdraw-quote', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            toChainId,
+            fromAddress: user.deposit_wallet_address,
+            toAddress: walletSendTo,
+            amount: walletSendAmount,
+          }),
+        })
+        const quoteData = await quoteRes.json().catch(() => null)
+        const transactionRequest = quoteData?.quote?.transactionRequest
+        if (!quoteRes.ok || !transactionRequest?.to || !transactionRequest?.data) {
+          toast.error(quoteData?.error ?? messages.invalidAmount)
+          return
+        }
+        calls = buildLiFiBridgeCalls({
+          to: transactionRequest.to,
+          data: transactionRequest.data,
+          value: transactionRequest.value,
+        })
+        metadata = 'cross_chain_withdraw'
+      }
+      else {
+        calls = [buildSendErc20Call({
+          token: COLLATERAL_TOKEN_ADDRESS,
+          to: walletSendTo as `0x${string}`,
+          amount: walletSendAmount,
+          decimals: 6,
+        })]
+      }
 
       const result = await runWithSignaturePrompt(() => signAndSubmitDepositWalletCalls({
         user,
-        calls: [call],
-        metadata: 'send_tokens',
+        calls,
+        metadata,
         signTypedDataAsync,
       }))
       if (result.error) {

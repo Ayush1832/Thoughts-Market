@@ -1,4 +1,4 @@
-import type { ChangeEventHandler, FormEventHandler } from 'react'
+import type { ChangeEventHandler, FormEvent } from 'react'
 import type { LiFiWalletTokenItem } from '@/hooks/useLiFiWalletTokens'
 
 export const MELD_PAYMENT_METHODS = [
@@ -36,14 +36,28 @@ export const WITHDRAW_TOKEN_OPTIONS = [
 ] as const
 
 export const WITHDRAW_CHAIN_OPTIONS = [
-  { value: 'Ethereum', label: 'Ethereum', icon: '/images/withdraw/chain/ethereum.svg', enabled: false },
+  { value: 'Ethereum', label: 'Ethereum', icon: '/images/withdraw/chain/ethereum.svg', enabled: true },
   { value: 'Solana', label: 'Solana', icon: '/images/withdraw/chain/solana.svg', enabled: false },
   { value: 'BSC', label: 'BSC', icon: '/images/withdraw/chain/bsc.svg', enabled: false },
-  { value: 'Base', label: 'Base', icon: '/images/withdraw/chain/base.svg', enabled: false },
+  { value: 'Base', label: 'Base', icon: '/images/withdraw/chain/base.svg', enabled: true },
   { value: 'Polygon', label: 'Polygon', icon: '/images/withdraw/chain/polygon.svg', enabled: true },
-  { value: 'Arbitrum', label: 'Arbitrum', icon: '/images/withdraw/chain/arbitrum.svg', enabled: false },
+  { value: 'Arbitrum', label: 'Arbitrum', icon: '/images/withdraw/chain/arbitrum.svg', enabled: true },
   { value: 'Optimism', label: 'Optimism', icon: '/images/withdraw/chain/optimism.svg', enabled: false },
 ] as const
+
+// Map withdraw-chain option value → EVM chain id (used for cross-chain quotes).
+export const WITHDRAW_CHAIN_IDS: Record<string, number> = {
+  Polygon: 137,
+  Ethereum: 1,
+  Base: 8453,
+  Arbitrum: 42161,
+}
+
+/** Receive selection passed from the withdraw form to the submit handler. */
+export interface WithdrawReceiveSelection {
+  receiveChain: string
+  receiveToken: string
+}
 
 export function getSelectedWalletTokenId(items: LiFiWalletTokenItem[], preferredSelectedTokenId: string) {
   if (!items.length) {
@@ -93,7 +107,7 @@ export interface WalletWithdrawModalProps {
   sendAmount: string
   onChangeSendAmount: (value: string) => void
   isSending: boolean
-  onSubmitSend: FormEventHandler<HTMLFormElement>
+  onSubmitSend: (event: FormEvent<HTMLFormElement>, receive?: WithdrawReceiveSelection) => void
   connectedWalletAddress?: string | null
   onUseConnectedWallet?: () => void
   availableBalance?: number | null

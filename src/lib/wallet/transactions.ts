@@ -288,6 +288,37 @@ export function buildCollateralApproveCall(spender: `0x${string}`): WalletCall {
   }))
 }
 
+/**
+ * Build the deposit-wallet calls needed to execute a LI.FI cross-chain route
+ * from the (Polygon) deposit wallet: approve USDC to the LI.FI router, then run
+ * the route's transaction. The route bridges/swaps USDC and delivers it to the
+ * recipient on the destination chain.
+ */
+export function buildLiFiBridgeCalls(transactionRequest: {
+  to: `0x${string}`
+  data: `0x${string}`
+  value?: string | number | bigint | null
+}): WalletCall[] {
+  let value = '0'
+  try {
+    if (transactionRequest.value != null && transactionRequest.value !== '') {
+      value = BigInt(transactionRequest.value).toString()
+    }
+  }
+  catch {
+    value = '0'
+  }
+
+  return [
+    buildCollateralApproveCall(transactionRequest.to),
+    {
+      target: transactionRequest.to,
+      value,
+      data: transactionRequest.data,
+    },
+  ]
+}
+
 export function buildConditionalSetApprovalForAllCall(operator: `0x${string}`): WalletCall {
   return createWalletCall(CONDITIONAL_TOKENS_CONTRACT, encodeFunctionData({
     abi: erc1155Abi,

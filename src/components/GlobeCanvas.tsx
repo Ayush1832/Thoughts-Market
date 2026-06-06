@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { type PointerEvent as ReactPointerEvent, useEffect, useRef } from 'react'
 
 // [lat, lon, r, g, b, dotSize]
 const SPOTS: [number, number, number, number, number, number][] = [
@@ -60,11 +60,26 @@ function smoothstep(e0: number, e1: number, x: number) {
   return t * t * (3 - 2 * t)
 }
 
+export interface GlobeHotspot {
+  lat: number
+  lon: number
+  r: number
+  g: number
+  b: number
+  size: number
+  label?: string
+}
+
 interface GlobeCanvasProps {
   size?: number
   showGrid?: boolean
   showHotspots?: boolean
   showArcs?: boolean
+  showLabels?: boolean
+  /** Override the default decorative hotspots with labeled, clickable data points. */
+  hotspots?: GlobeHotspot[]
+  /** Called with the hotspot index when a hotspot dot/label is tapped. */
+  onHotspotClick?: (index: number) => void
   className?: string
 }
 
@@ -73,12 +88,21 @@ export default function GlobeCanvas({
   showGrid = true,
   showHotspots = true,
   showArcs = true,
+  showLabels = false,
+  hotspots,
+  onHotspotClick,
   className,
 }: GlobeCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  // live toggle values read inside the animation loop without restarting it
-  const flags = useRef({ showGrid, showHotspots, showArcs })
-  flags.current = { showGrid, showHotspots, showArcs }
+  // live values read inside the animation loop without restarting it
+  const flags = useRef({ showGrid, showHotspots, showArcs, showLabels })
+  flags.current = { showGrid, showHotspots, showArcs, showLabels }
+  const hotspotsRef = useRef(hotspots)
+  hotspotsRef.current = hotspots
+  const onClickRef = useRef(onHotspotClick)
+  onClickRef.current = onHotspotClick
+  // current on-screen hotspot positions for hit-testing taps
+  const positionsRef = useRef<{ x: number, y: number, i: number }[]>([])
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -223,12 +247,23 @@ export default function GlobeCanvas({
     }
 
     function drawArcsAndHotspots() {
+      // active hotspots: caller-provided (labeled, clickable) or the default decorative set
+      const custom = hotspotsRef.current
+      const spots: ReadonlyArray<readonly [number, number, number, number, number, number]>
+        = custom && custom.length
+          ? custom.map(h => [h.lat, h.lon, h.r, h.g, h.b, h.size] as const)
+          : SPOTS
+      const labels = custom && custom.length ? custom.map(h => h.label) : []
+      const arcs = custom && custom.length
+        ? ARCS.filter(([a, b]) => a < spots.length && b < spots.length)
+        : ARCS
+
       if (flags.current.showArcs) {
         ctx.save()
         ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.clip()
         ctx.setLineDash([3, 4])
-        for (const [ia, ib] of ARCS) {
-          const a = SPOTS[ia], b = SPOTS[ib]
+        for (const [ia, ib] of arcs) {
+          const a = spots[ia], b = spots[ib]
           let started = false
           ctx.beginPath()
           for (let t = 0; t <= 40; t++) {
@@ -246,14 +281,17 @@ export default function GlobeCanvas({
         ctx.restore()
       }
 
+      positionsRef.current = []
       if (!flags.current.showHotspots) return
       const scale = R / 98
-      for (let i = 0; i < SPOTS.length; i++) {
-        const [lat, lon, r, g, b, baseSz] = SPOTS[i]
+      for (let i = 0; i < spots.length; i++) {
+        const [lat, lon, r, g, b, baseSz] = spots[i]
         const sz2 = baseSz * scale
         const p = projectGeo(lat, lon)
         const vis = Math.max(0, p.z)
         if (vis < 0.05) continue
+        // record front-facing position for tap hit-testing
+        if (vis > 0.12) positionsRef.current.push({ x: p.x, y: p.y, i })
         const pp = 0.5 + 0.5 * Math.sin(phase + i * 0.9)
 
         const gr = sz2 + 7 * pp * scale
@@ -271,6 +309,40 @@ export default function GlobeCanvas({
 
         ctx.beginPath(); ctx.arc(p.x, p.y, sz2 * 0.36, 0, Math.PI * 2)
         ctx.fillStyle = `rgba(255,255,255,${vis * 0.9})`; ctx.fill()
+
+        // ── label / heading next to the hotspot ──
+        const label = labels[i]
+        if (flags.current.showLabels && label && vis > 0.32) {
+          const fontPx = Math.max(9, Math.round(R * 0.072))
+          ctx.font = `600 ${fontPx}px Inter, system-ui, sans-serif`
+          ctx.textBaseline = 'middle'
+          const tw = ctx.measureText(label).width
+          const padX = fontPx * 0.5
+          const lh = fontPx + 8
+          const gap = sz2 + 8
+          const onRightHalf = p.x > cx
+          const boxW = tw + padX * 2
+          const lx = onRightHalf ? p.x - gap - boxW : p.x + gap
+          const ly = p.y - lh / 2
+          const a = Math.min(1, (vis - 0.32) / 0.25)
+          // connector
+          ctx.beginPath()
+          ctx.moveTo(onRightHalf ? p.x - sz2 : p.x + sz2, p.y)
+          ctx.lineTo(onRightHalf ? lx + boxW : lx, p.y)
+          ctx.strokeStyle = `rgba(${r},${g},${b},${0.5 * a})`
+          ctx.lineWidth = 1
+          ctx.stroke()
+          // pill
+          ctx.beginPath()
+          ctx.roundRect(lx, ly, boxW, lh, 7)
+          ctx.fillStyle = `rgba(8,10,18,${0.72 * a})`
+          ctx.fill()
+          ctx.strokeStyle = `rgba(${r},${g},${b},${0.45 * a})`
+          ctx.lineWidth = 1
+          ctx.stroke()
+          ctx.fillStyle = `rgba(255,255,255,${a})`
+          ctx.fillText(label, lx + padX, p.y + 0.5)
+        }
       }
     }
 
@@ -290,5 +362,38 @@ export default function GlobeCanvas({
     return () => { alive = false; cancelAnimationFrame(raf) }
   }, [size])
 
-  return <canvas ref={canvasRef} width={size} height={size} className={className} />
+  function handlePointerDown(e: ReactPointerEvent<HTMLCanvasElement>) {
+    const cb = onClickRef.current
+    if (!cb) return
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const rect = canvas.getBoundingClientRect()
+    const scaleX = canvas.width / rect.width
+    const scaleY = canvas.height / rect.height
+    const x = (e.clientX - rect.left) * scaleX
+    const y = (e.clientY - rect.top) * scaleY
+    const hitR2 = (canvas.width * 0.09) ** 2 // generous tap radius
+    let best = -1
+    let bestD = hitR2
+    for (const p of positionsRef.current) {
+      const d = (p.x - x) ** 2 + (p.y - y) ** 2
+      if (d < bestD) { bestD = d; best = p.i }
+    }
+    if (best >= 0) {
+      e.preventDefault()
+      e.stopPropagation()
+      cb(best)
+    }
+  }
+
+  return (
+    <canvas
+      ref={canvasRef}
+      width={size}
+      height={size}
+      className={className}
+      onPointerDown={onHotspotClick ? handlePointerDown : undefined}
+      style={onHotspotClick ? { cursor: 'pointer' } : undefined}
+    />
+  )
 }

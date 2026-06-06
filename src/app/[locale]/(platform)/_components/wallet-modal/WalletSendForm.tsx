@@ -1,7 +1,7 @@
 'use client'
 
-import type { ChangeEventHandler, FormEventHandler } from 'react'
-import type { PendingWithdrawalItem } from '@/app/[locale]/(platform)/_components/wallet-modal/utils'
+import type { ChangeEventHandler, FormEvent } from 'react'
+import type { PendingWithdrawalItem, WithdrawReceiveSelection } from '@/app/[locale]/(platform)/_components/wallet-modal/utils'
 import { useAppKitAccount } from '@reown/appkit/react'
 import {
   ArrowLeftIcon,
@@ -43,7 +43,7 @@ function WalletSendForm({
   sendAmount: string
   onChangeSendAmount: (value: string) => void
   isSending: boolean
-  onSubmitSend: FormEventHandler<HTMLFormElement>
+  onSubmitSend: (event: FormEvent<HTMLFormElement>, receive?: WithdrawReceiveSelection) => void
   onBack?: () => void
   connectedWalletAddress?: string | null
   onUseConnectedWallet?: () => void
@@ -128,7 +128,10 @@ function WalletSendForm({
         </button>
       )}
 
-      <form className="mt-2 grid gap-4" onSubmit={onSubmitSend}>
+      <form
+        className="mt-2 grid gap-4"
+        onSubmit={event => onSubmitSend(event, { receiveChain, receiveToken })}
+      >
         <div className="grid gap-2">
           <Label htmlFor="wallet-send-to">Recipient address</Label>
           <div className="relative">

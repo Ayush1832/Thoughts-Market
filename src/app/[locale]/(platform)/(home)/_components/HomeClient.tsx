@@ -4,6 +4,7 @@ import type { Route } from 'next'
 import type { FilterState } from '@/app/[locale]/(platform)/_providers/FilterProvider'
 import type { Event } from '@/types'
 import dynamic from 'next/dynamic'
+import { useSearchParams } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import EventsGrid from '@/app/[locale]/(platform)/(home)/_components/EventsGrid'
 import FilterToolbar from '@/app/[locale]/(platform)/(home)/_components/FilterToolbar'
@@ -165,11 +166,24 @@ function useHomeClientContentState({
 }: HomeClientContentStateInput) {
   const router = useRouter()
   const { updateFilters } = useFilters()
-  const [homeFilters, setHomeFilters] = useState<FilterState>(() => createHomeRouteFilters(targetTag, targetMainTag))
+  // The "Watchlist" sidebar link points to /?bookmarked=true — read that so the
+  // home feed shows only saved (bookmarked) markets.
+  const searchParams = useSearchParams()
+  const bookmarkedParam = searchParams.get('bookmarked') === 'true'
+  const [homeFilters, setHomeFilters] = useState<FilterState>(() => ({
+    ...createHomeRouteFilters(targetTag, targetMainTag),
+    bookmarked: bookmarkedParam,
+  }))
   const canUseServerInitialEvents = useMemo(
     () => serverTargetTag === targetTag && serverTargetMainTag === targetMainTag,
     [serverTargetMainTag, serverTargetTag, targetMainTag, targetTag],
   )
+
+  // Keep the bookmarked filter in sync with the URL (covers SPA navigation to
+  // the Watchlist link, where this component isn't remounted).
+  useEffect(function syncBookmarkedFilterToUrl() {
+    setHomeFilters(prev => (prev.bookmarked === bookmarkedParam ? prev : { ...prev, bookmarked: bookmarkedParam }))
+  }, [bookmarkedParam])
 
   useEffect(function syncHomeFiltersToGlobalFilterStore() {
     updateFilters({

@@ -288,7 +288,7 @@ export default function FriendPlayLobby({ onClose }: { onClose?: () => void }) {
                   onClick={() => setShowCreate(true)}
                   className="w-full rounded-2xl border-2 border-dashed border-border/50 px-4 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
                 >
-                  + Create with Thought So
+                  + Create room
                 </button>
               )}
 

@@ -1,5 +1,7 @@
 'use server'
 
+import { revalidateTag } from 'next/cache'
+import { cacheTags } from '@/lib/cache-tags'
 import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
 import { BookmarkRepository } from '@/lib/db/queries/bookmark'
 import { UserRepository } from '@/lib/db/queries/user'
@@ -29,6 +31,11 @@ export async function toggleBookmarkAction(eventId: string) {
     if (result.error) {
       return result
     }
+
+    // Invalidate the user's cached events list so the Watchlist (/?bookmarked=true)
+    // immediately reflects the added/removed bookmark instead of serving stale data.
+    revalidateTag(cacheTags.events(user.id), 'max')
+    revalidateTag(cacheTags.eventsList, 'max')
 
     return {
       data: {

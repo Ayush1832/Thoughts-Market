@@ -171,6 +171,11 @@ export async function DELETE(_request: NextRequest, { params }: EventCreationDra
       return NextResponse.json({ error: 'Unauthenticated.' }, { status: 401 })
     }
 
+    const currentUser = await UserRepository.getCurrentUser({ minimal: true })
+    if (!currentUser) {
+      return NextResponse.json({ error: 'User not found.' }, { status: 401 })
+    }
+
     const { id } = await params
     const { data, error } = await EventCreationRepository.deleteDraft({
       draftId: id,

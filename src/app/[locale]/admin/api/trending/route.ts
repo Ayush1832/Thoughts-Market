@@ -1,3 +1,4 @@
+import { isAdminAuthorized } from '@/lib/admin-auth-check'
 import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
 import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
@@ -9,8 +10,8 @@ type TrendingKey = (typeof TRENDING_KEYS)[number]
 
 export async function GET() {
   try {
-    const currentUser = await UserRepository.getCurrentUser({ minimal: true })
-    if (!currentUser?.is_admin) {
+    const isAdmin = await isAdminAuthorized()
+    if (!isAdmin) {
       return NextResponse.json({ error: 'Unauthenticated.' }, { status: 401 })
     }
 
@@ -31,8 +32,8 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const currentUser = await UserRepository.getCurrentUser({ minimal: true })
-    if (!currentUser?.is_admin) {
+    const isAdmin = await isAdminAuthorized()
+    if (!isAdmin) {
       return NextResponse.json({ error: 'Unauthenticated.' }, { status: 401 })
     }
 

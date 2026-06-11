@@ -2,6 +2,7 @@ import { setRequestLocale } from 'next-intl/server'
 import { notFound } from 'next/navigation'
 import AdminCreateRoomForm from '@/app/[locale]/admin/p2p/_components/AdminCreateRoomForm'
 import AdminRoomsTable, { type AdminRoomRow } from '@/app/[locale]/admin/p2p/_components/AdminRoomsTable'
+import { verifyAdminSession } from '@/lib/admin-session'
 import { RoomsRepository } from '@/lib/db/queries/rooms'
 import { UserRepository } from '@/lib/db/queries/user'
 
@@ -29,10 +30,15 @@ export default async function AdminP2PPage({ params }: PageProps<'/[locale]/admi
   const { locale } = await params
   setRequestLocale(locale)
 
-  // Defensive guard — mutations are also guarded in the server actions.
-  const user = await UserRepository.getCurrentUser({ minimal: true })
-  if (!user || !user.is_admin) {
-    notFound()
+  // Check for admin session first
+  const isAdminAuthenticated = await verifyAdminSession()
+
+  if (!isAdminAuthenticated) {
+    // Fall back to wallet-based admin check
+    const user = await UserRepository.getCurrentUser({ minimal: true })
+    if (!user || !user.is_admin) {
+      notFound()
+    }
   }
 
   const { data } = await RoomsRepository.listAllRooms()

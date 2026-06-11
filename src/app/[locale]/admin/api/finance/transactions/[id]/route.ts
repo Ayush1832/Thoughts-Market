@@ -1,3 +1,4 @@
+import { isAdminAuthorized } from '@/lib/admin-auth-check'
 import type { NextRequest } from 'next/server'
 import type { TxStatus } from '@/lib/db/queries/finance'
 import { NextResponse } from 'next/server'
@@ -10,8 +11,8 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const currentUser = await UserRepository.getCurrentUser({ minimal: true })
-    if (!currentUser?.is_admin) {
+    const isAdmin = await isAdminAuthorized()
+    if (!isAdmin) {
       return NextResponse.json({ error: 'Unauthenticated.' }, { status: 401 })
     }
 

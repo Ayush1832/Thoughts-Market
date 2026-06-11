@@ -1,7 +1,7 @@
 'use client'
 
 import { useDisconnect } from '@reown/appkit-controllers/react'
-import { BadgePercentIcon, ChevronDownIcon, DownloadIcon, SettingsIcon, ShieldIcon, TrophyIcon, UnplugIcon } from 'lucide-react'
+import { BadgePercentIcon, ChevronDownIcon, DownloadIcon, SettingsIcon, TrophyIcon, UnplugIcon } from 'lucide-react'
 import { useExtracted } from 'next-intl'
 import Image from 'next/image'
 import { useEffect, useRef, useState } from 'react'
@@ -289,15 +289,6 @@ export default function HeaderDropdownUserMenuAuth() {
               {t('APIs')}
             </AppLink>
           </DropdownMenuItem>
-
-          {user?.is_admin && (
-            <DropdownMenuItem asChild className="py-2 text-sm font-semibold">
-              <AppLink intentPrefetch href="/admin" className="flex w-full items-center gap-1.5">
-                <ShieldIcon className="size-4 text-current" />
-                {t('Admin')}
-              </AppLink>
-            </DropdownMenuItem>
-          )}
 
           <div className="flex items-center justify-between gap-2 px-2 py-1 text-sm font-semibold">
             <span>{t('Dark Mode')}</span>

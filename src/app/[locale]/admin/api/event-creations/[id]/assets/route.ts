@@ -1,3 +1,4 @@
+import { isAdminAuthorized } from '@/lib/admin-auth-check'
 import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
 import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
@@ -30,8 +31,8 @@ function resolveAssetExtension(file: File) {
 
 export async function POST(request: NextRequest, { params }: EventCreationAssetRouteProps) {
   try {
-    const currentUser = await UserRepository.getCurrentUser({ minimal: true })
-    if (!currentUser || !currentUser.is_admin) {
+    const isAdmin = await isAdminAuthorized()
+    if (!isAdmin) {
       return NextResponse.json({ error: 'Unauthenticated.' }, { status: 401 })
     }
 

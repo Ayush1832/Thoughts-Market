@@ -1,3 +1,4 @@
+import { isAdminAuthorized } from '@/lib/admin-auth-check'
 import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
 import { isAdminWallet } from '@/lib/admin'
@@ -12,8 +13,8 @@ import { inArray, sql, count, desc } from 'drizzle-orm'
 
 export async function GET(request: NextRequest) {
   try {
-    const currentUser = await UserRepository.getCurrentUser({ minimal: true })
-    if (!currentUser || !currentUser.is_admin) {
+    const isAdmin = await isAdminAuthorized()
+    if (!isAdmin) {
       return NextResponse.json({ error: 'Unauthenticated.' }, { status: 401 })
     }
 

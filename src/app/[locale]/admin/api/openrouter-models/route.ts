@@ -1,3 +1,4 @@
+import { isAdminAuthorized } from '@/lib/admin-auth-check'
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { fetchOpenRouterModels } from '@/lib/ai/openrouter'
@@ -10,8 +11,8 @@ const RequestSchema = z.object({
 
 export async function POST(request: Request) {
   try {
-    const currentUser = await UserRepository.getCurrentUser({ minimal: true })
-    if (!currentUser || !currentUser.is_admin) {
+    const isAdmin = await isAdminAuthorized()
+    if (!isAdmin) {
       return NextResponse.json({ error: 'Not authorized.' }, { status: 401 })
     }
 

@@ -1,3 +1,4 @@
+import { isAdminAuthorized } from '@/lib/admin-auth-check'
 import type { NextRequest } from 'next/server'
 import type { AdminRole } from '@/lib/db/schema/auth/tables'
 import { NextResponse } from 'next/server'

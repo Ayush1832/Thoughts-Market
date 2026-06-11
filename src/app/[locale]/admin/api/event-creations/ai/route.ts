@@ -1,3 +1,4 @@
+import { isAdminAuthorized } from '@/lib/admin-auth-check'
 import type { OpenRouterMessage } from '@/lib/ai/openrouter'
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
@@ -788,8 +789,8 @@ function isTimezoneOnlyDateReason(reason: string) {
 
 export async function GET() {
   try {
-    const currentUser = await UserRepository.getCurrentUser({ minimal: true })
-    if (!currentUser || !currentUser.is_admin) {
+    const isAdmin = await isAdminAuthorized()
+    if (!isAdmin) {
       return NextResponse.json({ error: 'Not authorized.' }, { status: 401 })
     }
 
@@ -806,8 +807,8 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const currentUser = await UserRepository.getCurrentUser({ minimal: true })
-    if (!currentUser || !currentUser.is_admin) {
+    const isAdmin = await isAdminAuthorized()
+    if (!isAdmin) {
       return NextResponse.json({ error: 'Not authorized.' }, { status: 401 })
     }
 

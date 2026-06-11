@@ -1,3 +1,4 @@
+import { isAdminAuthorized } from '@/lib/admin-auth-check'
 import { NextResponse } from 'next/server'
 import { getAddress, isAddress } from 'viem'
 import { z } from 'zod'
@@ -42,7 +43,7 @@ function toNormalizedWalletList(wallets: string[]) {
 }
 
 async function requireAdmin() {
-  const currentUser = await UserRepository.getCurrentUser({ minimal: true })
+  const isAdmin = await isAdminAuthorized()
   return Boolean(currentUser?.is_admin)
 }
 

@@ -175,8 +175,8 @@ function useHomeClientContentState({
     bookmarked: bookmarkedParam,
   }))
   const canUseServerInitialEvents = useMemo(
-    () => serverTargetTag === targetTag && serverTargetMainTag === targetMainTag,
-    [serverTargetMainTag, serverTargetTag, targetMainTag, targetTag],
+    () => serverTargetTag === targetTag && serverTargetMainTag === targetMainTag && !bookmarkedParam,
+    [bookmarkedParam, serverTargetMainTag, serverTargetTag, targetMainTag, targetTag],
   )
 
   // Keep the bookmarked filter in sync with the URL (covers SPA navigation to

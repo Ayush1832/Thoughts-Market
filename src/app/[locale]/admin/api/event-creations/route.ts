@@ -1,8 +1,8 @@
-import { isAdminAuthorized } from '@/lib/admin-auth-check'
 import type { NextRequest } from 'next/server'
 import type { EventCreationAssetPayload } from '@/lib/event-creation'
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
+import { isAdminAuthorized } from '@/lib/admin-auth-check'
 import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
 import { EventCreationRepository } from '@/lib/db/queries/event-creations'
 import { UserRepository } from '@/lib/db/queries/user'
@@ -19,6 +19,11 @@ export async function GET(request: NextRequest) {
     const isAdmin = await isAdminAuthorized()
     if (!isAdmin) {
       return NextResponse.json({ error: 'Unauthenticated.' }, { status: 401 })
+    }
+
+    const currentUser = await UserRepository.getCurrentUser({ minimal: true })
+    if (!currentUser) {
+      return NextResponse.json({ error: 'User not found.' }, { status: 401 })
     }
 
     const search = new URL(request.url).searchParams.get('search')?.trim() || undefined
@@ -53,6 +58,11 @@ export async function POST(request: NextRequest) {
     const isAdmin = await isAdminAuthorized()
     if (!isAdmin) {
       return NextResponse.json({ error: 'Unauthenticated.' }, { status: 401 })
+    }
+
+    const currentUser = await UserRepository.getCurrentUser({ minimal: true })
+    if (!currentUser) {
+      return NextResponse.json({ error: 'User not found.' }, { status: 401 })
     }
 
     const payload = await request.json().catch(() => null)

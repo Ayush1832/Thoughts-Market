@@ -1,6 +1,6 @@
-import { isAdminAuthorized } from '@/lib/admin-auth-check'
 import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
+import { isAdminAuthorized } from '@/lib/admin-auth-check'
 import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
 import { EventCreationRepository } from '@/lib/db/queries/event-creations'
 import { UserRepository } from '@/lib/db/queries/user'
@@ -34,6 +34,12 @@ export async function POST(request: NextRequest, { params }: EventCreationAssetR
     const isAdmin = await isAdminAuthorized()
     if (!isAdmin) {
       return NextResponse.json({ error: 'Unauthenticated.' }, { status: 401 })
+    }
+
+    // Get current user for draft operations
+    const currentUser = await UserRepository.getCurrentUser({ minimal: true })
+    if (!currentUser) {
+      return NextResponse.json({ error: 'User not found.' }, { status: 401 })
     }
 
     const { id } = await params

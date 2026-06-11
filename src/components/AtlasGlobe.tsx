@@ -125,6 +125,7 @@ export default function AtlasGlobe() {
         </div>
       </div>
 
+
       {/* ── Threat list (tap a row to focus its hotspot) ── */}
       <div className="px-4 pb-1 divide-y divide-border">
         {POINTS.map((p, i) => (

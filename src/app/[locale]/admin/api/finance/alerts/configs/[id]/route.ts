@@ -15,6 +15,11 @@ export async function PATCH(
       return NextResponse.json({ error: 'Unauthenticated.' }, { status: 401 })
     }
 
+    const currentUser = await UserRepository.getCurrentUser({ minimal: true })
+    if (!currentUser) {
+      return NextResponse.json({ error: 'User not found.' }, { status: 401 })
+    }
+
     const { id } = await params
     const body = await request.json()
     const { is_enabled } = body

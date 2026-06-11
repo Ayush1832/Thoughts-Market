@@ -170,8 +170,11 @@ function useWalletSendHandler({
       return
     }
 
-    const targetChain = receive?.receiveChain
-    const isCrossChain = Boolean(targetChain && targetChain !== 'Polygon')
+    const targetChain = receive?.receiveChain ?? 'Polygon'
+    const targetToken = receive?.receiveToken ?? 'USDC'
+    // Use a LI.FI route whenever the destination differs from same-chain USDC
+    // (different chain, or a different token on Polygon — handled as a swap).
+    const useLiFi = targetChain !== 'Polygon' || targetToken !== 'USDC'
 
     setIsWalletSending(true)
     try {
@@ -179,18 +182,19 @@ function useWalletSendHandler({
       let calls: WalletCall[]
       let metadata = 'send_tokens'
 
-      if (isCrossChain) {
-        const toChainId = WITHDRAW_CHAIN_IDS[targetChain as string]
+      if (useLiFi) {
+        const toChainId = WITHDRAW_CHAIN_IDS[targetChain]
         if (!toChainId) {
           toast.error(messages.invalidRecipient)
           return
         }
-        // Fetch a LI.FI cross-chain route: Polygon USDC (deposit wallet) → recipient on the destination chain.
+        // LI.FI route: Polygon USDC (deposit wallet) → chosen token on the chosen chain → recipient.
         const quoteRes = await fetch('/api/lifi/withdraw-quote', {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify({
             toChainId,
+            toToken: targetToken,
             fromAddress: user.deposit_wallet_address,
             toAddress: walletSendTo,
             amount: walletSendAmount,
@@ -429,6 +433,7 @@ export function WalletFlow({
         onMax={handleSetMaxAmount}
         isBalanceLoading={isLoadingBalance}
         pendingWithdrawals={visiblePendingWithdrawals}
+        depositWalletAddress={user?.deposit_wallet_address ?? null}
       />
     </>
   )

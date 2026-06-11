@@ -11,8 +11,9 @@ import {
   WalletIcon,
 } from 'lucide-react'
 import Image from 'next/image'
-import { useState } from 'react'
-import { WITHDRAW_CHAIN_OPTIONS, WITHDRAW_TOKEN_OPTIONS } from '@/app/[locale]/(platform)/_components/wallet-modal/utils'
+import { useEffect, useState } from 'react'
+import { formatUnits } from 'viem'
+import { WITHDRAW_CHAIN_IDS, WITHDRAW_CHAIN_OPTIONS, WITHDRAW_TOKEN_OPTIONS } from '@/app/[locale]/(platform)/_components/wallet-modal/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -37,6 +38,7 @@ function WalletSendForm({
   onMax,
   isBalanceLoading = false,
   pendingWithdrawals = [],
+  depositWalletAddress,
 }: {
   sendTo: string
   onChangeSendTo: ChangeEventHandler<HTMLInputElement>
@@ -51,6 +53,7 @@ function WalletSendForm({
   onMax?: () => void
   isBalanceLoading?: boolean
   pendingWithdrawals?: PendingWithdrawalItem[]
+  depositWalletAddress?: string | null
 }) {
   const trimmedRecipient = sendTo.trim()
   const isRecipientAddress = /^0x[a-fA-F0-9]{40}$/.test(trimmedRecipient)
@@ -74,12 +77,76 @@ function WalletSendForm({
         maximumFractionDigits: 2,
       })
     : '0.00'
-  const receiveAmountDisplay = Number.isFinite(parsedAmount)
-    ? parsedAmount.toLocaleString('en-US', {
-        minimumFractionDigits: 5,
-        maximumFractionDigits: 5,
-      })
-    : '0.00000'
+  // ── Live cross-chain/swap quote (real "You will receive" + fees) ──
+  const isDirectTransfer = receiveToken === 'USDC' && receiveChain === 'Polygon'
+  const [quote, setQuote] = useState<{
+    receiveAmount: string
+    receiveUsd: number
+    networkCostUsd: number
+    feeUsd: number
+    priceImpactPct: number
+  } | null>(null)
+  const [quoteStatus, setQuoteStatus] = useState<'idle' | 'loading' | 'error' | 'need-recipient'>('idle')
+  const [quoteError, setQuoteError] = useState('')
+
+  useEffect(() => {
+    const amt = Number(sendAmount)
+    if (!Number.isFinite(amt) || amt <= 0) {
+      setQuote(null); setQuoteStatus('idle'); return
+    }
+    // Same-chain Polygon USDC = direct 1:1 transfer, no bridge/swap.
+    if (isDirectTransfer) {
+      setQuote({ receiveAmount: amt.toFixed(2), receiveUsd: amt, networkCostUsd: 0, feeUsd: 0, priceImpactPct: 0 })
+      setQuoteStatus('idle'); setQuoteError(''); return
+    }
+    if (!isRecipientAddress) { setQuote(null); setQuoteStatus('need-recipient'); return }
+    const toChainId = WITHDRAW_CHAIN_IDS[receiveChain]
+    if (!depositWalletAddress || !toChainId) {
+      setQuote(null); setQuoteStatus('error'); setQuoteError('Withdrawal route unavailable.'); return
+    }
+
+    let cancelled = false
+    setQuoteStatus('loading')
+    const handle = setTimeout(async () => {
+      try {
+        const res = await fetch('/api/lifi/withdraw-quote', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ toChainId, toToken: receiveToken, fromAddress: depositWalletAddress, toAddress: trimmedRecipient, amount: String(amt) }),
+        })
+        const data = await res.json().catch(() => null)
+        if (cancelled) return
+        if (!res.ok || !data?.quote) {
+          setQuote(null); setQuoteStatus('error'); setQuoteError(data?.error ?? 'Could not fetch a quote.'); return
+        }
+        const q = data.quote
+        const est = q.estimate ?? {}
+        const decimals = Number(q.action?.toToken?.decimals ?? 18)
+        const priceUsd = Number(q.action?.toToken?.priceUSD ?? 0)
+        const receiveNum = Number(formatUnits(BigInt(est.toAmount ?? '0'), decimals))
+        const receiveUsd = Number(est.toAmountUSD ?? receiveNum * priceUsd)
+        const fromUsd = Number(est.fromAmountUSD ?? amt)
+        const gasUsd = (est.gasCosts ?? []).reduce((s: number, c: any) => s + Number(c.amountUSD ?? 0), 0)
+        const feeUsd = (est.feeCosts ?? []).reduce((s: number, c: any) => s + Number(c.amountUSD ?? 0), 0)
+        setQuote({
+          receiveAmount: receiveNum.toLocaleString('en-US', { maximumFractionDigits: 5 }),
+          receiveUsd,
+          networkCostUsd: gasUsd,
+          feeUsd,
+          priceImpactPct: fromUsd > 0 ? Math.max(0, ((fromUsd - receiveUsd) / fromUsd) * 100) : 0,
+        })
+        setQuoteStatus('idle'); setQuoteError('')
+      }
+      catch {
+        if (!cancelled) { setQuote(null); setQuoteStatus('error'); setQuoteError('Could not fetch a quote.') }
+      }
+    }, 500)
+    return () => { cancelled = true; clearTimeout(handle) }
+  }, [sendAmount, receiveToken, receiveChain, trimmedRecipient, isRecipientAddress, depositWalletAddress, isDirectTransfer])
+
+  const usd2 = (n: number) => n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  // Cross-chain/swap requires a successful live quote before submitting.
+  const quoteBlocksSubmit = !isDirectTransfer && (quoteStatus === 'loading' || quoteStatus === 'error')
   const formattedBalance = Number.isFinite(availableBalance)
     ? Number(availableBalance).toLocaleString('en-US', {
         minimumFractionDigits: 2,
@@ -266,15 +333,25 @@ function WalletSendForm({
           <div className="flex items-center justify-between text-sm">
             <span className="text-foreground">You will receive</span>
             <div className="flex items-center gap-3 text-right">
-              <span className="text-foreground">
-                {receiveAmountDisplay}
-                {' '}
-                {receiveToken}
-              </span>
-              <span className="text-muted-foreground">
-                $
-                {amountDisplay}
-              </span>
+              {quoteStatus === 'loading'
+                ? <span className="text-muted-foreground">Fetching quote…</span>
+                : quoteStatus === 'need-recipient'
+                  ? <span className="text-muted-foreground">Enter recipient to estimate</span>
+                  : quoteStatus === 'error'
+                    ? <span className="text-destructive">{quoteError}</span>
+                    : (
+                        <>
+                          <span className="text-foreground">
+                            {quote?.receiveAmount ?? '0.00000'}
+                            {' '}
+                            {receiveToken}
+                          </span>
+                          <span className="text-muted-foreground">
+                            $
+                            {usd2(quote?.receiveUsd ?? 0)}
+                          </span>
+                        </>
+                      )}
             </div>
           </div>
           <button
@@ -284,7 +361,7 @@ function WalletSendForm({
           >
             <span>Transaction breakdown</span>
             <span className="flex items-center gap-1">
-              {!isBreakdownOpen && <span>0.00%</span>}
+              {!isBreakdownOpen && <span>{(quote?.priceImpactPct ?? 0).toFixed(2)}%</span>}
               <ChevronRightIcon
                 className={cn('size-4 transition', { 'rotate-90': isBreakdownOpen })}
               />
@@ -304,23 +381,28 @@ function WalletSendForm({
                     <TooltipContent>
                       <div className="space-y-1 text-xs text-foreground">
                         <div className="flex items-center justify-between gap-4">
-                          <span>Total cost</span>
-                          <span className="text-right">$0.00</span>
+                          <span>Network cost</span>
+                          <span className="text-right">
+                            $
+                            {usd2(quote?.networkCostUsd ?? 0)}
+                          </span>
                         </div>
                         <div className="flex items-center justify-between gap-4">
-                          <span>Source chain gas</span>
-                          <span className="text-right">$0.00</span>
-                        </div>
-                        <div className="flex items-center justify-between gap-4">
-                          <span>Destination chain gas</span>
-                          <span className="text-right">$0.00</span>
+                          <span>Provider fee</span>
+                          <span className="text-right">
+                            $
+                            {usd2(quote?.feeUsd ?? 0)}
+                          </span>
                         </div>
                       </div>
                     </TooltipContent>
                   </Tooltip>
                   <div className="flex items-center gap-1">
                     <FuelIcon className="size-4" />
-                    <span>$0.00</span>
+                    <span>
+                      $
+                      {usd2((quote?.networkCostUsd ?? 0) + (quote?.feeUsd ?? 0))}
+                    </span>
                   </div>
                 </div>
                 <div className="flex items-center justify-between">
@@ -335,20 +417,18 @@ function WalletSendForm({
                       <div className="space-y-1 text-xs text-foreground">
                         <div className="flex items-center justify-between gap-4">
                           <span>Total impact</span>
-                          <span className="text-right">0.00%</span>
-                        </div>
-                        <div className="flex items-center justify-between gap-4">
-                          <span>Swap impact</span>
-                          <span className="text-right">0.00%</span>
-                        </div>
-                        <div className="flex items-center justify-between gap-4">
-                          <span>Fun.xyz fee</span>
-                          <span className="text-right">0.00%</span>
+                          <span className="text-right">
+                            {(quote?.priceImpactPct ?? 0).toFixed(2)}
+                            %
+                          </span>
                         </div>
                       </div>
                     </TooltipContent>
                   </Tooltip>
-                  <span>0.00%</span>
+                  <span>
+                    {(quote?.priceImpactPct ?? 0).toFixed(2)}
+                    %
+                  </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <Tooltip>
@@ -359,7 +439,8 @@ function WalletSendForm({
                       </div>
                     </TooltipTrigger>
                     <TooltipContent>
-                      Slippage occurs due to price changes during trade execution. Minimum received: $0.00
+                      Slippage occurs due to price changes during trade execution. Minimum received: $
+                      {usd2((quote?.receiveUsd ?? 0) * 0.995)}
                     </TooltipContent>
                   </Tooltip>
                   <span>Auto • 0.00%</span>
@@ -402,7 +483,7 @@ function WalletSendForm({
           </div>
         )}
 
-        <Button type="submit" className="h-12 w-full gap-2 text-base" disabled={isSubmitDisabled}>
+        <Button type="submit" className="h-12 w-full gap-2 text-base" disabled={isSubmitDisabled || quoteBlocksSubmit}>
           {isSending ? 'Submitting…' : 'Withdraw'}
         </Button>
       </form>

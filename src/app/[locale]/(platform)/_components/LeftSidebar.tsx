@@ -5,7 +5,6 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   FlameIcon,
-  GlobeIcon,
   HashIcon,
   SparklesIcon,
   TrendingUpIcon,
@@ -13,6 +12,7 @@ import {
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { usePathname } from 'next/navigation'
+import SidebarProfileCard from '@/app/[locale]/(platform)/_components/SidebarProfileCard'
 import AppLink from '@/components/AppLink'
 import HeaderLogo from '@/components/HeaderLogo'
 import { cn } from '@/lib/utils'
@@ -32,7 +32,6 @@ const NAV_ITEMS: SidebarNavItem[] = [
   { icon: <SparklesIcon  className="size-4" />, label: 'New Events',     href: '/new',             badge: 'NEW',  badgeVariant: 'new' },
   { icon: <FlameIcon     className="size-4" />, label: 'Hot Now',        href: '/?sort=24h-volume', badgeVariant: 'count', count: 24 },
   { icon: <BookmarkIcon  className="size-4" />, label: 'Watchlist',      href: '/?bookmarked=true', badgeVariant: 'count', count: 0 },
-  { icon: <GlobeIcon     className="size-4" />, label: 'Atlas',          href: '/geopolitics',     badge: 'NEW',  badgeVariant: 'new' },
 ]
 
 const COMMUNITIES = [
@@ -229,6 +228,9 @@ export default function LeftSidebar() {
           </div>
         )}
       </nav>
+
+      {/* ── Account / profile card (real data) — only when expanded ── */}
+      {!collapsed && <SidebarProfileCard />}
     </aside>
   )
 }

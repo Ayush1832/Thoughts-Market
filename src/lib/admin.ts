@@ -43,5 +43,31 @@ export function isAdminWallet(address?: string | null): boolean {
     return false
   }
 
-  return getAdminWallets().includes(address.toLowerCase())
+  // Super admins are always admins too.
+  return getAdminWallets().includes(address.toLowerCase()) || isSuperAdminWallet(address)
+}
+
+let cachedSuperAdminWallets: string[] | null = null
+
+export function getSuperAdminWallets(): string[] {
+  if (cachedSuperAdminWallets) {
+    return cachedSuperAdminWallets
+  }
+
+  const envValue = process.env.SUPER_ADMIN_WALLETS
+  if (!envValue) {
+    cachedSuperAdminWallets = []
+    return cachedSuperAdminWallets
+  }
+
+  cachedSuperAdminWallets = parseAdminWalletsEnv(envValue)
+  return cachedSuperAdminWallets
+}
+
+export function isSuperAdminWallet(address?: string | null): boolean {
+  if (!address) {
+    return false
+  }
+
+  return getSuperAdminWallets().includes(address.toLowerCase())
 }

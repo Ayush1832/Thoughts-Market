@@ -1,13 +1,16 @@
 import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
+import { getAdminAccess } from '@/lib/admin-guard'
+import { canAccessSection } from '@/lib/admin-permissions'
 import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
 import { RolesRepository } from '@/lib/db/queries/roles'
-import { UserRepository } from '@/lib/db/queries/user'
 
 export async function GET(_request: NextRequest) {
   try {
-    const currentUser = await UserRepository.getCurrentUser({ minimal: true })
-    if (!currentUser || !currentUser.is_admin) {
+    // Accept either auth method (username/password cookie OR wallet admin)
+    // and require access to the Roles section.
+    const allowed = await getAdminAccess()
+    if (!canAccessSection(allowed, 'roles')) {
       return NextResponse.json({ error: 'Unauthenticated.' }, { status: 401 })
     }
 

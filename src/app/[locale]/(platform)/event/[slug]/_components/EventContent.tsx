@@ -1,6 +1,5 @@
 import type { EventFaqItem } from '@/lib/event-faq'
 import type { Event, EventLiveChartConfig, EventSeriesEntry } from '@/types'
-import AiInsightsPanel from '@/app/[locale]/(platform)/event/[slug]/_components/AiInsightsPanel'
 import AiMarketAlerts from '@/app/[locale]/(platform)/event/[slug]/_components/AiMarketAlerts'
 import AiRiskScorePanel from '@/app/[locale]/(platform)/event/[slug]/_components/AiRiskScorePanel'
 import EventBackToTopButton from '@/app/[locale]/(platform)/event/[slug]/_components/EventBackToTopButton'
@@ -97,7 +96,6 @@ export default function EventContent({
           <div className="grid gap-6">
             <AiMarketAlerts eventId={event.id} />
             <EventMarketsSection event={event} liveChartConfig={liveChartConfig} />
-            <AiInsightsPanel eventId={event.id} />
             {singleMarket && (
               <AiRiskScorePanel market={singleMarket} eventId={event.id} />
             )}

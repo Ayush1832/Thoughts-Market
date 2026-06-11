@@ -171,7 +171,17 @@ export default function GlobeCanvas({
 
         let r = tex![ti], g = tex![ti + 1], b = tex![ti + 2]
         const lum = (r + g + b) / 3
-        if (lum < 30) { r = r * 0.5 + 4; g = g * 0.6 + 11; b = b * 0.7 + 30 }
+        if (lum < 28) {
+          // dark land/ocean — deep navy night side
+          r = r * 0.45 + 3; g = g * 0.55 + 9; b = b * 0.7 + 26
+        }
+        else {
+          // city lights — boost & warm them so they pop like the reference
+          const boost = 1.35 + smoothstep(28, 130, lum) * 0.7
+          r = Math.min(255, r * boost + 22)
+          g = Math.min(255, g * boost * 0.9 + 12)
+          b = Math.min(255, b * boost * 0.55 + 4)
+        }
         const limb = limbArr[i]
         data[off] = r * limb
         data[off + 1] = g * limb
@@ -231,8 +241,9 @@ export default function GlobeCanvas({
 
       const ring = ctx.createRadialGradient(cx, cy, R * 0.7, cx, cy, R)
       ring.addColorStop(0, 'rgba(0,0,0,0)')
-      ring.addColorStop(0.82, 'rgba(40,180,255,0.05)')
-      ring.addColorStop(1, 'rgba(120,225,255,0.45)')
+      ring.addColorStop(0.8, 'rgba(40,180,255,0.06)')
+      ring.addColorStop(0.94, 'rgba(90,210,255,0.28)')
+      ring.addColorStop(1, 'rgba(150,235,255,0.6)')
       ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.fillStyle = ring; ctx.fill()
 
       const dawn = ctx.createRadialGradient(
@@ -243,6 +254,58 @@ export default function GlobeCanvas({
       dawn.addColorStop(0.6, 'rgba(60,160,255,0.08)')
       dawn.addColorStop(1, 'rgba(0,0,0,0)')
       ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.fillStyle = dawn; ctx.fill()
+      ctx.restore()
+    }
+
+    // Flowing topographic-style contour lines wrapping the globe (the signature
+    // look of the reference). Cheap: a handful of sine-perturbed latitude bands.
+    function drawContours() {
+      ctx.save()
+      ctx.beginPath(); ctx.arc(cx, cy, R - 0.5, 0, Math.PI * 2); ctx.clip()
+      ctx.globalCompositeOperation = 'lighter'
+      const lines = 11
+      for (let k = 0; k < lines; k++) {
+        const baseLat = -72 + (k * 144) / (lines - 1)
+        const amp = 5 + (k % 3) * 4
+        const freq = 2 + (k % 3)
+        const off = phase * 0.18 + k * 1.3
+        let started = false
+        ctx.beginPath()
+        for (let lon = -180; lon <= 180; lon += 4) {
+          const lat = baseLat + amp * Math.sin((lon * Math.PI) / 180 * freq + off)
+          const p = projectGeo(lat, lon)
+          if (p.z < 0.04) { started = false; continue }
+          if (!started) { ctx.moveTo(p.x, p.y); started = true }
+          else ctx.lineTo(p.x, p.y)
+        }
+        ctx.strokeStyle = `rgba(94,210,255,${0.045 + 0.03 * (k % 2)})`
+        ctx.lineWidth = 0.6
+        ctx.stroke()
+      }
+      ctx.restore()
+    }
+
+    // Bright focal "spotlight" glow over the lead hotspot, like the reference.
+    function drawFocalGlow() {
+      const custom = hotspotsRef.current
+      const lead = custom && custom.length ? [custom[0].lat, custom[0].lon] : [SPOTS[0][0], SPOTS[0][1]]
+      const p = projectGeo(lead[0], lead[1])
+      if (p.z < 0.1) return
+      const v = Math.min(1, p.z)
+      ctx.save()
+      ctx.globalCompositeOperation = 'lighter'
+      const halo = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, R * 0.55)
+      halo.addColorStop(0, `rgba(190,238,255,${0.42 * v})`)
+      halo.addColorStop(0.22, `rgba(110,195,255,${0.16 * v})`)
+      halo.addColorStop(1, 'rgba(0,0,0,0)')
+      ctx.beginPath(); ctx.arc(p.x, p.y, R * 0.55, 0, Math.PI * 2); ctx.fillStyle = halo; ctx.fill()
+      const core = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, R * 0.07)
+      core.addColorStop(0, `rgba(255,255,255,${0.95 * v})`)
+      core.addColorStop(1, 'rgba(255,255,255,0)')
+      ctx.beginPath(); ctx.arc(p.x, p.y, R * 0.07, 0, Math.PI * 2); ctx.fillStyle = core; ctx.fill()
+      const ringR = R * (0.12 + 0.03 * (0.5 + 0.5 * Math.sin(phase)))
+      ctx.beginPath(); ctx.arc(p.x, p.y, ringR, 0, Math.PI * 2)
+      ctx.strokeStyle = `rgba(180,232,255,${0.4 * v})`; ctx.lineWidth = 1; ctx.stroke()
       ctx.restore()
     }
 
@@ -260,24 +323,38 @@ export default function GlobeCanvas({
 
       if (flags.current.showArcs) {
         ctx.save()
-        ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.clip()
-        ctx.setLineDash([3, 4])
+        ctx.globalCompositeOperation = 'lighter'
         for (const [ia, ib] of arcs) {
           const a = spots[ia], b = spots[ib]
-          let started = false
-          ctx.beginPath()
-          for (let t = 0; t <= 40; t++) {
-            const f = t / 40
+          // build the bowed (lifted) arc path once, reuse for glow + core passes
+          const pts: { x: number, y: number }[] = []
+          for (let t = 0; t <= 48; t++) {
+            const f = t / 48
             const p = projectGeo(a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f)
-            if (p.z < -0.15) { started = false; continue }
-            if (!started) { ctx.moveTo(p.x, p.y); started = true }
-            else ctx.lineTo(p.x, p.y)
+            if (p.z < -0.1) continue
+            // push the midpoint outward from the globe center → arc bows off the surface
+            const dx = p.x - cx, dy = p.y - cy
+            const dist = Math.hypot(dx, dy) || 1
+            const lift = Math.sin(f * Math.PI) * R * 0.22
+            pts.push({ x: p.x + (dx / dist) * lift, y: p.y + (dy / dist) * lift })
           }
-          ctx.strokeStyle = 'rgba(0,210,255,0.16)'
-          ctx.lineWidth = 0.9
-          ctx.stroke()
+          if (pts.length < 2) continue
+          const trace = () => {
+            ctx.beginPath()
+            ctx.moveTo(pts[0].x, pts[0].y)
+            for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y)
+          }
+          // soft glow
+          trace(); ctx.strokeStyle = 'rgba(0,210,255,0.10)'; ctx.lineWidth = 3; ctx.stroke()
+          // bright core
+          trace(); ctx.strokeStyle = 'rgba(120,235,255,0.55)'; ctx.lineWidth = 1; ctx.stroke()
+          // travelling pulse along the arc
+          const head = pts[Math.floor((0.5 + 0.5 * Math.sin(phase * 0.9)) * (pts.length - 1))]
+          const pg = ctx.createRadialGradient(head.x, head.y, 0, head.x, head.y, 4)
+          pg.addColorStop(0, 'rgba(220,250,255,0.9)')
+          pg.addColorStop(1, 'rgba(220,250,255,0)')
+          ctx.beginPath(); ctx.arc(head.x, head.y, 4, 0, Math.PI * 2); ctx.fillStyle = pg; ctx.fill()
         }
-        ctx.setLineDash([])
         ctx.restore()
       }
 
@@ -351,7 +428,9 @@ export default function GlobeCanvas({
       if (tex) { drawEarthPixels(); ctx.putImageData(image, 0, 0) }
       else { drawFallbackSphere() }
       if (flags.current.showGrid) drawGrid()
+      drawContours()
       drawAtmosphere()
+      drawFocalGlow()
       drawArcsAndHotspots()
       rot += 0.0017
       phase += 0.032

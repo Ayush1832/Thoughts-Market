@@ -16,7 +16,7 @@ interface AdminMenuItem {
   icon: LucideIcon
 }
 
-export default function AdminSidebar() {
+export default function AdminSidebar({ allowedSections }: { allowedSections?: '*' | string[] }) {
   const t = useExtracted()
   const adminMenuItems: AdminMenuItem[] = [
     { id: 'general', label: t('General'), href: '/admin' as Route, icon: SettingsIcon },
@@ -35,8 +35,13 @@ export default function AdminSidebar() {
     // { id: 'reels', label: t('Reels'), href: '/admin/reels' as Route, icon: FilmIcon },
     { id: 'social', label: t('Social'), href: '/admin/social' as Route, icon: MessageSquareIcon },
   ]
+  // RBAC: only show sections this user's role(s) allow.
+  const visibleMenuItems = allowedSections && allowedSections !== '*'
+    ? adminMenuItems.filter(item => allowedSections.includes(item.id))
+    : adminMenuItems
+
   const pathname = usePathname()
-  const activeItem = adminMenuItems.find((item) => {
+  const activeItem = visibleMenuItems.find((item) => {
     if (item.id === 'general') {
       return pathname === item.href
     }
@@ -60,7 +65,7 @@ export default function AdminSidebar() {
           lg:grid lg:gap-1 lg:overflow-visible lg:rounded-none lg:bg-transparent
         `}
       >
-        {adminMenuItems.map(item => (
+        {visibleMenuItems.map(item => (
           <Button
             key={item.id}
             type="button"

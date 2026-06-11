@@ -1,10 +1,9 @@
 import type { Event } from '@/types'
-import { BrainCircuitIcon, ChevronRightIcon } from 'lucide-react'
 import AppLink from '@/components/AppLink'
+import AtlasGlobe from '@/components/AtlasGlobe'
 import Sparkline from '@/components/Sparkline'
 import { listHomeEventsPage } from '@/lib/home-events-page'
 import RightSidebarClient from './RightSidebarClient'
-import AtlasGlobe from '@/components/AtlasGlobe'
 
 async function getLiveMarkets(): Promise<Event[]> {
   try {
@@ -14,43 +13,6 @@ async function getLiveMarkets(): Promise<Event[]> {
   catch {
     return []
   }
-}
-
-function AiConfidenceCard() {
-  const percentage = 74
-  const insight = 'Crypto markets show 67% directional win rate this week.'
-
-  return (
-    <div
-      className="relative space-y-3 overflow-hidden rounded-2xl border border-primary/20 p-4"
-      style={{ background: 'linear-gradient(135deg, oklch(0.55 0.2 280 / 0.12), oklch(0.65 0.16 200 / 0.06) 60%, transparent)' }}
-    >
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-          <BrainCircuitIcon className="size-4 text-primary" />
-          AI CONFIDENCE
-        </div>
-        <span className="text-xl font-bold text-foreground">
-          {percentage}
-          %
-        </span>
-      </div>
-      <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted/60">
-        <div
-          className="h-full rounded-full"
-          style={{ width: `${percentage}%`, background: 'linear-gradient(90deg, oklch(0.55 0.2 280), oklch(0.7 0.16 200))' }}
-        />
-      </div>
-      <p className="text-xs/relaxed text-muted-foreground">{insight}</p>
-      <AppLink
-        href="/"
-        className="flex items-center gap-1 text-xs font-medium text-primary transition-colors hover:text-primary/80"
-      >
-        Explore takes
-        <ChevronRightIcon className="size-3" />
-      </AppLink>
-    </div>
-  )
 }
 
 function LiveMarketMini({ event }: { event: any }) {
@@ -136,7 +98,8 @@ export default async function RightSidebar() {
   return (
     <RightSidebarClient>
       <div className="space-y-5 p-4">
-        <AiConfidenceCard />
+        {/* Globe widget pinned to the top */}
+        <AtlasGlobe />
 
         {liveMarkets.length > 0 && (
           <div className="space-y-2">
@@ -175,8 +138,6 @@ export default async function RightSidebar() {
             ))}
           </div>
         </div>
-
-        <AtlasGlobe />
 
         <div className="h-4" />
       </div>

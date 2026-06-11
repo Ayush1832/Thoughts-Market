@@ -2,13 +2,14 @@
 
 import type { AdminRole } from '@/lib/db/schema/auth/tables'
 import { revalidatePath } from 'next/cache'
+import { getAdminAccess } from '@/lib/admin-guard'
+import { canAccessSection } from '@/lib/admin-permissions'
 import { RolesRepository } from '@/lib/db/queries/roles'
-import { UserRepository } from '@/lib/db/queries/user'
 import { ADMIN_ROLES } from '@/lib/db/schema/auth/tables'
 
 export async function assignRoleAction(userId: string, role: AdminRole): Promise<{ error: string | null }> {
-  const currentUser = await UserRepository.getCurrentUser({ minimal: true })
-  if (!currentUser || !currentUser.is_admin) {
+  const allowed = await getAdminAccess()
+  if (!canAccessSection(allowed, 'roles')) {
     return { error: 'Unauthorized.' }
   }
 
@@ -24,8 +25,8 @@ export async function assignRoleAction(userId: string, role: AdminRole): Promise
 }
 
 export async function removeRoleAction(userId: string, role: AdminRole): Promise<{ error: string | null }> {
-  const currentUser = await UserRepository.getCurrentUser({ minimal: true })
-  if (!currentUser || !currentUser.is_admin) {
+  const allowed = await getAdminAccess()
+  if (!canAccessSection(allowed, 'roles')) {
     return { error: 'Unauthorized.' }
   }
 

@@ -154,7 +154,7 @@ export async function GET(request: NextRequest) {
 
       return {
         ...user,
-        is_admin: isAdminWallet(user.address),
+        is_admin: isAdminWallet(user.address) || isAdminWallet(depositWalletAddress),
         avatarUrl: user.image ? getPublicAssetUrl(user.image) : '',
         referred_by_display: referredDisplay,
         referred_by_profile_url: referredProfile,

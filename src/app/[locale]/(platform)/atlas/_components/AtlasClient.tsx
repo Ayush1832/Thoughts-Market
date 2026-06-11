@@ -1,48 +1,54 @@
 'use client'
 
-import { useQuery } from '@tanstack/react-query'
-import { ArrowLeftIcon, ExternalLinkIcon } from 'lucide-react'
+import type { Route } from 'next'
+import { ArrowLeftIcon, ChevronRightIcon } from 'lucide-react'
 import { useState } from 'react'
 import AppLink from '@/components/AppLink'
 import GlobeCanvas from '@/components/GlobeCanvas'
+import { useRouter } from '@/i18n/navigation'
 import { cn } from '@/lib/utils'
 
-interface FeedItem {
+// Platform market categories, anchored to globe locations. These ARE the
+// "cards" — the feed and the globe both render from this single source.
+interface AtlasCategory {
   id: string
-  category: string
-  title: string
-  source: string
-  url: string
-  image: string | null
-  ago: string
+  label: string
+  href: string
+  color: string
+  lat: number
+  lon: number
+  region: string
 }
 
-const CATEGORIES = [
-  { id: 'geopolitics', label: 'Geopolitics' },
-  { id: 'elections', label: 'Elections' },
-  { id: 'commodities', label: 'Commodities' },
-  { id: 'markets', label: 'Markets' },
-  { id: 'tech', label: 'AI & Tech' },
-  { id: 'conflict', label: 'Conflict' },
-] as const
-
-const HOTSPOTS = [
-  { name: 'Taiwan tension', pct: '+12%', color: '#ff4d6d' },
-  { name: 'Strait of Hormuz', pct: '+8%', color: '#ffbe3d' },
-  { name: 'NATO posture', pct: '-2%', color: '#22c55e' },
-  { name: 'Korean DMZ', pct: '+4%', color: '#a855f7' },
-  { name: 'Red Sea routes', pct: '+9%', color: '#ff4d6d' },
+const CATEGORIES: AtlasCategory[] = [
+  { id: 'geopolitics', label: 'Geopolitics', href: '/geopolitics', color: '#54e3ff', lat: 25, lon: 121, region: 'East Asia' },
+  { id: 'politics', label: 'Politics', href: '/politics', color: '#ff6b8a', lat: 38, lon: -77, region: 'Washington' },
+  { id: 'crypto', label: 'Crypto', href: '/crypto', color: '#ffbe3d', lat: 1, lon: 103, region: 'Singapore' },
+  { id: 'finance', label: 'Finance', href: '/finance', color: '#22c55e', lat: 40, lon: -74, region: 'New York' },
+  { id: 'tech', label: 'Tech', href: '/tech', color: '#7d6cff', lat: 37, lon: -122, region: 'San Francisco' },
+  { id: 'sports', label: 'Sports', href: '/sports/live', color: '#4ade8a', lat: 51, lon: -0.1, region: 'London' },
+  { id: 'esports', label: 'Esports', href: '/esports/live', color: '#a855f7', lat: 37, lon: 127, region: 'Seoul' },
+  { id: 'culture', label: 'Culture', href: '/culture', color: '#ff7ad9', lat: 34, lon: -118, region: 'Los Angeles' },
+  { id: 'world', label: 'World', href: '/world', color: '#54e3ff', lat: 48, lon: 2, region: 'Europe' },
+  { id: 'economy', label: 'Economy', href: '/economy', color: '#ffd66c', lat: 50, lon: 8, region: 'Frankfurt' },
+  { id: 'weather', label: 'Weather', href: '/weather', color: '#a8d8ff', lat: -23, lon: -46, region: 'São Paulo' },
+  { id: 'elections', label: 'Elections', href: '/elections', color: '#ff6b8a', lat: 28, lon: 77, region: 'New Delhi' },
+  { id: 'mentions', label: 'Mentions', href: '/mentions', color: '#c084fc', lat: 35, lon: 139, region: 'Tokyo' },
 ]
 
-const CATEGORY_ACCENT: Record<string, string> = {
-  GEOPOLITICS: 'text-[#ff6b7a] border-l-[#ff4d6d]',
-  COMMODITY: 'text-[#ffbe3d] border-l-[#ffbe3d]',
-  FINANCE: 'text-[#22c55e] border-l-[#22c55e]',
-  ELECTION: 'text-[#4f8ef7] border-l-[#4f8ef7]',
-  TECH: 'text-[#c084fc] border-l-[#a855f7]',
-  CONFLICT: 'text-[#ff6b7a] border-l-[#ff4d6d]',
-  GLOBAL: 'text-[#00d4ff] border-l-[#00d4ff]',
+function hexToRgb(hex: string): [number, number, number] {
+  const h = hex.replace('#', '')
+  return [
+    Number.parseInt(h.slice(0, 2), 16),
+    Number.parseInt(h.slice(2, 4), 16),
+    Number.parseInt(h.slice(4, 6), 16),
+  ]
 }
+
+const HOTSPOTS = CATEGORIES.map((c) => {
+  const [r, g, b] = hexToRgb(c.color)
+  return { lat: c.lat, lon: c.lon, r, g, b, size: 4.6, label: c.label }
+})
 
 function StatPill({ label, value, sub, color }: { label: string, value: string, sub?: string, color?: string }) {
   return (
@@ -57,22 +63,8 @@ function StatPill({ label, value, sub, color }: { label: string, value: string, 
 }
 
 export default function AtlasClient() {
-  const [category, setCategory] = useState<string>('geopolitics')
+  const router = useRouter()
   const [layers, setLayers] = useState({ heatmap: false, hotspots: true, flow: true, grid: true })
-
-  const { data, isLoading, isError, dataUpdatedAt } = useQuery({
-    queryKey: ['atlas-news', category],
-    queryFn: async (): Promise<FeedItem[]> => {
-      const res = await fetch(`/api/atlas/news?category=${category}`)
-      if (!res.ok) throw new Error('Failed to load feed')
-      const json = await res.json()
-      return json.items as FeedItem[]
-    },
-    refetchInterval: 120_000,
-    staleTime: 60_000,
-  })
-
-  const updatedAgo = dataUpdatedAt ? Math.round((Date.now() - dataUpdatedAt) / 1000) : 0
 
   return (
     <div className="min-h-screen text-white">
@@ -100,19 +92,23 @@ export default function AtlasClient() {
       </div>
 
       <div className="grid gap-4 p-4 lg:grid-cols-[240px_1fr_360px] lg:p-6">
-        {/* ── Left: hotspots + layers ── */}
+        {/* ── Left: categories + layers ── */}
         <aside className="space-y-6">
           <div>
-            <p className="mb-2 text-[10px] font-semibold tracking-[1.6px] text-white/35 uppercase">Hotspots · {HOTSPOTS.length}</p>
+            <p className="mb-2 text-[10px] font-semibold tracking-[1.6px] text-white/35 uppercase">Categories · {CATEGORIES.length}</p>
             <div className="space-y-1.5">
-              {HOTSPOTS.map(h => (
-                <div key={h.name} className="flex items-center justify-between rounded-lg border border-white/8 bg-white/[0.03] px-3 py-2">
+              {CATEGORIES.map(c => (
+                <AppLink
+                  key={c.id}
+                  href={c.href as Route}
+                  className="flex items-center justify-between rounded-lg border border-white/8 bg-white/[0.03] px-3 py-2 transition-colors hover:bg-white/[0.06]"
+                >
                   <div className="flex items-center gap-2.5">
-                    <span className="size-2 rounded-full" style={{ background: h.color, boxShadow: `0 0 7px ${h.color}` }} />
-                    <span className="text-[13px] text-white/80">{h.name}</span>
+                    <span className="size-2 rounded-full" style={{ background: c.color, boxShadow: `0 0 7px ${c.color}` }} />
+                    <span className="text-[13px] text-white/80">{c.label}</span>
                   </div>
-                  <span className={cn('text-[13px] font-semibold', h.pct.startsWith('-') ? 'text-[#22c55e]' : 'text-[#ff6b7a]')}>{h.pct}</span>
-                </div>
+                  <span className="text-[11px] text-white/30">{c.region}</span>
+                </AppLink>
               ))}
             </div>
           </div>
@@ -137,81 +133,51 @@ export default function AtlasClient() {
           </div>
         </aside>
 
-        {/* ── Center: globe + category tabs ── */}
+        {/* ── Center: globe (categories appear at their locations) ── */}
         <div className="relative flex flex-col rounded-2xl border border-white/8 bg-[#0a0f1e]/60 p-4">
-          <div className="flex flex-wrap gap-2">
-            {CATEGORIES.map(c => (
-              <button
-                key={c.id}
-                type="button"
-                onClick={() => setCategory(c.id)}
-                className={cn(
-                  'rounded-full px-3.5 py-1.5 text-[13px] font-medium transition-colors',
-                  category === c.id ? 'bg-[#1c3a66] text-white' : 'bg-white/5 text-white/60 hover:bg-white/10',
-                )}
-              >
-                {c.label}
-              </button>
-            ))}
-          </div>
-
           <div className="flex flex-1 items-center justify-center py-6">
             <GlobeCanvas
               size={420}
               showGrid={layers.grid}
               showHotspots={layers.hotspots}
               showArcs={layers.flow}
+              showLabels
+              hotspots={HOTSPOTS}
+              onHotspotClick={i => router.push(CATEGORIES[i].href as Route)}
               className="block max-w-full"
             />
           </div>
         </div>
 
-        {/* ── Right: intelligence feed ── */}
+        {/* ── Right: intelligence feed — the category cards ── */}
         <aside className="rounded-2xl border border-white/8 bg-[#0a0f1e]/60 p-4">
           <div className="mb-3 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="size-2 animate-pulse rounded-full bg-[#22c55e] shadow-[0_0_8px_#22c55e]" />
               <h2 className="text-sm font-bold tracking-wide">INTELLIGENCE FEED</h2>
             </div>
-            <span className="text-[11px] text-white/35">
-              {isLoading ? 'loading…' : `updated ${updatedAgo < 60 ? `${updatedAgo}s` : `${Math.round(updatedAgo / 60)}m`} ago`}
-            </span>
+            <span className="text-[11px] text-white/35">{CATEGORIES.length} categories</span>
           </div>
 
           <div className="max-h-[70vh] space-y-2 overflow-y-auto pr-1">
-            {isLoading && Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="animate-shimmer h-20 rounded-xl" />
-            ))}
-
-            {isError && (
-              <p className="px-1 py-4 text-sm text-white/50">Couldn’t load the feed. Retrying shortly…</p>
-            )}
-
-            {!isLoading && data?.map(item => (
-              <a
-                key={item.id}
-                href={item.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={cn(
-                  'group block rounded-xl border border-white/8 border-l-2 bg-white/[0.03] p-3 transition-colors hover:bg-white/[0.06]',
-                  CATEGORY_ACCENT[item.category] ?? CATEGORY_ACCENT.GLOBAL,
-                )}
+            {CATEGORIES.map(c => (
+              <AppLink
+                key={c.id}
+                href={c.href as Route}
+                className="group block rounded-xl border border-white/8 border-l-2 bg-white/[0.03] p-3 transition-colors hover:bg-white/[0.06]"
+                style={{ borderLeftColor: c.color }}
               >
                 <div className="flex items-center justify-between">
-                  <span className={cn('text-[10px] font-bold tracking-[1.2px]', (CATEGORY_ACCENT[item.category] ?? CATEGORY_ACCENT.GLOBAL).split(' ')[0])}>
-                    {item.category}
+                  <span className="text-[10px] font-bold tracking-[1.2px] uppercase" style={{ color: c.color }}>
+                    {c.label}
                   </span>
-                  <span className="text-[11px] text-white/30">{item.ago}</span>
+                  <span className="text-[11px] text-white/30">{c.region}</span>
                 </div>
-                <p className="mt-1 text-[13.5px] leading-snug font-semibold text-white/90 group-hover:text-white">
-                  {item.title}
+                <p className="mt-1 flex items-center justify-between text-[13.5px] leading-snug font-semibold text-white/90 group-hover:text-white">
+                  Explore {c.label} markets
+                  <ChevronRightIcon className="size-4 opacity-0 transition-opacity group-hover:opacity-60" />
                 </p>
-                <p className="mt-1 flex items-center gap-1 text-[11px] text-white/40">
-                  {item.source}
-                  <ExternalLinkIcon className="size-3 opacity-0 transition-opacity group-hover:opacity-60" />
-                </p>
-              </a>
+              </AppLink>
             ))}
           </div>
         </aside>

@@ -16,14 +16,18 @@ interface WithdrawQuoteBody {
   fromAddress: string // deposit wallet (Polygon)
   toAddress: string // recipient on the destination chain
   amount: string // human USDC amount
+  toToken?: string // destination token symbol (default USDC)
 }
 
-// Destination chains we support for cross-chain withdrawals.
-const SUPPORTED_TO_CHAINS = new Set<number>([1, 8453, 42161]) // Ethereum, Base, Arbitrum
+// Destination EVM chains supported for withdrawals (Polygon = same-chain swap).
+const SUPPORTED_TO_CHAINS = new Set<number>([1, 137, 8453, 42161, 56, 10])
 
-function findUsdcToken(tokens: TokenExtended[]) {
-  return tokens.find(t => t.symbol.toUpperCase() === 'USDC')
-    ?? tokens.find(t => t.symbol.toUpperCase().includes('USDC'))
+function findTokenBySymbol(tokens: TokenExtended[], symbol: string) {
+  const want = symbol.toUpperCase()
+  return tokens.find(t => t.symbol.toUpperCase() === want)
+    ?? tokens.find(t => t.symbol.toUpperCase().includes(want))
+    // fall back to USDC if the requested token isn't available on this chain
+    ?? tokens.find(t => t.symbol.toUpperCase() === 'USDC')
 }
 
 export async function POST(request: Request) {
@@ -63,18 +67,18 @@ export async function POST(request: Request) {
   }
 
   try {
-    // Resolve USDC on the destination chain.
+    // Resolve the requested receive token on the destination chain (default USDC).
     const tokensResponse = await getTokens({ extended: true, chains: [toChainId] })
-    const destUsdc = findUsdcToken(tokensResponse.tokens[toChainId] ?? [])
-    if (!destUsdc) {
-      return NextResponse.json({ error: 'USDC not available on the destination chain.' }, { status: 400 })
+    const destToken = findTokenBySymbol(tokensResponse.tokens[toChainId] ?? [], body.toToken ?? 'USDC')
+    if (!destToken) {
+      return NextResponse.json({ error: 'Requested token not available on the destination chain.' }, { status: 400 })
     }
 
     const quote = await getQuote({
       fromChain: DEFAULT_CHAIN_ID, // Polygon
       toChain: toChainId,
-      fromToken: COLLATERAL_TOKEN_ADDRESS, // Polygon USDC
-      toToken: destUsdc.address,
+      fromToken: COLLATERAL_TOKEN_ADDRESS, // Polygon USDC (collateral)
+      toToken: destToken.address,
       fromAddress: body.fromAddress, // deposit wallet
       toAddress: body.toAddress, // recipient on destination chain
       fromAmount,

@@ -8,7 +8,7 @@ import { generateRandomString } from 'better-auth/crypto'
 import { nextCookies } from 'better-auth/next-js'
 import { customSession, siwe, twoFactor } from 'better-auth/plugins'
 import { createPublicClient, http } from 'viem'
-import { isAdminWallet } from '@/lib/admin'
+import { isAdminWallet, isSuperAdminWallet } from '@/lib/admin'
 import { AffiliateRepository } from '@/lib/db/queries/affiliate'
 import { db } from '@/lib/drizzle'
 import { reownProjectId } from '@/lib/reown-project-id'
@@ -19,7 +19,9 @@ import { ensureUserTradingAuthSecretFingerprint } from '@/lib/trading-auth/serve
 import { sanitizeTradingAuthSettings } from '@/lib/trading-auth/utils'
 import * as schema from './db/schema'
 
-const ALLOW_ADMIN_ACCESS = process.env.NODE_ENV !== 'production' || process.env.ADMIN_BYPASS === 'true'
+// Dev convenience that grants everyone full admin. OFF by default so RBAC roles
+// actually apply (set ADMIN_BYPASS=true to re-enable the old "everyone is admin" dev mode).
+const ALLOW_ADMIN_ACCESS = process.env.ADMIN_BYPASS === 'true'
 
 const TWO_FACTOR_COOKIE_NAME = 'two_factor'
 const TRUST_DEVICE_COOKIE_NAME = 'trust_device'
@@ -219,12 +221,20 @@ export const auth = betterAuth({
         ? sanitizeTradingAuthSettings(hydratedSettings)
         : hydratedSettings
 
+      // A user has two addresses: the EOA login wallet (`address`) and the
+      // smart/deposit wallet (`deposit_wallet_address`, shown in the UI). The
+      // admin list may contain EITHER, so check both.
+      const eoaAddress = (user as any).address as string | undefined
+      const depositAddress = (user as any).deposit_wallet_address as string | undefined
+      const isAdmin = isAdminWallet(eoaAddress) || isAdminWallet(depositAddress)
+      const isSuperAdmin = isSuperAdminWallet(eoaAddress) || isSuperAdminWallet(depositAddress)
       return {
         user: {
           ...user,
           settings,
           image: user.image ? getPublicAssetUrl(user.image) : '',
-          is_admin: ALLOW_ADMIN_ACCESS || isAdminWallet(user.name),
+          is_admin: ALLOW_ADMIN_ACCESS || isAdmin,
+          is_super_admin: ALLOW_ADMIN_ACCESS || isSuperAdmin,
         },
         session,
       }

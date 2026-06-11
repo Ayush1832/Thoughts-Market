@@ -31,6 +31,16 @@ export default async function PortfolioPage({ params }: PageProps<'/[locale]/por
 
   return (
     <>
+      {/* Prototype-style header */}
+      <div className="mb-6">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground/70">
+          Portfolio
+        </p>
+        <h1 className="font-display text-4xl leading-tight tracking-tight md:text-5xl">
+          Your edge, in numbers
+        </h1>
+      </div>
+
       <PublicProfileHeroCards
         profile={{
           username: user?.username ?? 'Your portfolio',

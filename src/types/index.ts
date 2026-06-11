@@ -226,6 +226,7 @@ export interface User {
   affiliate_code?: string | null
   referred_by_user_id?: string | null
   is_admin: boolean
+  is_super_admin?: boolean
   deposit_wallet_address?: string | null
   deposit_wallet_signature?: string | null
   deposit_wallet_signed_at?: string | null

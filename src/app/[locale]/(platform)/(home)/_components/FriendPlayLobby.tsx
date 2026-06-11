@@ -145,6 +145,7 @@ export default function FriendPlayLobby({ onClose }: { onClose?: () => void }) {
   const handleCreate = async () => {
     if (!newRoomName.trim()) return
     setCreating(true)
+    setJoinError('')
     try {
       const res = await fetch('/api/rooms', {
         method: 'POST',
@@ -158,8 +159,18 @@ export default function FriendPlayLobby({ onClose }: { onClose?: () => void }) {
         setNewRoomName('')
         setShowCreate(false)
       }
+      else {
+        const data = await res.json().catch(() => null)
+        setJoinError(
+          res.status === 401
+            ? 'Please log in / connect your wallet to create a room.'
+            : (data?.error ?? 'Could not create room.'),
+        )
+      }
     }
-    catch {}
+    catch {
+      setJoinError('Network error. Please try again.')
+    }
     finally { setCreating(false) }
   }
 

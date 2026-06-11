@@ -381,7 +381,7 @@ function HomeClientContent({
                   <div
                     className={cn(
                       'group relative overflow-hidden rounded-3xl border border-border/40',
-                      'bg-gradient-to-br from-card via-card to-primary/5',
+                      'bg-linear-to-br from-card via-card to-primary/5',
                       'px-5 py-4 transition-all duration-300',
                       'hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5',
                     )}
@@ -389,7 +389,7 @@ function HomeClientContent({
                     <div className="flex flex-wrap items-center justify-between gap-4">
                       <div>
                         <div className="flex items-center gap-2">
-                          <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">Friends Play</p>
+                          <p className="text-2xs font-semibold tracking-widest text-muted-foreground/60 uppercase">Friends Play</p>
                           <span className="text-muted-foreground/40">·</span>
                           <p className="text-xs text-muted-foreground">Your edge over the house</p>
                         </div>

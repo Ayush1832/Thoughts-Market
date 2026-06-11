@@ -8,8 +8,8 @@ import {
   HashIcon,
   TrendingUpIcon,
 } from 'lucide-react'
-import { useEffect, useState } from 'react'
 import { usePathname } from 'next/navigation'
+import { useEffect, useState } from 'react'
 import SidebarProfileCard from '@/app/[locale]/(platform)/_components/SidebarProfileCard'
 import AppLink from '@/components/AppLink'
 import HeaderLogo from '@/components/HeaderLogo'
@@ -25,23 +25,26 @@ interface SidebarNavItem {
 }
 
 const NAV_ITEMS: SidebarNavItem[] = [
-  { icon: <TrendingUpIcon className="size-4" />, label: 'Trending',      href: '/' },
-  { icon: <FlameIcon     className="size-4" />, label: 'Hot Now',        href: '/?sort=24h-volume', badgeVariant: 'count', count: 24 },
-  { icon: <BookmarkIcon  className="size-4" />, label: 'Watchlist',      href: '/?bookmarked=true', badgeVariant: 'count', count: 0 },
+  { icon: <TrendingUpIcon className="size-4" />, label: 'Trending', href: '/' },
+  { icon: <FlameIcon className="size-4" />, label: 'Hot Now', href: '/?sort=24h-volume', badgeVariant: 'count', count: 24 },
+  { icon: <BookmarkIcon className="size-4" />, label: 'Watchlist', href: '/?bookmarked=true', badgeVariant: 'count', count: 0 },
 ]
 
 const COMMUNITIES = [
   { label: 'Politics', href: '/politics' },
-  { label: 'Crypto',   href: '/crypto' },
-  { label: 'Sports',   href: '/sports/live' },
-  { label: 'Finance',  href: '/finance' },
-  { label: 'Tech',     href: '/tech' },
+  { label: 'Crypto', href: '/crypto' },
+  { label: 'Sports', href: '/sports/live' },
+  { label: 'Finance', href: '/finance' },
+  { label: 'Tech', href: '/tech' },
 ]
 
 function NavBadge({ variant, badge, count }: { variant?: string, badge?: string, count?: number }) {
   if (variant === 'live') {
     return (
-      <span className="flex items-center gap-1 rounded-sm bg-red-500/20 px-1.5 py-0.5 text-2xs font-bold tracking-wider text-red-400">
+      <span className="
+        flex items-center gap-1 rounded-sm bg-red-500/20 px-1.5 py-0.5 text-2xs font-bold tracking-wider text-red-400
+      "
+      >
         <span className="size-1.5 animate-pulse rounded-full bg-red-400" />
         {badge}
       </span>
@@ -56,7 +59,10 @@ function NavBadge({ variant, badge, count }: { variant?: string, badge?: string,
   }
   if (variant === 'count' && count !== undefined && count > 0) {
     return (
-      <span className="flex size-5 items-center justify-center rounded-full bg-tm-elevated text-2xs font-semibold text-tm-secondary">
+      <span className="
+        flex size-5 items-center justify-center rounded-full bg-tm-elevated text-2xs font-semibold text-tm-secondary
+      "
+      >
         {count}
       </span>
     )
@@ -68,12 +74,11 @@ function NavBadge({ variant, badge, count }: { variant?: string, badge?: string,
 function CollapseTooltip({ label }: { label: string }) {
   return (
     <span className="
-      pointer-events-none absolute left-full z-50 ml-3
-      hidden group-hover:flex
-      whitespace-nowrap rounded-lg border border-tm-border
-      bg-tm-elevated px-2.5 py-1.5 text-xs font-medium
-      text-tm-primary shadow-xl
-    ">
+      pointer-events-none absolute left-full z-50 ml-3 hidden rounded-lg border border-tm-border bg-tm-elevated px-2.5
+      py-1.5 text-xs font-medium whitespace-nowrap text-tm-primary shadow-xl
+      group-hover:flex
+    "
+    >
       {label}
     </span>
   )
@@ -86,7 +91,7 @@ export default function LeftSidebar() {
   // Restore preference from localStorage (runs only on client)
   useEffect(() => {
     try {
-      if (localStorage.getItem('sidebar-collapsed') === 'true') setCollapsed(true)
+      if (localStorage.getItem('sidebar-collapsed') === 'true') { setCollapsed(true) }
     }
     catch {}
   }, [])
@@ -94,7 +99,8 @@ export default function LeftSidebar() {
   function toggle() {
     setCollapsed((prev) => {
       const next = !prev
-      try { localStorage.setItem('sidebar-collapsed', String(next)) } catch {}
+      try { localStorage.setItem('sidebar-collapsed', String(next)) }
+      catch {}
       return next
     })
   }
@@ -102,7 +108,7 @@ export default function LeftSidebar() {
   return (
     <aside
       className={cn(
-        'sticky top-0 z-40 hidden h-screen shrink-0 flex-col overflow-y-auto overflow-x-hidden',
+        'sticky top-0 z-40 hidden h-screen shrink-0 flex-col overflow-x-hidden overflow-y-auto',
         'border-r border-tm-border bg-tm-surface',
         'transition-[width] duration-300 ease-in-out',
         'lg:flex',
@@ -157,14 +163,18 @@ export default function LeftSidebar() {
                 'transition-all duration-200',
                 collapsed ? 'justify-center px-2' : 'justify-between gap-3 px-3',
                 isActive
-                  ? 'bg-tm-elevated text-[#4f8ef7] before:absolute before:left-0 before:inset-y-2 before:w-0.5 before:rounded-r-full before:bg-[#4f8ef7]'
+                  ? `
+                    bg-tm-elevated text-[#4f8ef7]
+                    before:absolute before:inset-y-2 before:left-0 before:w-0.5 before:rounded-r-full
+                    before:bg-[#4f8ef7]
+                  `
                   : 'text-tm-secondary hover:bg-tm-elevated hover:text-tm-primary',
               )}
             >
               {/* Icon */}
               <span className={cn(
                 'shrink-0 transition-all duration-200',
-                isActive ? 'text-[#4f8ef7] scale-110' : 'text-tm-secondary/70 group-hover:text-tm-primary',
+                isActive ? 'scale-110 text-[#4f8ef7]' : 'text-tm-secondary/70 group-hover:text-tm-primary',
               )}
               >
                 {item.icon}
@@ -189,8 +199,8 @@ export default function LeftSidebar() {
 
         {/* Communities — full list when expanded */}
         {!collapsed && (
-          <div className="px-1 py-1">
-            <p className="mb-2 px-2 text-[10px] font-bold tracking-[1.8px] text-tm-secondary/50 uppercase">
+          <div className="p-1">
+            <p className="mb-2 px-2 text-2xs font-bold tracking-[1.8px] text-tm-secondary/50 uppercase">
               Communities
             </p>
             <div className="space-y-0.5">
@@ -198,7 +208,10 @@ export default function LeftSidebar() {
                 <AppLink
                   key={c.label}
                   href={c.href}
-                  className="flex items-center gap-3 rounded-lg px-2 py-2 text-sm text-tm-secondary transition-all duration-200 hover:bg-tm-elevated hover:text-tm-primary"
+                  className="
+                    flex items-center gap-3 rounded-lg p-2 text-sm text-tm-secondary transition-all duration-200
+                    hover:bg-tm-elevated hover:text-tm-primary
+                  "
                 >
                   <HashIcon className="size-3.5 shrink-0 text-tm-secondary/50" />
                   {c.label}
@@ -215,7 +228,11 @@ export default function LeftSidebar() {
               <AppLink
                 key={c.label}
                 href={c.href}
-                className="group relative flex items-center justify-center rounded-xl py-2 text-tm-secondary transition-all duration-200 hover:bg-tm-elevated hover:text-tm-primary"
+                className="
+                  group relative flex items-center justify-center rounded-xl py-2 text-tm-secondary transition-all
+                  duration-200
+                  hover:bg-tm-elevated hover:text-tm-primary
+                "
               >
                 <HashIcon className="size-3.5" />
                 <CollapseTooltip label={c.label} />

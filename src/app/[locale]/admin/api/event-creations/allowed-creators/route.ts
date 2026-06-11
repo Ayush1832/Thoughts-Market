@@ -1,7 +1,7 @@
-import { isAdminAuthorized } from '@/lib/admin-auth-check'
 import { NextResponse } from 'next/server'
 import { getAddress, isAddress } from 'viem'
 import { z } from 'zod'
+import { isAdminAuthorized } from '@/lib/admin-auth-check'
 import {
   groupAllowedMarketCreatorItems,
   isPublicAllowedMarketCreatorsResponse,
@@ -9,7 +9,6 @@ import {
 } from '@/lib/allowed-market-creators'
 import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
 import { AllowedMarketCreatorRepository } from '@/lib/db/queries/allowed-market-creators'
-import { UserRepository } from '@/lib/db/queries/user'
 
 const addSiteCreatorSchema = z.object({
   sourceType: z.literal('site'),
@@ -43,8 +42,7 @@ function toNormalizedWalletList(wallets: string[]) {
 }
 
 async function requireAdmin() {
-  const isAdmin = await isAdminAuthorized()
-  return Boolean(currentUser?.is_admin)
+  return await isAdminAuthorized()
 }
 
 async function buildAdminResponse(addressParam?: string | null) {

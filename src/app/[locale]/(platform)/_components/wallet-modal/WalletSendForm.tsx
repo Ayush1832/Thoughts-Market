@@ -61,7 +61,14 @@ function WalletSendForm({
   const [receiveToken, setReceiveToken] = useState<string>('USDC')
   const [receiveChain, setReceiveChain] = useState<string>('Polygon')
   const [isBreakdownOpen, setIsBreakdownOpen] = useState(false)
-  const inputValue = formatDisplayAmount(sendAmount)
+  // The Amount field is denominated in the selected receive token. The balance
+  // stays in USDC, so we convert via the token's USD price (USDC = 1).
+  const isUsdcUnit = receiveToken === 'USDC'
+  const [tokenPrice, setTokenPrice] = useState<number | null>(1)
+  // True when the selected token doesn't exist on the selected chain (e.g. WBNB on Polygon).
+  const [priceUnavailable, setPriceUnavailable] = useState(false)
+  const priceForUnit = isUsdcUnit ? 1 : tokenPrice
+  const [amountInput, setAmountInput] = useState<string>(() => formatDisplayAmount(sendAmount))
   const appKitAccount = useAppKitAccount()
   const isSubmitDisabled = (
     isSending
@@ -145,15 +152,58 @@ function WalletSendForm({
   }, [sendAmount, receiveToken, receiveChain, trimmedRecipient, isRecipientAddress, depositWalletAddress, isDirectTransfer])
 
   const usd2 = (n: number) => n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-  // Cross-chain/swap requires a successful live quote before submitting.
-  const quoteBlocksSubmit = !isDirectTransfer && (quoteStatus === 'loading' || quoteStatus === 'error')
-  const formattedBalance = Number.isFinite(availableBalance)
-    ? Number(availableBalance).toLocaleString('en-US', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
+  // Cross-chain/swap requires a successful live quote before submitting; an
+  // unavailable token/chain combo blocks it outright.
+  const quoteBlocksSubmit = priceUnavailable || (!isDirectTransfer && (quoteStatus === 'loading' || quoteStatus === 'error'))
+
+  // Fetch the receive token's USD price so we can denominate the Amount in it.
+  useEffect(() => {
+    if (isUsdcUnit) { setTokenPrice(1); setPriceUnavailable(false); return }
+    const chainId = WITHDRAW_CHAIN_IDS[receiveChain]
+    if (!chainId) { setTokenPrice(null); setPriceUnavailable(true); return }
+    let cancelled = false
+    setTokenPrice(null)
+    setPriceUnavailable(false)
+    fetch(`/api/lifi/token-price?chainId=${chainId}&symbol=${encodeURIComponent(receiveToken)}`)
+      .then(r => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (cancelled) { return }
+        if (d?.priceUSD) { setTokenPrice(Number(d.priceUSD)) }
+        else { setPriceUnavailable(true) } // token not available on this chain
       })
-    : '0.00'
-  const balanceDisplay = isBalanceLoading
+      .catch(() => { if (!cancelled) { setPriceUnavailable(true) } })
+    return () => { cancelled = true }
+  }, [receiveToken, receiveChain, isUsdcUnit])
+
+  // When the unit/price changes (token switched), re-show the same USDC spend as
+  // the equivalent token amount. Intentionally keyed only on price, not the
+  // amount, so typing isn't overwritten.
+  useEffect(() => {
+    if (priceForUnit == null) { return }
+    const usdc = Number(sendAmount)
+    setAmountInput(Number.isFinite(usdc) && usdc > 0 ? formatTokenAmount(usdc / priceForUnit) : '')
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [priceForUnit])
+
+  function formatTokenAmount(n: number): string {
+    if (!Number.isFinite(n) || n <= 0) { return '' }
+    return n.toLocaleString('en-US', { maximumFractionDigits: 6, useGrouping: false })
+  }
+  function tokenToUsdc(tokenAmount: number): number {
+    return tokenAmount * (priceForUnit ?? 1)
+  }
+  function usdcToToken(usdc: number): number {
+    const p = priceForUnit ?? 1
+    return p > 0 ? usdc / p : 0
+  }
+  const balanceInUnit = priceForUnit ? usdcToToken(Number(availableBalance ?? 0)) : null
+  const formattedBalance = balanceInUnit != null && Number.isFinite(balanceInUnit)
+    ? balanceInUnit.toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: isUsdcUnit ? 2 : 4,
+      })
+    : '—'
+  const balanceDisplay = (isBalanceLoading || (!isUsdcUnit && tokenPrice == null && !priceUnavailable))
     ? <Skeleton className="h-4 w-16" />
     : formattedBalance
   const selectedToken = WITHDRAW_TOKEN_OPTIONS.find(option => option.value === receiveToken)
@@ -162,24 +212,35 @@ function WalletSendForm({
 
   function handleAmountChange(rawValue: string) {
     const cleaned = sanitizeNumericInput(rawValue)
-    const numericValue = Number.parseFloat(cleaned)
-
-    if (cleaned === '' || numericValue <= MAX_AMOUNT_INPUT) {
-      onChangeSendAmount(cleaned)
+    setAmountInput(cleaned)
+    if (cleaned === '') { onChangeSendAmount(''); return }
+    const num = Number.parseFloat(cleaned)
+    if (!Number.isFinite(num)) { return }
+    const usdc = tokenToUsdc(num) // parent always stores the USDC spend
+    if (usdc <= MAX_AMOUNT_INPUT) {
+      onChangeSendAmount(formatAmountInputValue(usdc))
     }
   }
 
   function handleAmountBlur(rawValue: string) {
     const cleaned = sanitizeNumericInput(rawValue)
-    const numeric = Number.parseFloat(cleaned)
-
-    if (!cleaned || Number.isNaN(numeric)) {
+    const num = Number.parseFloat(cleaned)
+    if (!cleaned || Number.isNaN(num)) {
+      setAmountInput('')
       onChangeSendAmount('')
       return
     }
+    const usdc = Math.min(tokenToUsdc(num), MAX_AMOUNT_INPUT)
+    setAmountInput(formatTokenAmount(usdcToToken(usdc)))
+    onChangeSendAmount(formatAmountInputValue(usdc))
+  }
 
-    const clampedValue = Math.min(numeric, MAX_AMOUNT_INPUT)
-    onChangeSendAmount(formatAmountInputValue(clampedValue))
+  function handleMaxClick() {
+    onMax?.() // parent sets the USDC spend to the full balance
+    const bal = Number(availableBalance)
+    if (Number.isFinite(bal) && bal > 0) {
+      setAmountInput(formatTokenAmount(usdcToToken(bal)))
+    }
   }
 
   return (
@@ -232,7 +293,7 @@ function WalletSendForm({
               id="wallet-send-amount"
               type="text"
               inputMode="decimal"
-              value={inputValue}
+              value={amountInput}
               onChange={event => handleAmountChange(event.target.value)}
               onBlur={event => handleAmountBlur(event.target.value)}
               placeholder="0.00"
@@ -244,14 +305,14 @@ function WalletSendForm({
               required
             />
             <div className="absolute inset-y-2 right-2 flex items-center gap-2">
-              <span className="text-sm font-semibold text-muted-foreground">USDC</span>
+              <span className="text-sm font-semibold text-muted-foreground">{receiveToken}</span>
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
                 className="h-7 px-2 text-xs text-foreground hover:text-muted-foreground"
-                onClick={onMax}
-                disabled={!onMax || isBalanceLoading}
+                onClick={handleMaxClick}
+                disabled={!onMax || isBalanceLoading || (!isUsdcUnit && tokenPrice == null)}
               >
                 Max
               </Button>
@@ -265,9 +326,19 @@ function WalletSendForm({
             <span className="flex items-center gap-1">
               <span>Balance:</span>
               <span>{balanceDisplay}</span>
-              <span>USDC</span>
+              <span>{receiveToken}</span>
             </span>
           </div>
+          {priceUnavailable && (
+            <p className="mx-2 text-xs text-destructive">
+              {receiveToken}
+              {' '}
+              isn’t available on
+              {' '}
+              {receiveChain}
+              . Pick a different token or chain.
+            </p>
+          )}
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">

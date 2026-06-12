@@ -11,8 +11,8 @@ export default function AdminLoginPage() {
   const router = useRouter()
   const locale = useLocale()
 
-  const [email, setEmail] = useState('admin@thoughtsmarket.com')
-  const [password, setPassword] = useState('p@ssw0RD')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
@@ -85,7 +85,7 @@ export default function AdminLoginPage() {
               <Input
                 id="email"
                 type="email"
-                placeholder="admin@thoughtsmarket.com"
+                placeholder="Enter your email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={isLoading}
@@ -102,7 +102,7 @@ export default function AdminLoginPage() {
               <Input
                 id="password"
                 type="password"
-                placeholder="••••••••"
+                placeholder="Enter your password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 disabled={isLoading}
@@ -138,7 +138,7 @@ export default function AdminLoginPage() {
           {/* Footer */}
           <div className="mt-6 pt-6 border-t border-slate-700">
             <p className="text-xs text-slate-500 text-center">
-              Restricted access • Credentials are pre-filled for authorized users
+              Restricted access • Authorized administrators only
             </p>
           </div>
         </div>

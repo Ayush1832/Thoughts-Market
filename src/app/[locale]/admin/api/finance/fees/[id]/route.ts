@@ -1,6 +1,6 @@
-import { isAdminAuthorized } from '@/lib/admin-auth-check'
 import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
+import { isAdminAuthorized } from '@/lib/admin-auth-check'
 import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
 import { updateFeeConfig } from '@/lib/db/queries/finance'
 import { UserRepository } from '@/lib/db/queries/user'
@@ -13,6 +13,11 @@ export async function PUT(
     const isAdmin = await isAdminAuthorized()
     if (!isAdmin) {
       return NextResponse.json({ error: 'Unauthenticated.' }, { status: 401 })
+    }
+
+    const currentUser = await UserRepository.getCurrentUser({ minimal: true })
+    if (!currentUser) {
+      return NextResponse.json({ error: 'User not found.' }, { status: 401 })
     }
 
     const { id } = await params

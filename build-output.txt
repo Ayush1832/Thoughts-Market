@@ -1,0 +1,36 @@
+
+> build
+> next build
+
+▲ Next.js 16.2.6 (Turbopack)
+- Environments: .env.local
+- Cache Components enabled
+- Experiments (use with caution):
+  · clientTraceMetadata
+  · optimizePackageImports
+  · serverActions
+  · staticGenerationMaxConcurrency: 2
+  · staticGenerationMinPagesPerWorker: 8
+  ✓ typedEnv
+
+[MDX] generated files in 78.10009999999966ms
+  Creating an optimized production build ...
+✓ Compiled successfully in 85s
+  Running next.config.js provided runAfterProductionCompile ...
+[@sentry/nextjs - After Production Compile] Warning: No auth token provided. Will not create release. Please set the `authToken` option. You can find information on how to generate a Sentry auth token here: https://docs.sentry.io/api/auth/
+[@sentry/nextjs - After Production Compile] Warning: No auth token provided. Will not upload source maps. Please set the `authToken` option. You can find information on how to generate a Sentry auth token here: https://docs.sentry.io/api/auth/
+✓ Completed runAfterProductionCompile in 2.9s
+  Running TypeScript ...
+Failed to type check.
+
+.next/dev/types/link.d.ts:302:1
+Type error: Declaration or statement expected.
+
+  [90m300 |[0m     [36mtype[0m?: [33mRedirectType[0m
+  [90m301 |[0m   ): never;
+[31m[1m>[0m [90m302 |[0m }
+  [90m    |[0m [31m[1m^[0m
+  [90m303 |[0m
+  [90m304 |[0m declare module [32m'next/form'[0m {
+  [90m305 |[0m   [36mimport[0m [36mtype[0m { [33mFormProps[0m [36mas[0m [33mOriginalFormProps[0m } [36mfrom[0m [32m'next/dist/client/form.js'[0m
+Next.js build worker exited with code: 1 and signal: null

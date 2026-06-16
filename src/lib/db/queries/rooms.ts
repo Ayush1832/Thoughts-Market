@@ -1,4 +1,4 @@
-import { and, desc, eq, isNull, sql } from 'drizzle-orm'
+import { and, desc, eq, isNull, lt, sql } from 'drizzle-orm'
 import { rooms, room_participants } from '@/lib/db/schema/rooms/tables'
 import { users } from '@/lib/db/schema/auth/tables'
 import { runQuery } from '@/lib/db/utils/run-query'
@@ -8,7 +8,43 @@ function generateRoomCode(): string {
   return Math.random().toString(36).substring(2, 8).toUpperCase()
 }
 
+// Open rooms that are never started expire after this long and get removed.
+export const ROOM_EXPIRY_MINUTES = 24 * 60 // 24 hours
+
 export const RoomsRepository = {
+  // Delete stale, never-started rooms (participants cascade via FK).
+  async cleanupExpiredRooms() {
+    return runQuery(async () => {
+      await db.delete(rooms).where(and(
+        eq(rooms.status, 'open'),
+        lt(rooms.created_at, sql`now() - interval '${sql.raw(String(ROOM_EXPIRY_MINUTES))} minutes'`),
+      ))
+      return { data: true, error: null }
+    })
+  },
+
+  // Host removes a player from a room (sets left_at).
+  async kickParticipant(roomId: string, hostId: string, targetUserId: string) {
+    return runQuery(async () => {
+      const [room] = await db.select().from(rooms).where(eq(rooms.id, roomId)).limit(1)
+      if (!room)
+        return { data: null, error: 'Room not found' }
+      if (room.host_id !== hostId)
+        return { data: null, error: 'Only the host can remove players' }
+      if (targetUserId === hostId)
+        return { data: null, error: 'The host cannot be removed' }
+
+      await db.update(room_participants)
+        .set({ left_at: new Date() })
+        .where(and(
+          eq(room_participants.room_id, roomId),
+          eq(room_participants.user_id, targetUserId),
+          isNull(room_participants.left_at),
+        ))
+      return { data: true, error: null }
+    })
+  },
+
   async createRoom(hostId: string, name: string, maxParticipants = 50, isPrivate = false) {
     return runQuery(async () => {
       const code = generateRoomCode()

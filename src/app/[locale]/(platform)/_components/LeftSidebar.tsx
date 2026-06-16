@@ -6,10 +6,11 @@ import {
   ChevronRightIcon,
   FlameIcon,
   HashIcon,
+  SparklesIcon,
   TrendingUpIcon,
 } from 'lucide-react'
 import { usePathname } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import SidebarProfileCard from '@/app/[locale]/(platform)/_components/SidebarProfileCard'
 import AppLink from '@/components/AppLink'
 import HeaderLogo from '@/components/HeaderLogo'
@@ -28,6 +29,7 @@ const NAV_ITEMS: SidebarNavItem[] = [
   { icon: <TrendingUpIcon className="size-4" />, label: 'Trending', href: '/' },
   { icon: <FlameIcon className="size-4" />, label: 'Hot Now', href: '/?sort=24h-volume', badgeVariant: 'count', count: 24 },
   { icon: <BookmarkIcon className="size-4" />, label: 'Watchlist', href: '/?bookmarked=true', badgeVariant: 'count', count: 0 },
+  { icon: <SparklesIcon className="size-4" />, label: 'Creators Corner', href: '/creators-corner', badge: 'NEW', badgeVariant: 'new' },
 ]
 
 const COMMUNITIES = [
@@ -86,20 +88,24 @@ function CollapseTooltip({ label }: { label: string }) {
 
 export default function LeftSidebar() {
   const pathname = usePathname()
-  const [collapsed, setCollapsed] = useState(false)
-
-  // Restore preference from localStorage (runs only on client)
-  useEffect(() => {
-    try {
-      if (localStorage.getItem('sidebar-collapsed') === 'true') { setCollapsed(true) }
+  const [collapsed, setCollapsed] = useState(() => {
+    if (typeof window === 'undefined') {
+      return false
     }
-    catch {}
-  }, [])
+    try {
+      return localStorage.getItem('sidebar-collapsed') === 'true'
+    }
+    catch {
+      return false
+    }
+  })
 
   function toggle() {
     setCollapsed((prev) => {
       const next = !prev
-      try { localStorage.setItem('sidebar-collapsed', String(next)) }
+      try {
+        localStorage.setItem('sidebar-collapsed', String(next))
+      }
       catch {}
       return next
     })

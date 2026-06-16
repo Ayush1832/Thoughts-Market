@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
+import { useUser } from '@/stores/useUser'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -110,6 +111,7 @@ export default function FriendPlayLobby({ onClose }: { onClose?: () => void }) {
   // Create room form
   const [creating, setCreating] = useState(false)
   const [newRoomName, setNewRoomName] = useState('')
+  const [newRoomPrivate, setNewRoomPrivate] = useState(false)
   const [showCreate, setShowCreate] = useState(false)
 
   // Join by code
@@ -128,11 +130,12 @@ export default function FriendPlayLobby({ onClose }: { onClose?: () => void }) {
   ])
   const [chatInput, setChatInput] = useState('')
   const chatRef = useRef<HTMLDivElement>(null)
+  const user = useUser()
 
   // ── Fetch rooms ─────────────────────────────────────────────────────────────
   const fetchRooms = useCallback(async () => {
     try {
-      const res = await fetch('/api/rooms')
+      const res = await fetch('/api/rooms', { cache: 'no-store' })
       if (res.ok) {
         const json = await res.json()
         setRooms(json.mine ?? [])
@@ -153,15 +156,21 @@ export default function FriendPlayLobby({ onClose }: { onClose?: () => void }) {
 
   useEffect(() => { void fetchRooms() }, [fetchRooms])
 
-  // ── Fetch room details when selected ────────────────────────────────────────
+  // ── Fetch room details when selected, then poll so players join/leave/kick
+  //    updates show up live ──────────────────────────────────────────────────
   useEffect(() => {
-    if (!selectedRoom) { return }
-    fetch(`/api/rooms/${selectedRoom.id}`)
-      .then(r => r.ok ? r.json() : null)
-      .then((d) => {
-        if (d) { setRoomDetails(d) }
-      })
-      .catch(() => {})
+    const roomId = selectedRoom?.id
+    if (!roomId) { return }
+    let active = true
+    const load = () => {
+      fetch(`/api/rooms/${roomId}`, { cache: 'no-store' })
+        .then(r => (r.ok ? r.json() : null))
+        .then((d) => { if (active && d) { setRoomDetails(d) } })
+        .catch(() => {})
+    }
+    load()
+    const interval = setInterval(load, 5000)
+    return () => { active = false; clearInterval(interval) }
   }, [selectedRoom?.id])
 
   // ── Create room ─────────────────────────────────────────────────────────────
@@ -173,13 +182,14 @@ export default function FriendPlayLobby({ onClose }: { onClose?: () => void }) {
       const res = await fetch('/api/rooms', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: newRoomName.trim() }),
+        body: JSON.stringify({ name: newRoomName.trim(), isPrivate: newRoomPrivate }),
       })
       if (res.ok) {
         const room: Room = await res.json()
         setRooms(prev => [room, ...prev])
         setSelectedRoom(room)
         setNewRoomName('')
+        setNewRoomPrivate(false)
         setShowCreate(false)
       }
       else {
@@ -231,6 +241,28 @@ export default function FriendPlayLobby({ onClose }: { onClose?: () => void }) {
     await fetchRooms()
   }
 
+  // ── Host: remove a player ────────────────────────────────────────────────────
+  const handleKick = async (userId: string) => {
+    if (!selectedRoom) { return }
+    setActionError('')
+    try {
+      const res = await fetch(`/api/rooms/${selectedRoom.id}/kick`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId }),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => null)
+        setActionError(data?.error ?? 'Could not remove player')
+        return
+      }
+      const refreshed = await fetch(`/api/rooms/${selectedRoom.id}`, { cache: 'no-store' }).then(r => (r.ok ? r.json() : null)).catch(() => null)
+      if (refreshed) { setRoomDetails(refreshed) }
+      await fetchRooms()
+    }
+    catch { setActionError('Network error') }
+  }
+
   // ── Start room ───────────────────────────────────────────────────────────────
   const handleStart = async () => {
     if (!selectedRoom) { return }
@@ -269,6 +301,7 @@ export default function FriendPlayLobby({ onClose }: { onClose?: () => void }) {
   const allRooms = [...rooms, ...publicRooms.filter(pr => !rooms.some(r => r.id === pr.id))]
   const currentParticipants = roomDetails?.participants ?? []
   const isLive = selectedRoom?.status === 'playing'
+  const isHost = Boolean(user) && selectedRoom?.host_id === user!.id
 
   return (
     <div className="
@@ -307,6 +340,15 @@ export default function FriendPlayLobby({ onClose }: { onClose?: () => void }) {
                     className="h-8 text-xs"
                     autoFocus
                   />
+                  <label className="flex cursor-pointer items-center gap-2 text-xs text-muted-foreground">
+                    <input
+                      type="checkbox"
+                      checked={newRoomPrivate}
+                      onChange={e => setNewRoomPrivate(e.target.checked)}
+                      className="size-3.5 accent-[var(--color-primary)]"
+                    />
+                    Invite-only (hidden — only invited members can view)
+                  </label>
                   <div className="flex gap-2">
                     <Button onClick={handleCreate} size="sm" className="h-7 flex-1 text-xs" disabled={creating || !newRoomName.trim()}>
                       {creating ? 'Creating…' : 'Create'}
@@ -513,7 +555,32 @@ export default function FriendPlayLobby({ onClose }: { onClose?: () => void }) {
                         </div>
                       </>
                     )}
-                    {activeTab !== 'Discussion' && (
+                    {activeTab === 'Invite' && (
+                      <div className="space-y-2 rounded-xl border border-border/30 p-3">
+                        <p className="text-2xs font-semibold tracking-wider text-muted-foreground/60 uppercase">
+                          Share this code to invite players
+                        </p>
+                        <div className="flex items-center gap-2">
+                          <code className="flex-1 rounded-lg border border-border/40 bg-muted/40 px-3 py-2 text-center text-sm font-bold tracking-widest text-foreground">
+                            {selectedRoom.code}
+                          </code>
+                          <Button
+                            size="sm"
+                            className="h-9 text-xs"
+                            onClick={() => navigator.clipboard?.writeText(selectedRoom.code).catch(() => {})}
+                          >
+                            Copy
+                          </Button>
+                        </div>
+                        <p className="text-2xs text-muted-foreground">
+                          {selectedRoom.host_id === user?.id
+                            ? 'Anyone with this code can join the room.'
+                            : 'Ask the host to share the room code.'}
+                        </p>
+                      </div>
+                    )}
+
+                    {activeTab !== 'Discussion' && activeTab !== 'Invite' && (
                       <div className="
                         flex h-28 items-center justify-center rounded-xl border border-border/30 text-xs
                         text-muted-foreground
@@ -549,6 +616,18 @@ export default function FriendPlayLobby({ onClose }: { onClose?: () => void }) {
                               </span>
                               {p.role === 'host' && (
                                 <span className="text-2xs text-primary">host</span>
+                              )}
+                              {/* Host can remove other players */}
+                              {isHost && p.role !== 'host' && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleKick(p.user_id)}
+                                  title="Remove player"
+                                  aria-label={`Remove ${p.username ?? 'player'}`}
+                                  className="ml-0.5 text-muted-foreground/60 transition-colors hover:text-red-400"
+                                >
+                                  ✕
+                                </button>
                               )}
                             </div>
                           ))}

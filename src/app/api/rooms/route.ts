@@ -9,6 +9,9 @@ export async function GET() {
   try {
     const user = await UserRepository.getCurrentUser({ minimal: true })
 
+    // Remove stale, never-started rooms before listing.
+    await RoomsRepository.cleanupExpiredRooms()
+
     const [publicResult, userResult] = await Promise.all([
       RoomsRepository.listPublicRooms(),
       user ? RoomsRepository.listUserRooms(user.id) : { data: [], error: null },

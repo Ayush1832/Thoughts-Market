@@ -1,6 +1,6 @@
 import { and, desc, eq, isNull, lt, sql } from 'drizzle-orm'
-import { rooms, room_participants } from '@/lib/db/schema/rooms/tables'
 import { users } from '@/lib/db/schema/auth/tables'
+import { room_participants, rooms } from '@/lib/db/schema/rooms/tables'
 import { runQuery } from '@/lib/db/utils/run-query'
 import { db } from '@/lib/drizzle'
 
@@ -27,12 +27,9 @@ export const RoomsRepository = {
   async kickParticipant(roomId: string, hostId: string, targetUserId: string) {
     return runQuery(async () => {
       const [room] = await db.select().from(rooms).where(eq(rooms.id, roomId)).limit(1)
-      if (!room)
-        return { data: null, error: 'Room not found' }
-      if (room.host_id !== hostId)
-        return { data: null, error: 'Only the host can remove players' }
-      if (targetUserId === hostId)
-        return { data: null, error: 'The host cannot be removed' }
+      if (!room) { return { data: null, error: 'Room not found' } }
+      if (room.host_id !== hostId) { return { data: null, error: 'Only the host can remove players' } }
+      if (targetUserId === hostId) { return { data: null, error: 'The host cannot be removed' } }
 
       await db.update(room_participants)
         .set({ left_at: new Date() })
@@ -56,8 +53,7 @@ export const RoomsRepository = {
         is_private: isPrivate,
       }).returning()
 
-      if (!room)
-        return { data: null, error: 'Failed to create room' }
+      if (!room) { return { data: null, error: 'Failed to create room' } }
 
       // Auto-join host as participant
       await db.insert(room_participants).values({
@@ -73,10 +69,8 @@ export const RoomsRepository = {
   async joinRoom(roomId: string, userId: string) {
     return runQuery(async () => {
       const [room] = await db.select().from(rooms).where(eq(rooms.id, roomId)).limit(1)
-      if (!room)
-        return { data: null, error: 'Room not found' }
-      if (room.status !== 'open')
-        return { data: null, error: 'Room is not open for joining' }
+      if (!room) { return { data: null, error: 'Room not found' } }
+      if (room.status !== 'open') { return { data: null, error: 'Room is not open for joining' } }
 
       const countResult = await db
         .select({ count: sql<number>`count(*)::int` })
@@ -84,8 +78,7 @@ export const RoomsRepository = {
         .where(and(eq(room_participants.room_id, roomId), isNull(room_participants.left_at)))
 
       const count = countResult[0]?.count ?? 0
-      if (count >= room.max_participants)
-        return { data: null, error: 'Room is full' }
+      if (count >= room.max_participants) { return { data: null, error: 'Room is full' } }
 
       const [participant] = await db.insert(room_participants)
         .values({ room_id: roomId, user_id: userId, role: 'player' })
@@ -114,20 +107,16 @@ export const RoomsRepository = {
   async startRoom(roomId: string, hostId: string) {
     return runQuery(async () => {
       const [room] = await db.select().from(rooms).where(eq(rooms.id, roomId)).limit(1)
-      if (!room)
-        return { data: null, error: 'Room not found' }
-      if (room.host_id !== hostId)
-        return { data: null, error: 'Only the host can start the room' }
-      if (room.status !== 'open')
-        return { data: null, error: 'Room is already started or closed' }
+      if (!room) { return { data: null, error: 'Room not found' } }
+      if (room.host_id !== hostId) { return { data: null, error: 'Only the host can start the room' } }
+      if (room.status !== 'open') { return { data: null, error: 'Room is already started or closed' } }
 
       const countResult = await db
         .select({ count: sql<number>`count(*)::int` })
         .from(room_participants)
         .where(and(eq(room_participants.room_id, roomId), isNull(room_participants.left_at)))
 
-      if ((countResult[0]?.count ?? 0) < 3)
-        return { data: null, error: 'Need at least 3 participants to start' }
+      if ((countResult[0]?.count ?? 0) < 3) { return { data: null, error: 'Need at least 3 participants to start' } }
 
       const [updated] = await db.update(rooms)
         .set({ status: 'playing', started_at: new Date() })
@@ -148,8 +137,7 @@ export const RoomsRepository = {
   async getRoomWithParticipants(roomId: string) {
     return runQuery(async () => {
       const [room] = await db.select().from(rooms).where(eq(rooms.id, roomId)).limit(1)
-      if (!room)
-        return { data: null, error: 'Room not found' }
+      if (!room) { return { data: null, error: 'Room not found' } }
 
       const participants = await db
         .select({

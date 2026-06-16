@@ -13,15 +13,13 @@ export async function GET(
     const { id } = await params
     const { data, error } = await RoomsRepository.getRoomWithParticipants(id)
 
-    if (error || !data)
-      return NextResponse.json({ error: error ?? 'Room not found' }, { status: 404 })
+    if (error || !data) { return NextResponse.json({ error: error ?? 'Room not found' }, { status: 404 }) }
 
     // Invite-only rooms are viewable only by their participants.
     if (data.is_private) {
       const user = await UserRepository.getCurrentUser({ minimal: true })
       const isParticipant = Boolean(user) && data.participants.some(p => p.user_id === user!.id)
-      if (!isParticipant)
-        return NextResponse.json({ error: 'This room is invite-only.' }, { status: 403 })
+      if (!isParticipant) { return NextResponse.json({ error: 'This room is invite-only.' }, { status: 403 }) }
     }
 
     return NextResponse.json(data)

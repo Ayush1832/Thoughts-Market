@@ -32,8 +32,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const user = await UserRepository.getCurrentUser({ minimal: true })
-    if (!user)
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    if (!user) { return NextResponse.json({ error: 'Authentication required' }, { status: 401 }) }
 
     const body = await request.json()
     const { name, maxParticipants, isPrivate } = body as {
@@ -42,8 +41,7 @@ export async function POST(request: NextRequest) {
       isPrivate?: boolean
     }
 
-    if (!name?.trim())
-      return NextResponse.json({ error: 'Room name is required' }, { status: 400 })
+    if (!name?.trim()) { return NextResponse.json({ error: 'Room name is required' }, { status: 400 }) }
 
     const { data, error } = await RoomsRepository.createRoom(
       user.id,
@@ -52,8 +50,7 @@ export async function POST(request: NextRequest) {
       isPrivate ?? false,
     )
 
-    if (error || !data)
-      return NextResponse.json({ error: error ?? DEFAULT_ERROR_MESSAGE }, { status: 500 })
+    if (error || !data) { return NextResponse.json({ error: error ?? DEFAULT_ERROR_MESSAGE }, { status: 500 }) }
 
     return NextResponse.json(data, { status: 201 })
   }

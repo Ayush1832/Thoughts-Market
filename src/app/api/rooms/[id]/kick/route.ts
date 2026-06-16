@@ -8,18 +8,15 @@ import { UserRepository } from '@/lib/db/queries/user'
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const user = await UserRepository.getCurrentUser({ minimal: true })
-    if (!user)
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    if (!user) { return NextResponse.json({ error: 'Authentication required' }, { status: 401 }) }
 
     const { id } = await params
     const { userId } = await request.json() as { userId?: string }
-    if (!userId)
-      return NextResponse.json({ error: 'userId is required' }, { status: 400 })
+    if (!userId) { return NextResponse.json({ error: 'userId is required' }, { status: 400 }) }
 
     // kickParticipant verifies the caller is the room host.
     const { error } = await RoomsRepository.kickParticipant(id, user.id, userId)
-    if (error)
-      return NextResponse.json({ error }, { status: 400 })
+    if (error) { return NextResponse.json({ error }, { status: 400 }) }
 
     return NextResponse.json({ success: true })
   }

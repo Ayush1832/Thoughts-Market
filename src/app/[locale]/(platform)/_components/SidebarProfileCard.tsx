@@ -75,7 +75,7 @@ export default function SidebarProfileCard() {
       {/* total balance (real) */}
       <div className="mt-3 border-t border-tm-border pt-3">
         <div className="flex items-center justify-between">
-          <p className="text-[10px] font-semibold tracking-[0.12em] text-tm-secondary/70 uppercase">Total balance</p>
+          <p className="text-2xs font-semibold tracking-[0.12em] text-tm-secondary/70 uppercase">Total balance</p>
           <div className="flex items-center gap-2">
             <button
               type="button"
@@ -95,7 +95,7 @@ export default function SidebarProfileCard() {
             </button>
           </div>
         </div>
-        <p className="font-mono-pr mt-0.5 text-lg font-bold text-tm-primary">
+        <p className="mt-0.5 font-mono-pr text-lg font-bold text-tm-primary">
           {isLoading ? '—' : totalLabel}
         </p>
 
@@ -106,7 +106,7 @@ export default function SidebarProfileCard() {
             <span className="size-1 rounded-full bg-green-400" />
             <span className="size-1 rounded-full bg-green-400" />
           </span>
-          <span className="text-[10px] text-tm-secondary/60">24h</span>
+          <span className="text-2xs text-tm-secondary/60">24h</span>
         </div>
         <Sparkline
           seed={address || username}
@@ -121,13 +121,21 @@ export default function SidebarProfileCard() {
       <div className="mt-3 grid grid-cols-2 gap-2">
         <AppLink
           href="/portfolio"
-          className="rounded-xl bg-[linear-gradient(135deg,#7d6cff,#54e3ff)] py-2 text-center text-xs font-semibold text-white transition hover:brightness-110"
+          className="
+            rounded-xl bg-[linear-gradient(135deg,#7d6cff,#54e3ff)] py-2 text-center text-xs font-semibold text-white
+            transition
+            hover:brightness-110
+          "
         >
           Deposit
         </AppLink>
         <AppLink
           href="/portfolio"
-          className="rounded-xl border border-tm-border bg-tm-surface py-2 text-center text-xs font-semibold text-tm-primary transition hover:bg-tm-elevated"
+          className="
+            rounded-xl border border-tm-border bg-tm-surface py-2 text-center text-xs font-semibold text-tm-primary
+            transition
+            hover:bg-tm-elevated
+          "
         >
           Withdraw
         </AppLink>

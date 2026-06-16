@@ -345,7 +345,7 @@ export default function FriendPlayLobby({ onClose }: { onClose?: () => void }) {
                       type="checkbox"
                       checked={newRoomPrivate}
                       onChange={e => setNewRoomPrivate(e.target.checked)}
-                      className="size-3.5 accent-[var(--color-primary)]"
+                      className="size-3.5 accent-primary"
                     />
                     Invite-only (hidden — only invited members can view)
                   </label>
@@ -561,7 +561,11 @@ export default function FriendPlayLobby({ onClose }: { onClose?: () => void }) {
                           Share this code to invite players
                         </p>
                         <div className="flex items-center gap-2">
-                          <code className="flex-1 rounded-lg border border-border/40 bg-muted/40 px-3 py-2 text-center text-sm font-bold tracking-widest text-foreground">
+                          <code className="
+                            flex-1 rounded-lg border border-border/40 bg-muted/40 px-3 py-2 text-center text-sm
+                            font-bold tracking-widest text-foreground
+                          "
+                          >
                             {selectedRoom.code}
                           </code>
                           <Button

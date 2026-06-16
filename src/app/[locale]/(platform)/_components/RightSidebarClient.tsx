@@ -44,7 +44,10 @@ export default function RightSidebarClient({ children }: RightSidebarClientProps
   return (
     <aside
       className={cn(
-        'sticky top-14 hidden h-[calc(100vh-3.5rem)] shrink-0 flex-col border-l border-border/50 bg-card transition-all duration-300',
+        `
+          sticky top-14 hidden h-[calc(100vh-3.5rem)] shrink-0 flex-col border-l border-border/50 bg-card transition-all
+          duration-300
+        `,
         'xl:flex',
         collapsed ? 'w-10' : 'w-80 2xl:w-96',
       )}

@@ -44,24 +44,28 @@ export default async function PlatformLayout({ params, children }: LayoutProps<'
                   'radial-gradient(900px circle at 20% 0%, rgba(79,142,247,0.09), transparent 60%), radial-gradient(700px circle at 80% 5%, rgba(0,212,255,0.06), transparent 55%)',
               }}
             />
-            {/* 3-column layout on desktop, single column on mobile */}
-            <div className="flex min-h-screen w-full">
-              {/* Left Sidebar */}
-              <LeftSidebar />
+            {/* Full-width top header, then the 3-column layout below it */}
+            <div className="flex min-h-screen w-full flex-col">
+              {/* Top bar spans the entire width: search centered, profile far-right above the globe */}
+              <Header />
 
-              {/* Main Content — min-w-0 is critical: forces flex child to shrink below content size */}
-              <div className="flex w-0 min-w-0 flex-1 flex-col">
-                <Header />
-                <NavigationTabs />
-                <main className="flex-1 p-3 lg:p-5">
-                  {children}
-                </main>
+              <div className="flex min-h-0 w-full flex-1">
+                {/* Left Sidebar */}
+                <LeftSidebar />
+
+                {/* Main Content — min-w-0 is critical: forces flex child to shrink below content size */}
+                <div className="flex w-0 min-w-0 flex-1 flex-col">
+                  <NavigationTabs />
+                  <main className="flex-1 p-3 lg:p-5">
+                    {children}
+                  </main>
+                </div>
+
+                {/* Right Sidebar */}
+                <Suspense fallback={<div className="hidden w-80 shrink-0 xl:block 2xl:w-96" />}>
+                  <RightSidebar />
+                </Suspense>
               </div>
-
-              {/* Right Sidebar */}
-              <Suspense fallback={<div className="hidden w-80 shrink-0 xl:block 2xl:w-96" />}>
-                <RightSidebar />
-              </Suspense>
             </div>
 
             <MobileBottomNav />

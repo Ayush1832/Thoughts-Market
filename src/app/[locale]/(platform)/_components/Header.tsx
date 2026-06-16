@@ -7,27 +7,26 @@ export default async function Header() {
   return (
     <header className="sticky top-0 z-40 border-b border-tm-border bg-tm-surface/95 backdrop-blur-sm">
       <div className="flex h-14 w-full items-center gap-3 px-3 lg:px-5">
-        {/* Logo: mobile only */}
-        <div className="shrink-0 lg:hidden">
-          <HeaderLogo />
+        {/* Left slot: logo on mobile, flexible spacer on desktop (mirrors the right slot to keep the search centered) */}
+        <div className="flex min-w-0 flex-1 items-center">
+          <div className="shrink-0 lg:hidden">
+            <HeaderLogo />
+          </div>
         </div>
 
-        {/* Search: flexible, grows to fill but capped, can shrink */}
-        <div className="hidden min-w-0 flex-1 items-center lg:flex lg:max-w-md xl:max-w-lg">
+        {/* Center: search — truly centered across the full-width top bar */}
+        <div className="hidden min-w-0 flex-1 items-center justify-center lg:flex lg:max-w-md xl:max-w-lg">
           <HeaderSearch />
         </div>
 
-        {/* "How it works": its own slot, never overlaps search or menu */}
-        <div className="hidden shrink-0 lg:flex">
-          <HowItWorksDeferred />
-        </div>
-
-        {/* Spacer on mobile only (desktop search already grows) */}
-        <div className="flex-1 lg:hidden" />
-
-        {/* Portfolio / wallet / avatar — always visible, never shrinks */}
-        <div className="flex shrink-0 items-center gap-1">
-          <HeaderMenu />
+        {/* Right slot: How it works + Portfolio / Cash / Deposit / avatar — pinned to the far right, above the globe */}
+        <div className="flex flex-1 items-center justify-end gap-3">
+          <div className="hidden shrink-0 lg:flex">
+            <HowItWorksDeferred />
+          </div>
+          <div className="flex shrink-0 items-center gap-1">
+            <HeaderMenu />
+          </div>
         </div>
       </div>
     </header>

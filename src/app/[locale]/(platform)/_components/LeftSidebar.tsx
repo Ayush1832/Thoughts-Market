@@ -114,7 +114,7 @@ export default function LeftSidebar() {
   return (
     <aside
       className={cn(
-        'sticky top-0 z-40 hidden h-screen shrink-0 flex-col overflow-x-hidden overflow-y-auto',
+        'sticky top-14 z-40 hidden h-[calc(100vh-3.5rem)] shrink-0 flex-col overflow-x-hidden overflow-y-auto',
         'border-r border-tm-border bg-tm-surface',
         'transition-[width] duration-300 ease-in-out',
         'lg:flex',

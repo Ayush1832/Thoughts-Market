@@ -21,9 +21,27 @@ CREATE UNIQUE INDEX IF NOT EXISTS creator_applications_username_idx
 
 ALTER TABLE creator_applications ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "service_role_all_creator_applications"
-  ON creator_applications FOR ALL TO service_role
-  USING (true) WITH CHECK (true);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname = 'public'
+      AND tablename = 'creator_applications'
+      AND policyname = 'service_role_all_creator_applications'
+  ) THEN
+    CREATE POLICY "service_role_all_creator_applications"
+      ON creator_applications FOR ALL TO service_role
+      USING (true) WITH CHECK (true);
+  END IF;
+END $$;
 
--- Realtime support
-ALTER PUBLICATION supabase_realtime ADD TABLE creator_applications;
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables
+    WHERE pubname = 'supabase_realtime'
+      AND tablename = 'creator_applications'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE creator_applications;
+  END IF;
+END $$;

@@ -1,8 +1,10 @@
 'use client'
 
+import { EyeIcon, EyeOffIcon } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useLocale } from 'next-intl'
 import { useState } from 'react'
+import HeaderLogo from '@/components/HeaderLogo'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -13,6 +15,7 @@ export default function AdminLoginPage() {
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
@@ -69,8 +72,13 @@ export default function AdminLoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800 px-4">
       <div className="w-full max-w-md">
         <div className="bg-slate-800 border border-slate-700 rounded-lg shadow-xl p-8">
+          {/* Brand */}
+          <div className="mb-6 flex justify-center text-white">
+            <HeaderLogo />
+          </div>
+
           {/* Header */}
-          <div className="mb-8">
+          <div className="mb-8 text-center">
             <h1 className="text-2xl font-bold text-white mb-2">Admin Portal</h1>
             <p className="text-slate-400 text-sm">Secure authentication required</p>
           </div>
@@ -99,16 +107,26 @@ export default function AdminLoginPage() {
               <Label htmlFor="password" className="text-slate-300 text-sm font-medium block mb-2">
                 Password
               </Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="Enter your password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                disabled={isLoading}
-                className="w-full bg-slate-700 border-slate-600 text-white placeholder:text-slate-500 focus:border-blue-500"
-                required
-              />
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  disabled={isLoading}
+                  className="w-full bg-slate-700 border-slate-600 text-white placeholder:text-slate-500 focus:border-blue-500 pr-11"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(prev => !prev)}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  className="absolute inset-y-0 right-0 flex items-center px-3 text-slate-400 hover:text-white"
+                >
+                  {showPassword ? <EyeOffIcon className="size-4" /> : <EyeIcon className="size-4" />}
+                </button>
+              </div>
             </div>
 
             {/* Error Message */}

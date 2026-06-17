@@ -27,13 +27,13 @@ export default function AdminSidebar({ allowedSections }: { allowedSections?: '*
     { id: 'finance', label: t('Finance'), href: '/admin/finance' as Route, icon: DollarSignIcon },
     { id: 'affiliate', label: t('Affiliate'), href: '/admin/affiliate' as Route, icon: BadgePercentIcon },
     { id: 'events', label: t('Events'), href: '/admin/events' as Route, icon: CalendarIcon },
+    { id: 'social', label: t('Creators Corner'), href: '/admin/social' as Route, icon: SparklesIcon },
     { id: 'p2p', label: t('Peer to Peer'), href: '/admin/p2p' as Route, icon: SwordsIcon },
     { id: 'users', label: t('Users'), href: '/admin/users' as Route, icon: UsersIcon },
     { id: 'roles', label: t('Roles'), href: '/admin/roles' as Route, icon: ShieldCheckIcon },
     { id: 'support', label: t('Support'), href: '/admin/support' as Route, icon: HeadphonesIcon },
     { id: 'trending', label: t('Trending'), href: '/admin/trending' as Route, icon: TrendingUpIcon },
     // { id: 'reels', label: t('Reels'), href: '/admin/reels' as Route, icon: FilmIcon },
-    { id: 'social', label: t('Creators Corner'), href: '/admin/social' as Route, icon: SparklesIcon },
   ]
   // RBAC: only show sections this user's role(s) allow.
   const visibleMenuItems = allowedSections && allowedSections !== '*'

@@ -2,7 +2,7 @@
 
 import type { LucideIcon } from 'lucide-react'
 import type { Route } from 'next'
-import { BadgePercentIcon, CalendarIcon, DollarSignIcon, FilmIcon, HeadphonesIcon, LanguagesIcon, MessageSquareIcon, NewspaperIcon, SettingsIcon, ShieldCheckIcon, SwatchBookIcon, SwordsIcon, TagsIcon, TextSelectIcon, TrendingUpIcon, UsersIcon } from 'lucide-react'
+import { BadgePercentIcon, CalendarIcon, DollarSignIcon, HeadphonesIcon, LanguagesIcon, SettingsIcon, ShieldCheckIcon, SparklesIcon, SwatchBookIcon, SwordsIcon, TagsIcon, TextSelectIcon, TrendingUpIcon, UsersIcon } from 'lucide-react'
 import { useExtracted } from 'next-intl'
 import AppLink from '@/components/AppLink'
 import { Button } from '@/components/ui/button'
@@ -33,7 +33,7 @@ export default function AdminSidebar({ allowedSections }: { allowedSections?: '*
     { id: 'support', label: t('Support'), href: '/admin/support' as Route, icon: HeadphonesIcon },
     { id: 'trending', label: t('Trending'), href: '/admin/trending' as Route, icon: TrendingUpIcon },
     // { id: 'reels', label: t('Reels'), href: '/admin/reels' as Route, icon: FilmIcon },
-    { id: 'social', label: t('Social'), href: '/admin/social' as Route, icon: MessageSquareIcon },
+    { id: 'social', label: t('Creators Corner'), href: '/admin/social' as Route, icon: SparklesIcon },
   ]
   // RBAC: only show sections this user's role(s) allow.
   const visibleMenuItems = allowedSections && allowedSections !== '*'

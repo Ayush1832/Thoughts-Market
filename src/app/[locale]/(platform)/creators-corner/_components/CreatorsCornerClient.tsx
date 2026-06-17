@@ -4,6 +4,7 @@ import {
   BarChart3Icon,
   CheckCircle2Icon,
   ChevronRightIcon,
+  ClockIcon,
   FlameIcon,
   LockIcon,
   SearchIcon,
@@ -14,15 +15,27 @@ import {
   TrendingUpIcon,
   UserPlusIcon,
   UsersIcon,
+  XCircleIcon,
   ZapIcon,
 } from 'lucide-react'
 import { useState } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { cn } from '@/lib/utils'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type CreatorTier = 'NEWCOMER' | 'RISING' | 'PRO' | 'ELITE'
 type AppMode = 'user' | 'creator'
-type CreatorState = 'none' | 'approved'
+type ApplicationStatus = 'none' | 'pending' | 'approved' | 'rejected' | 'verified'
+
+interface CreatorStatus {
+  applicationStatus: ApplicationStatus
+  totalWageredUsd: number
+  isEligible: boolean
+  displayName: string | null
+  username: string | null
+  reviewNotes: string | null
+  niche: string | null
+}
 
 interface Creator {
   id: string
@@ -299,21 +312,8 @@ const PRESTIGE_BADGES = [
   { id: 'b6', emoji: '👑', label: 'Elite Tier', desc: 'Reach Elite creator tier', earned: false, colorClass: 'border-tm-border bg-tm-elevated/40 text-tm-secondary/40' },
 ]
 
-const TOP_MARKETS = [
-  { rank: 1, title: 'ETH above $5K by Q2?', volume: '$12.4K', result: 'YES ✓', isWin: true },
-  { rank: 2, title: 'BTC new ATH this cycle?', volume: '$8.9K', result: 'YES ✓', isWin: true },
-  { rank: 3, title: 'Solana surpass ETH in TVL?', volume: '$6.2K', result: 'NO ✗', isWin: false },
-  { rank: 4, title: 'Fed pivot in March 2025?', volume: '$4.8K', result: 'YES ✓', isWin: true },
-  { rank: 5, title: 'DOGE above $1 by EOY?', volume: '$3.1K', result: 'NO ✓', isWin: true },
-]
 
-const RECENT_ACTIVITY = [
-  { id: 'a1', text: 'Market resolved: ETH above $4K?', sub: '+$42.50 earned', time: '2h ago', positive: true },
-  { id: 'a2', text: 'cryptobull_22 started following you', sub: '+1 follower', time: '4h ago', positive: true },
-  { id: 'a3', text: 'Market created: Will ETH reach $5K?', sub: '0 traders so far', time: '8h ago', positive: null },
-  { id: 'a4', text: 'Badge earned: Sharp Caller 🎯', sub: 'You hit 70% accuracy!', time: '1d ago', positive: true },
-  { id: 'a5', text: 'Market resolved: SOL TVL flip ETH?', sub: '-$18.00 accuracy penalty', time: '2d ago', positive: false },
-]
+const WAGER_REQUIREMENT_USD = 1_000
 
 // ─── Utility ──────────────────────────────────────────────────────────────────
 function tierColors(tier: CreatorTier): string {
@@ -824,6 +824,206 @@ function UserModeView({ onSwitchToCreator }: { onSwitchToCreator: () => void }) 
   )
 }
 
+// ─── Creator Mode: Wagering Gate ──────────────────────────────────────────────
+function WageringGate({ totalWageredUsd }: { totalWageredUsd: number }) {
+  const pct = Math.min(100, Math.round((totalWageredUsd / WAGER_REQUIREMENT_USD) * 100))
+  const remaining = Math.max(0, WAGER_REQUIREMENT_USD - totalWageredUsd)
+
+  return (
+    <div className="mx-auto max-w-lg py-8">
+      <div className="relative overflow-hidden rounded-3xl border border-amber-500/30 bg-linear-to-br from-amber-500/10 via-orange-500/5 to-transparent p-8">
+        <div className="absolute -top-12 -right-12 size-40 rounded-full bg-amber-500/10 blur-3xl" />
+        <div className="relative space-y-6 text-center">
+          <div className="mx-auto flex size-20 items-center justify-center rounded-3xl bg-amber-500/15 text-4xl">
+            🔒
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-2xl font-bold text-tm-primary">Wagering Requirement</h2>
+            <p className="text-sm/relaxed text-tm-secondary">
+              To apply as a creator, you need to have wagered at least
+              {' '}
+              <span className="font-bold text-amber-400">$10,000</span>
+              {' '}
+              on the platform. This ensures our creators have proven market experience.
+            </p>
+          </div>
+
+          {/* Progress */}
+          <div className="space-y-3 rounded-2xl border border-tm-border bg-tm-surface p-5">
+            <div className="flex items-center justify-between text-sm">
+              <span className="font-semibold text-tm-primary">Your wagering progress</span>
+              <span className="font-bold text-amber-400">
+                {pct}
+                %
+              </span>
+            </div>
+            <div className="relative h-3 overflow-hidden rounded-full bg-tm-elevated">
+              <div
+                className="
+                  h-full rounded-full bg-linear-to-r from-amber-500 to-orange-400 shadow-sm shadow-amber-500/40
+                  transition-all duration-700
+                "
+                style={{ width: `${pct}%` }}
+              />
+            </div>
+            <div className="flex items-center justify-between text-xs text-tm-secondary">
+              <span>
+                <span className="font-bold text-tm-primary">
+                  $
+                  {totalWageredUsd.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                </span>
+                {' '}
+                wagered
+              </span>
+              <span>
+                <span className="font-bold text-tm-primary">
+                  $
+                  {WAGER_REQUIREMENT_USD.toLocaleString()}
+                </span>
+                {' '}
+                goal
+              </span>
+            </div>
+          </div>
+
+          {remaining > 0 && (
+            <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-sm text-amber-300">
+              You need
+              {' '}
+              <span className="font-bold">
+                $
+                {remaining.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+              </span>
+              {' '}
+              more in wagering to unlock creator applications.
+            </div>
+          )}
+
+          <button
+            type="button"
+            className="
+              w-full rounded-xl bg-primary py-3 text-sm font-semibold text-white shadow-lg shadow-primary/25
+              transition-all duration-200
+              hover:-translate-y-px hover:shadow-xl hover:shadow-primary/35
+            "
+          >
+            Start Trading to Unlock
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Creator Mode: Pending Screen ─────────────────────────────────────────────
+function PendingScreen({ displayName, username }: { displayName: string | null, username: string | null }) {
+  return (
+    <div className="mx-auto max-w-lg py-8">
+      <div className="relative overflow-hidden rounded-3xl border border-blue-500/30 bg-linear-to-br from-blue-500/10 via-indigo-500/5 to-transparent p-8">
+        <div className="absolute -top-12 -right-12 size-40 rounded-full bg-blue-500/10 blur-3xl" />
+        <div className="relative space-y-6 text-center">
+          <div className="relative mx-auto flex size-20 items-center justify-center rounded-3xl bg-blue-500/15 text-4xl">
+            <ClockIcon className="size-10 animate-pulse text-blue-400" />
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-2xl font-bold text-tm-primary">Application Under Review</h2>
+            <p className="text-sm/relaxed text-tm-secondary">
+              Your creator application for
+              {' '}
+              <span className="font-bold text-tm-primary">
+                {displayName ?? 'your account'}
+              </span>
+              {' '}
+              (
+              @
+              {username ?? '—'}
+              ) has been submitted and is being reviewed by our team.
+            </p>
+          </div>
+
+          <div className="space-y-3 rounded-2xl border border-tm-border bg-tm-surface p-5 text-left">
+            {[
+              { step: 1, label: 'Application submitted', done: true },
+              { step: 2, label: 'Admin review in progress', done: false, active: true },
+              { step: 3, label: 'Approval & profile activation', done: false },
+              { step: 4, label: 'Verification badge (optional)', done: false },
+            ].map(s => (
+              <div key={s.step} className="flex items-center gap-3">
+                <div className={cn(
+                  'flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-bold',
+                  s.done
+                    ? 'bg-emerald-500/20 text-emerald-400'
+                    : s.active
+                      ? 'bg-blue-500/20 text-blue-400 animate-pulse'
+                      : 'bg-tm-elevated text-tm-secondary/40',
+                )}
+                >
+                  {s.done ? '✓' : s.step}
+                </div>
+                <span className={cn('text-sm', s.done || s.active ? 'text-tm-primary' : 'text-tm-secondary/50')}>
+                  {s.label}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          <p className="text-xs text-tm-secondary/60">
+            Reviews typically take 24–48 hours. You'll be notified once a decision is made.
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Creator Mode: Rejected Screen ───────────────────────────────────────────
+function RejectedScreen({
+  reviewNotes,
+  onReapply,
+}: {
+  reviewNotes: string | null
+  onReapply: () => void
+}) {
+  return (
+    <div className="mx-auto max-w-lg py-8">
+      <div className="relative overflow-hidden rounded-3xl border border-red-500/30 bg-linear-to-br from-red-500/10 via-rose-500/5 to-transparent p-8">
+        <div className="absolute -top-12 -right-12 size-40 rounded-full bg-red-500/10 blur-3xl" />
+        <div className="relative space-y-6 text-center">
+          <div className="mx-auto flex size-20 items-center justify-center rounded-3xl bg-red-500/15">
+            <XCircleIcon className="size-10 text-red-400" />
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-2xl font-bold text-tm-primary">Application Not Approved</h2>
+            <p className="text-sm/relaxed text-tm-secondary">
+              Unfortunately your creator application was not approved at this time. You can review the feedback below
+              and re-apply when you're ready.
+            </p>
+          </div>
+
+          {reviewNotes && (
+            <div className="rounded-2xl border border-red-500/20 bg-red-500/5 p-4 text-left">
+              <p className="mb-1 text-2xs font-bold tracking-wider text-red-400 uppercase">Admin Feedback</p>
+              <p className="text-sm/relaxed text-tm-secondary">{reviewNotes}</p>
+            </div>
+          )}
+
+          <button
+            type="button"
+            onClick={onReapply}
+            className="
+              w-full rounded-xl bg-primary py-3 text-sm font-semibold text-white shadow-lg shadow-primary/25
+              transition-all duration-200
+              hover:-translate-y-px hover:shadow-xl hover:shadow-primary/35
+            "
+          >
+            Re-apply as Creator
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Creator Mode: Application Form ──────────────────────────────────────────
 const NICHE_OPTIONS = ['Crypto', 'Sports', 'Politics', 'Finance', 'Technology', 'Entertainment', 'Gaming', 'Lifestyle', 'Other']
 
@@ -832,15 +1032,39 @@ function ApplicationForm({ onSubmit }: { onSubmit: () => void }) {
   const [agreed, setAgreed] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [step, setStep] = useState(1)
+  const [error, setError] = useState('')
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: React.SyntheticEvent<HTMLFormElement>) {
     e.preventDefault()
     if (!agreed) {
       return
     }
     setSubmitting(true)
-    await new Promise(r => setTimeout(r, 1800))
-    onSubmit()
+    setError('')
+    try {
+      const res = await fetch('/api/creators/apply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          displayName: form.displayName.trim(),
+          username: form.username.trim(),
+          niche: form.niche,
+          socialLink: form.social.trim() || undefined,
+          reason: form.reason.trim(),
+        }),
+      })
+      if (!res.ok) {
+        const { error: errMsg } = await res.json() as { error: string }
+        setError(errMsg ?? 'Submission failed. Please try again.')
+        setSubmitting(false)
+        return
+      }
+      onSubmit()
+    }
+    catch {
+      setError('Network error. Please try again.')
+      setSubmitting(false)
+    }
   }
 
   const canProceed = form.displayName.trim().length >= 2 && form.username.trim().length >= 3 && form.niche
@@ -956,6 +1180,14 @@ function ApplicationForm({ onSubmit }: { onSubmit: () => void }) {
 
         {step === 2 && (
           <div className="space-y-4">
+            {/* Wagering requirement badge */}
+            <div className="flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-2.5">
+              <CheckCircle2Icon className="size-4 shrink-0 text-emerald-400" />
+              <span className="text-xs font-semibold text-emerald-400">
+                $10,000 wagering requirement met ✓
+              </span>
+            </div>
+
             <div className="space-y-1.5">
               <label className="text-xs font-semibold tracking-wide text-tm-secondary uppercase">
                 Social media / portfolio link
@@ -1013,6 +1245,12 @@ function ApplicationForm({ onSubmit }: { onSubmit: () => void }) {
               </span>
             </label>
 
+            {error && (
+              <p className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-2.5 text-sm text-red-400">
+                {error}
+              </p>
+            )}
+
             <div className="flex gap-3">
               <button
                 type="button"
@@ -1039,7 +1277,7 @@ function ApplicationForm({ onSubmit }: { onSubmit: () => void }) {
                   ? (
                       <>
                         <span className="size-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                        Creating your profile...
+                        Submitting application...
                       </>
                     )
                   : '🚀 Submit Application'}
@@ -1053,7 +1291,15 @@ function ApplicationForm({ onSubmit }: { onSubmit: () => void }) {
 }
 
 // ─── Creator Mode: Dashboard Overview ────────────────────────────────────────
-function CreatorDashboard({ displayName, username }: { displayName: string, username: string }) {
+function CreatorDashboard({
+  displayName,
+  username,
+  isVerified,
+}: {
+  displayName: string
+  username: string
+  isVerified: boolean
+}) {
   const [activeTab, setActiveTab] = useState('Overview')
   const xpCurrent = 18420
   const xpTarget = 50000
@@ -1076,38 +1322,52 @@ function CreatorDashboard({ displayName, username }: { displayName: string, user
             >
               🔮
             </div>
-            <div className="absolute -right-1 -bottom-1 rounded-full bg-emerald-500 p-1">
-              <ShieldCheckIcon className="size-3 text-white" />
-            </div>
+            {isVerified
+              ? (
+                  <div className="absolute -right-1 -bottom-1 rounded-full bg-blue-500 p-1">
+                    <ShieldCheckIcon className="size-3 text-white" />
+                  </div>
+                )
+              : (
+                  <div className="absolute -right-1 -bottom-1 rounded-full bg-emerald-500 p-1">
+                    <CheckCircle2Icon className="size-3 text-white" />
+                  </div>
+                )}
           </div>
 
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="space-y-1">
               <div className="flex flex-wrap items-center gap-2">
-                <h2 className="text-xl font-bold text-tm-primary">{displayName || 'vee.eth'}</h2>
+                <h2 className="text-xl font-bold text-tm-primary">{displayName || 'Creator'}</h2>
                 <TierBadge tier="PRO" />
+                {isVerified && (
+                  <span className="flex items-center gap-1 rounded-full border border-blue-500/40 bg-blue-500/15 px-2 py-0.5 text-2xs font-bold text-blue-400">
+                    <ShieldCheckIcon className="size-2.5" />
+                    Verified
+                  </span>
+                )}
               </div>
               <div className="text-sm text-tm-secondary">
                 @
-                {username || 'vee.eth'}
+                {username || 'creator'}
                 {' '}
-                · DeFi analyst & on-chain sleuth
+                · Creator on Thoughts Market
               </div>
               <div className="flex flex-wrap gap-4 pt-1 text-sm text-tm-secondary">
                 <span>
-                  <span className="font-bold text-tm-primary">12,840</span>
+                  <span className="font-bold text-tm-primary">0</span>
                   {' '}
                   followers
                 </span>
                 <span>
-                  <span className="font-bold text-tm-primary">92</span>
+                  <span className="font-bold text-tm-primary">—</span>
                   {' '}
                   trust score
                 </span>
                 <span>
                   Rank
                   {' '}
-                  <span className="font-bold text-tm-primary">#142</span>
+                  <span className="font-bold text-tm-primary">—</span>
                 </span>
               </div>
             </div>
@@ -1177,10 +1437,10 @@ function CreatorDashboard({ displayName, username }: { displayName: string, user
           {/* Stats cards */}
           <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
             {[
-              { label: 'Total Volume Generated', value: '$48.3K', icon: <BarChart3Icon className="size-4" />, accent: 'text-[#4f8ef7] bg-[#4f8ef7]/10 border-[#4f8ef7]/20' },
-              { label: 'Creator Earnings', value: '$1,247.50', icon: <ZapIcon className="size-4" />, accent: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' },
-              { label: 'Active Markets', value: '23', icon: <TargetIcon className="size-4" />, accent: 'text-amber-400 bg-amber-500/10 border-amber-500/20' },
-              { label: 'Resolution Accuracy', value: '67%', icon: <TrendingUpIcon className="size-4" />, accent: 'text-violet-400 bg-violet-500/10 border-violet-500/20' },
+              { label: 'Total Volume Generated', value: '$0', icon: <BarChart3Icon className="size-4" />, accent: 'text-[#4f8ef7] bg-[#4f8ef7]/10 border-[#4f8ef7]/20' },
+              { label: 'Creator Earnings', value: '$0.00', icon: <ZapIcon className="size-4" />, accent: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' },
+              { label: 'Active Markets', value: '0', icon: <TargetIcon className="size-4" />, accent: 'text-amber-400 bg-amber-500/10 border-amber-500/20' },
+              { label: 'Resolution Accuracy', value: '—', icon: <TrendingUpIcon className="size-4" />, accent: 'text-violet-400 bg-violet-500/10 border-violet-500/20' },
             ].map((stat, i) => (
               <div
                 key={stat.label}
@@ -1207,26 +1467,10 @@ function CreatorDashboard({ displayName, username }: { displayName: string, user
                 <StarIcon className="size-4 text-amber-400" />
                 <h3 className="text-sm font-bold text-tm-primary">Your top markets</h3>
               </div>
-              <div className="space-y-3">
-                {TOP_MARKETS.map(m => (
-                  <div
-                    key={m.rank}
-                    className="flex items-center gap-3 rounded-xl p-2 transition-colors hover:bg-tm-elevated"
-                  >
-                    <span className="
-                      flex size-6 shrink-0 items-center justify-center rounded-full bg-tm-elevated text-2xs font-bold
-                      text-tm-secondary
-                    "
-                    >
-                      {m.rank}
-                    </span>
-                    <span className="flex-1 truncate text-xs text-tm-primary">{m.title}</span>
-                    <span className="shrink-0 text-xs font-semibold text-tm-secondary">{m.volume}</span>
-                    <span className={cn('shrink-0 text-2xs font-bold', m.isWin ? 'text-emerald-400' : 'text-red-400')}>
-                      {m.result}
-                    </span>
-                  </div>
-                ))}
+              <div className="flex flex-col items-center justify-center py-8 text-center">
+                <div className="mb-2 text-3xl">📊</div>
+                <p className="text-sm font-semibold text-tm-primary">No markets yet</p>
+                <p className="mt-1 text-xs text-tm-secondary">Create your first prediction market to get started.</p>
               </div>
             </div>
 
@@ -1236,35 +1480,10 @@ function CreatorDashboard({ displayName, username }: { displayName: string, user
                 <FlameIcon className="size-4 text-orange-400" />
                 <h3 className="text-sm font-bold text-tm-primary">Recent activity</h3>
               </div>
-              <div className="space-y-3">
-                {RECENT_ACTIVITY.map(a => (
-                  <div
-                    key={a.id}
-                    className="flex items-start gap-3 rounded-xl p-2 transition-colors hover:bg-tm-elevated"
-                  >
-                    <div className={cn(
-                      'mt-0.5 size-1.5 shrink-0 rounded-full',
-                      a.positive === true
-                        ? 'bg-emerald-400'
-                        : a.positive === false
-                          ? 'bg-red-400'
-                          : `bg-tm-secondary/40`,
-                    )}
-                    />
-                    <div className="min-w-0 flex-1">
-                      <div className="truncate text-xs text-tm-primary">{a.text}</div>
-                      <div className={cn('text-2xs', a.positive === true
-                        ? 'text-emerald-400'
-                        : a.positive === false
-                          ? `text-red-400`
-                          : `text-tm-secondary/60`)}
-                      >
-                        {a.sub}
-                      </div>
-                    </div>
-                    <span className="shrink-0 text-2xs text-tm-secondary/50">{a.time}</span>
-                  </div>
-                ))}
+              <div className="flex flex-col items-center justify-center py-8 text-center">
+                <div className="mb-2 text-3xl">🔔</div>
+                <p className="text-sm font-semibold text-tm-primary">No activity yet</p>
+                <p className="mt-1 text-xs text-tm-secondary">Activity will show once you start creating markets.</p>
               </div>
             </div>
           </div>
@@ -1275,8 +1494,7 @@ function CreatorDashboard({ displayName, username }: { displayName: string, user
               <ShieldCheckIcon className="size-4 text-[#4f8ef7]" />
               <h3 className="text-sm font-bold text-tm-primary">Prestige badges</h3>
               <span className="rounded-full bg-tm-elevated px-2 py-0.5 text-2xs font-semibold text-tm-secondary">
-                {PRESTIGE_BADGES.filter(b => b.earned).length}
-                /
+                0 /
                 {PRESTIGE_BADGES.length}
                 {' '}
                 earned
@@ -1288,23 +1506,14 @@ function CreatorDashboard({ displayName, username }: { displayName: string, user
                   key={b.id}
                   className={cn(
                     `
-                      relative flex flex-col items-center gap-2 rounded-2xl border p-4 text-center transition-all
-                      duration-200
+                      relative flex flex-col items-center gap-2 rounded-2xl border p-4 text-center opacity-40
                     `,
-                    b.earned ? 'hover:-translate-y-0.5 hover:shadow-lg' : 'opacity-60',
-                    b.colorClass,
+                    'border-tm-border bg-tm-elevated/40 text-tm-secondary/40',
                   )}
                 >
-                  {!b.earned && (
-                    <div className="absolute top-2 right-2">
-                      <LockIcon className="size-3 text-tm-secondary/40" />
-                    </div>
-                  )}
-                  {b.earned && (
-                    <div className="absolute top-2 right-2">
-                      <CheckCircle2Icon className="size-3 text-emerald-400" />
-                    </div>
-                  )}
+                  <div className="absolute top-2 right-2">
+                    <LockIcon className="size-3 text-tm-secondary/40" />
+                  </div>
                   <span className="text-2xl">{b.emoji}</span>
                   <div>
                     <div className="text-xs font-bold">{b.label}</div>
@@ -1333,46 +1542,71 @@ function CreatorDashboard({ displayName, username }: { displayName: string, user
 }
 
 // ─── Creator Mode View ────────────────────────────────────────────────────────
-interface CreatorProfile { state: CreatorState, displayName: string, username: string }
-
-function readCreatorProfile(): CreatorProfile {
-  const empty: CreatorProfile = { state: 'none', displayName: '', username: '' }
-  if (typeof window === 'undefined') {
-    return empty
-  }
-  try {
-    const saved = localStorage.getItem('creator-profile')
-    if (!saved) {
-      return empty
-    }
-    return JSON.parse(saved) as CreatorProfile
-  }
-  catch {
-    return empty
-  }
-}
-
 function CreatorModeView() {
-  const [profile, setProfile] = useState<CreatorProfile>(readCreatorProfile)
+  const queryClient = useQueryClient()
+  const [forceForm, setForceForm] = useState(false)
 
-  function handleApproved(displayName?: string, username?: string) {
-    const next: CreatorProfile = { state: 'approved', displayName: displayName ?? '', username: username ?? '' }
-    try {
-      localStorage.setItem('creator-profile', JSON.stringify(next))
-    }
-    catch {}
-    setProfile(next)
-  }
+  const { data: status, isLoading } = useQuery<CreatorStatus>({
+    queryKey: ['creator-status'],
+    queryFn: async () => {
+      const res = await fetch('/api/creators/status')
+      if (!res.ok) {
+        throw new Error('Failed to load creator status')
+      }
+      return res.json() as Promise<CreatorStatus>
+    },
+  })
 
-  if (profile.state === 'none') {
+  if (isLoading || !status) {
     return (
-      <div className="py-4">
-        <ApplicationForm onSubmit={() => handleApproved()} />
+      <div className="flex items-center justify-center py-20">
+        <div className="size-8 animate-spin rounded-full border-2 border-tm-border border-t-primary" />
       </div>
     )
   }
 
-  return <CreatorDashboard displayName={profile.displayName} username={profile.username} />
+  // 1 — Not eligible: wagering gate
+  if (!status.isEligible && status.applicationStatus === 'none') {
+    return <WageringGate totalWageredUsd={status.totalWageredUsd} />
+  }
+
+  // 2 — Eligible but no application yet (or forced re-apply after rejection)
+  if (status.applicationStatus === 'none' || forceForm) {
+    return (
+      <div className="py-4">
+        <ApplicationForm
+          onSubmit={() => {
+            setForceForm(false)
+            void queryClient.invalidateQueries({ queryKey: ['creator-status'] })
+          }}
+        />
+      </div>
+    )
+  }
+
+  // 3 — Pending review
+  if (status.applicationStatus === 'pending') {
+    return <PendingScreen displayName={status.displayName} username={status.username} />
+  }
+
+  // 4 — Rejected
+  if (status.applicationStatus === 'rejected') {
+    return (
+      <RejectedScreen
+        reviewNotes={status.reviewNotes}
+        onReapply={() => setForceForm(true)}
+      />
+    )
+  }
+
+  // 5 — Approved or Verified: show creator dashboard
+  return (
+    <CreatorDashboard
+      displayName={status.displayName ?? 'Creator'}
+      username={status.username ?? 'creator'}
+      isVerified={status.applicationStatus === 'verified'}
+    />
+  )
 }
 
 // ─── Page header ──────────────────────────────────────────────────────────────

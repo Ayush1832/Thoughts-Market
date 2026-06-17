@@ -1,4 +1,4 @@
-export const SUPPORTED_LOCALES = ['en', 'de', 'es', 'pt', 'fr', 'zh'] as const
+export const SUPPORTED_LOCALES = ['en', 'de', 'es', 'pt', 'fr', 'zh', 'hi'] as const
 
 export type SupportedLocale = (typeof SUPPORTED_LOCALES)[number]
 
@@ -15,6 +15,7 @@ export const LOCALE_LABELS: Record<SupportedLocale, string> = {
   pt: 'Português',
   fr: 'French',
   zh: '中文',
+  hi: 'हिन्दी',
 }
 
 export const LOOP_LABELS: Record<SupportedLocale, string> = {
@@ -24,6 +25,7 @@ export const LOOP_LABELS: Record<SupportedLocale, string> = {
   pt: 'Língua',
   fr: 'Langue',
   zh: '语言',
+  hi: 'भाषा',
 }
 
 export function normalizeEnabledLocales(locales: string[]): SupportedLocale[] {

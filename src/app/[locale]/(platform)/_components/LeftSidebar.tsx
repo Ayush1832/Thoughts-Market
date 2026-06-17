@@ -13,7 +13,6 @@ import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 import SidebarProfileCard from '@/app/[locale]/(platform)/_components/SidebarProfileCard'
 import AppLink from '@/components/AppLink'
-import HeaderLogo from '@/components/HeaderLogo'
 import { cn } from '@/lib/utils'
 
 interface SidebarNavItem {
@@ -121,22 +120,12 @@ export default function LeftSidebar() {
         collapsed ? 'w-[60px]' : 'w-52 xl:w-56',
       )}
     >
-      {/* ── Logo row + collapse toggle ── */}
+      {/* ── Collapse toggle (logo now lives in the top header bar) ── */}
       <div className={cn(
-        'shrink-0 border-b border-tm-border',
-        collapsed ? 'flex flex-col items-center gap-1 py-2' : 'flex h-14 items-center px-3',
+        'shrink-0',
+        collapsed ? 'flex flex-col items-center py-1' : 'flex h-7 items-center justify-end px-2 pt-1',
       )}
       >
-        {/* Logo: full wordmark when expanded, icon-only mark when collapsed (never fully hidden) */}
-        {collapsed
-          ? <HeaderLogo iconOnly />
-          : (
-              <div className="min-w-0 flex-1 overflow-hidden">
-                <HeaderLogo />
-              </div>
-            )}
-
-        {/* Collapse / expand toggle */}
         <button
           type="button"
           onClick={toggle}
@@ -154,7 +143,7 @@ export default function LeftSidebar() {
       </div>
 
       {/* ── Main Navigation ── */}
-      <nav className={cn('flex-1 space-y-0.5 py-4', collapsed ? 'px-2' : 'px-3')}>
+      <nav className={cn('flex-1 space-y-0.5 pt-1 pb-4', collapsed ? 'px-2' : 'px-3')}>
         {NAV_ITEMS.map((item) => {
           const isActive = item.href === '/'
             ? pathname === '/' || pathname === '/en'

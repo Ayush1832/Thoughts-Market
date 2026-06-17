@@ -7,11 +7,9 @@ export default async function Header() {
   return (
     <header className="sticky top-0 z-40 border-b border-tm-border bg-tm-surface/95 backdrop-blur-sm">
       <div className="flex h-14 w-full items-center gap-3 px-3 lg:px-5">
-        {/* Left slot: logo on mobile, flexible spacer on desktop (mirrors the right slot to keep the search centered) */}
+        {/* Left slot: brand logo (icon + name), in the top bar in line with the profile */}
         <div className="flex min-w-0 flex-1 items-center">
-          <div className="shrink-0 lg:hidden">
-            <HeaderLogo />
-          </div>
+          <HeaderLogo />
         </div>
 
         {/* Center: search — truly centered across the full-width top bar */}

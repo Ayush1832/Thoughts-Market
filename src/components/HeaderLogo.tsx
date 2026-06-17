@@ -29,7 +29,7 @@ export default function HeaderLogo({ labelSuffix, iconOnly = false }: HeaderLogo
       href="/"
       aria-label={label}
       className={`
-        flex h-12 shrink-0 items-center gap-3 text-xl font-medium text-foreground transition-opacity
+        flex h-12 shrink-0 items-center gap-2 text-lg font-medium text-foreground transition-opacity
         hover:opacity-80
       `}
     >
@@ -49,7 +49,7 @@ export default function HeaderLogo({ labelSuffix, iconOnly = false }: HeaderLogo
         imageClassName="w-full h-full object-contain"
         size={40}
       />
-      {!iconOnly && <span>{label}</span>}
+      {!iconOnly && <span className="whitespace-nowrap">{label}</span>}
     </AppLink>
   )
 }

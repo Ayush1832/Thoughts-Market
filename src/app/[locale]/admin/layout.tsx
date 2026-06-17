@@ -4,8 +4,9 @@ import { notFound, redirect } from 'next/navigation'
 import PlatformViewerState from '@/app/[locale]/(platform)/_components/PlatformViewerState'
 import AdminHeader from '@/app/[locale]/admin/_components/AdminHeader'
 import AdminSidebar from '@/app/[locale]/admin/_components/AdminSidebar'
+import type { AdminRole } from '@/lib/db/schema/auth/tables'
 import { getAllowedSections, serializeAllowedSections } from '@/lib/admin-permissions'
-import { verifyAdminSession } from '@/lib/admin-session'
+import { getAdminSession } from '@/lib/admin-session'
 import { RolesRepository } from '@/lib/db/queries/roles'
 import { UserRepository } from '@/lib/db/queries/user'
 import AppKitProvider from '@/providers/AppKitProvider'
@@ -19,11 +20,16 @@ export default async function AdminLayout({ params, children }: LayoutProps<'/[l
   setRequestLocale(locale)
 
   // Check for valid admin session (email/password login)
-  const isAdminAuthenticated = await verifyAdminSession()
+  const adminSession = await getAdminSession()
 
-  if (isAdminAuthenticated) {
-    // Admin portal login: grant full access
-    const allowedSections = '*' as const
+  if (adminSession) {
+    // Email/password admin: super_admin gets full access, otherwise the visible
+    // sections are the union of everything their assigned roles permit.
+    const hasSuperAdmin = adminSession.roles.includes('super_admin')
+    const allowed = hasSuperAdmin
+      ? '*'
+      : getAllowedSections(adminSession.roles as AdminRole[], false)
+    const allowedSections = serializeAllowedSections(allowed)
 
     return (
       <AppKitProvider>

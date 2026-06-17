@@ -25,7 +25,6 @@ async function fetchRoles(locale?: string): Promise<{ data: AdminRoleRow[], tota
 export default function AdminRolesTable() {
   const t = useExtracted()
   const { locale } = useParams() as { locale?: string }
-  const columns = useAdminRolesColumns()
   const [search, setSearch] = useState('')
 
   const queryKey = useMemo(() => ['admin-roles', { locale }], [locale])
@@ -37,6 +36,8 @@ export default function AdminRolesTable() {
   })
 
   const retry = useCallback(() => { void refetch() }, [refetch])
+  const handleChanged = useCallback(() => { void refetch() }, [refetch])
+  const columns = useAdminRolesColumns(handleChanged)
 
   const filtered = useMemo(() => {
     const rows = data?.data ?? []

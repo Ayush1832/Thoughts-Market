@@ -1,74 +1,103 @@
 import { cookies } from 'next/headers'
 import crypto from 'crypto'
 
-const ADMIN_EMAIL = 'admin@thoughtsmarket.com'
 const SESSION_SECRET = process.env.SESSION_SECRET || 'admin_session_secret_key_change_in_production'
+const MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000 // 7 days
 
-export async function verifyAdminSession(): Promise<boolean> {
+export interface AdminSessionData {
+  email: string
+  roles: string[]
+}
+
+/**
+ * Create a signed admin session token. The signed payload is
+ * `email:timestamp:role1,role2` so the roles cannot be tampered with
+ * client-side. Multiple roles are comma-separated.
+ */
+export function createAdminSession(email: string, roles: string[]): string {
+  const timestamp = Date.now()
+  const data = `${email}:${timestamp}:${roles.join(',')}`
+  const hmac = crypto.createHmac('sha256', SESSION_SECRET)
+  hmac.update(data)
+  return `${Buffer.from(data).toString('base64')}.${hmac.digest('hex')}`
+}
+
+/**
+ * Verify the admin_session cookie and return its payload (email + role),
+ * or null if missing / tampered / expired.
+ */
+export async function getAdminSession(): Promise<AdminSessionData | null> {
   try {
     const cookieStore = await cookies()
     const sessionToken = cookieStore.get('admin_session')?.value
-    const adminEmail = cookieStore.get('admin_email')?.value
 
-    if (!sessionToken || !adminEmail) {
-      return false
+    if (!sessionToken) {
+      return null
     }
 
-    // Verify email is correct
-    if (adminEmail !== ADMIN_EMAIL) {
-      return false
-    }
-
-    // Verify session token signature
     const parts = sessionToken.split('.')
     if (parts.length !== 2) {
-      return false
+      return null
     }
 
     const [encodedData, signature] = parts
 
-    // Decode the data first
     let data: string
     try {
       data = Buffer.from(encodedData, 'base64').toString()
     }
     catch {
-      return false
+      return null
     }
 
-    // Verify HMAC signature (must sign the original data, not the base64)
+    // Verify HMAC signature (signs the decoded data, not the base64).
     const hmac = crypto.createHmac('sha256', SESSION_SECRET)
     hmac.update(data)
     const expectedSignature = hmac.digest('hex')
 
     if (signature !== expectedSignature) {
-      return false
+      return null
     }
 
-    // Verify timestamp (session not too old)
-    const [, timestamp] = data.split(':')
-    const age = Date.now() - parseInt(timestamp)
-    const maxAge = 7 * 24 * 60 * 60 * 1000 // 7 days
+    const [email, timestamp, roleSegment] = data.split(':')
+    if (!email || !timestamp) {
+      return null
+    }
 
-    return age < maxAge
-  }
-  catch {
-    return false
-  }
-}
+    const age = Date.now() - Number.parseInt(timestamp, 10)
+    if (Number.isNaN(age) || age >= MAX_AGE_MS) {
+      return null
+    }
 
-export async function getAdminEmail(): Promise<string | null> {
-  try {
-    const cookieStore = await cookies()
-    return cookieStore.get('admin_email')?.value || null
+    const roles = (roleSegment ? roleSegment.split(',') : [])
+      .map(r => r.trim())
+      .filter(Boolean)
+
+    return { email, roles: roles.length > 0 ? roles : ['super_admin'] }
   }
   catch {
     return null
   }
 }
 
+/** Boolean check used by API route guards. */
+export async function verifyAdminSession(): Promise<boolean> {
+  return (await getAdminSession()) !== null
+}
+
+export async function getAdminEmail(): Promise<string | null> {
+  const session = await getAdminSession()
+  return session?.email ?? null
+}
+
+export async function getAdminRoles(): Promise<string[]> {
+  const session = await getAdminSession()
+  return session?.roles ?? []
+}
+
 export async function clearAdminSession() {
   const cookieStore = await cookies()
   cookieStore.delete('admin_session')
   cookieStore.delete('admin_email')
+  cookieStore.delete('admin_role')
 }

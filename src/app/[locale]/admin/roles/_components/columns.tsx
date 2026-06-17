@@ -4,10 +4,17 @@ import type { ColumnDef } from '@tanstack/react-table'
 import type { AdminRole } from '@/lib/db/schema/auth/tables'
 import { Trash2Icon } from 'lucide-react'
 import { useExtracted } from 'next-intl'
+import { useParams } from 'next/navigation'
 import { useTransition } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { removeRoleAction } from '../_actions/manage-role'
+import { routing } from '@/i18n/routing'
+import { EditRolesDialog } from './EditRolesDialog'
+
+function getAdminApiBasePath(locale?: string) {
+  if (!locale || locale === routing.defaultLocale) { return '/admin/api' }
+  return `/${locale}/admin/api`
+}
 
 export interface AdminRoleRow {
   id: string
@@ -39,8 +46,9 @@ const ROLE_LABELS: Record<AdminRole, string> = {
   content_manager: 'Content Manager',
 }
 
-function RemoveRoleButton({ userId, role }: { userId: string, role: AdminRole }) {
+function RemoveRoleButton({ userId, role, onChanged }: { userId: string, role: AdminRole, onChanged?: () => void }) {
   const t = useExtracted()
+  const { locale } = useParams() as { locale?: string }
   const [isPending, startTransition] = useTransition()
 
   return (
@@ -51,7 +59,19 @@ function RemoveRoleButton({ userId, role }: { userId: string, role: AdminRole })
       disabled={isPending}
       onClick={() => {
         startTransition(async () => {
-          await removeRoleAction(userId, role)
+          try {
+            const base = getAdminApiBasePath(locale)
+            const res = await fetch(`${base}/admin-users/${userId}/roles?role=${encodeURIComponent(role)}`, {
+              method: 'DELETE',
+              credentials: 'same-origin',
+            })
+            if (res.ok) {
+              onChanged?.()
+            }
+          }
+          catch {
+            // ignore — the row stays if the request fails
+          }
         })
       }}
       aria-label={t('Remove role')}
@@ -61,7 +81,7 @@ function RemoveRoleButton({ userId, role }: { userId: string, role: AdminRole })
   )
 }
 
-export function useAdminRolesColumns(): ColumnDef<AdminRoleRow>[] {
+export function useAdminRolesColumns(onChanged?: () => void): ColumnDef<AdminRoleRow>[] {
   const t = useExtracted()
 
   return [
@@ -106,8 +126,13 @@ export function useAdminRolesColumns(): ColumnDef<AdminRoleRow>[] {
       id: 'actions',
       header: () => null,
       cell: ({ row }) => (
-        <div className="flex justify-end">
-          <RemoveRoleButton userId={row.original.user_id} role={row.original.role} />
+        <div className="flex items-center justify-end gap-0.5">
+          <EditRolesDialog
+            userId={row.original.user_id}
+            label={row.original.username ?? row.original.email ?? row.original.address}
+            onSuccess={onChanged}
+          />
+          <RemoveRoleButton userId={row.original.user_id} role={row.original.role} onChanged={onChanged} />
         </div>
       ),
     },

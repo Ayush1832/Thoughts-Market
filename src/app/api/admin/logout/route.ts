@@ -13,6 +13,7 @@ export async function POST() {
     // Clear cookies
     response.cookies.delete('admin_session')
     response.cookies.delete('admin_email')
+    response.cookies.delete('admin_role')
 
     return response
   }

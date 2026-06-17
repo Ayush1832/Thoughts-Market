@@ -32,7 +32,7 @@ export default async function AdminLayout({ params, children }: LayoutProps<'/[l
         <main className="container py-4 lg:py-8">
           <div className="grid gap-8 lg:grid-cols-[200px_1fr] lg:gap-16">
             <AdminSidebar allowedSections={allowedSections} />
-            <div className="space-y-8">
+            <div className="space-y-4">
               {children}
             </div>
           </div>

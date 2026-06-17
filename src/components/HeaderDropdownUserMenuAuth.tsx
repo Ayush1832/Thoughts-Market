@@ -235,11 +235,27 @@ export default function HeaderDropdownUserMenuAuth() {
           onInteractOutside={() => setMenuOpen(false)}
           onEscapeKeyDown={() => setMenuOpen(false)}
         >
-          <DropdownMenuItem asChild>
-            <UserInfoSection />
-          </DropdownMenuItem>
-
-          <DropdownMenuSeparator />
+          {isAdmin
+            ? (
+                <>
+                  <div className="flex items-center gap-4 p-4">
+                    <div className="size-12 shrink-0 rounded-full bg-gradient-to-br from-purple-500 to-pink-500" />
+                    <div className="min-w-0 flex-1 space-y-1.5">
+                      <span className="truncate text-base/tight font-semibold text-foreground">Admin Profile</span>
+                      <span className="text-xs text-muted-foreground">System Administrator</span>
+                    </div>
+                  </div>
+                  <DropdownMenuSeparator />
+                </>
+              )
+            : (
+                <>
+                  <DropdownMenuItem asChild>
+                    <UserInfoSection />
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                </>
+              )}
 
           <DropdownMenuItem asChild className="py-2 text-sm font-semibold">
             <AppLink intentPrefetch href="/settings" className="flex w-full items-center gap-1.5">

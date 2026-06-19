@@ -18,7 +18,7 @@ import {
   XCircleIcon,
   ZapIcon,
 } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { cn } from '@/lib/utils'
 
@@ -442,27 +442,38 @@ function SpotlightCard({ creator, onToggleFollow }: { creator: Creator, onToggle
         </div>
       </div>
       <TierBadge tier={creator.tier} short />
-      <p className="text-[11px] leading-relaxed text-tm-secondary/80">{creator.bio}</p>
-      <div className="flex gap-3 text-[11px] text-tm-secondary">
-        <span>
-          <span className="font-semibold text-tm-primary">{creator.followers.toLocaleString()}</span>
-          {' '}
-          followers
-        </span>
-        <span>
-          <span className="font-semibold text-tm-primary">{creator.trustScore}</span>
-          {' '}
-          trust
-        </span>
-        <span>
-          <span className="font-semibold text-tm-primary">
-            {creator.accuracy}
-            %
-          </span>
-          {' '}
-          acc
-        </span>
-      </div>
+      <p className="line-clamp-2 text-[11px] leading-relaxed text-tm-secondary/80">{creator.bio}</p>
+      {creator.followers > 0
+        ? (
+            <div className="flex gap-3 text-[11px] text-tm-secondary">
+              <span>
+                <span className="font-semibold text-tm-primary">{creator.followers.toLocaleString()}</span>
+                {' '}
+                followers
+              </span>
+              <span>
+                <span className="font-semibold text-tm-primary">{creator.trustScore}</span>
+                {' '}
+                trust
+              </span>
+              <span>
+                <span className="font-semibold text-tm-primary">
+                  {creator.accuracy}
+                  %
+                </span>
+                {' '}
+                acc
+              </span>
+            </div>
+          )
+        : (
+            <div className="flex items-center gap-2 text-[11px] text-tm-secondary">
+              <span className="rounded-full bg-tm-elevated px-2 py-0.5 font-medium text-tm-secondary/80">
+                {creator.niche}
+              </span>
+              <span className="text-tm-secondary/50">New creator</span>
+            </div>
+          )}
       <button
         type="button"
         onClick={() => onToggleFollow(creator.id)}
@@ -634,22 +645,135 @@ function SpotlightRow({
   )
 }
 
+// ─── User Mode: real creator directory data ───────────────────────────────────
+interface ApiCreator {
+  id: string
+  display_name: string
+  username: string
+  niche: string
+  reason: string
+  status: 'approved' | 'verified'
+  social_link: string | null
+  created_at: string
+  image: string | null
+  address: string | null
+}
+
+interface ApiNiche {
+  niche: string
+  count: number
+}
+
+const AVATAR_GRADIENTS = [
+  'from-violet-600 to-purple-400',
+  'from-blue-600 to-cyan-400',
+  'from-green-600 to-emerald-400',
+  'from-red-500 to-rose-400',
+  'from-sky-500 to-indigo-400',
+  'from-amber-500 to-orange-400',
+  'from-pink-500 to-rose-400',
+  'from-teal-500 to-cyan-400',
+]
+const AVATAR_EMOJIS = ['🔮', '⚡', '🏆', '🎯', '🤖', '📊', '🚀', '💡', '🌟', '🔥']
+
+function hashSeed(seed: string): number {
+  let hash = 0
+  for (let i = 0; i < seed.length; i++) {
+    hash = (hash * 31 + seed.charCodeAt(i)) | 0
+  }
+  return Math.abs(hash)
+}
+
+// Map a real (approved/verified) creator application into the card shape.
+// Metrics like followers/accuracy aren't tracked yet, so they're left at 0 and
+// the card renders a "New creator" state instead of fake numbers.
+function mapApiCreator(row: ApiCreator): Creator {
+  const seed = hashSeed(row.username || row.id)
+  return {
+    id: row.id,
+    username: row.username,
+    displayName: row.display_name,
+    avatarGradient: AVATAR_GRADIENTS[seed % AVATAR_GRADIENTS.length],
+    avatarEmoji: AVATAR_EMOJIS[seed % AVATAR_EMOJIS.length],
+    tier: row.status === 'verified' ? 'ELITE' : 'PRO',
+    followers: 0,
+    trustScore: 0,
+    accuracy: 0,
+    volume: '$0',
+    niche: row.niche,
+    bio: row.reason,
+    isFollowing: false,
+  }
+}
+
+function useDebouncedValue<T>(value: T, delay = 300): T {
+  const [debounced, setDebounced] = useState(value)
+  useEffect(() => {
+    const timeout = setTimeout(() => setDebounced(value), delay)
+    return () => clearTimeout(timeout)
+  }, [value, delay])
+  return debounced
+}
+
 // ─── User Mode View ───────────────────────────────────────────────────────────
 function UserModeView({ onSwitchToCreator }: { onSwitchToCreator: () => void }) {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedNiche, setSelectedNiche] = useState('All niches')
   const [selectedFilter, setSelectedFilter] = useState('All')
   const [selectedCategory, setSelectedCategory] = useState('All')
-  const [creators, setCreators] = useState([...FEATURED_CREATORS, ...RISING_CREATORS])
+  const [followingIds, setFollowingIds] = useState<Set<string>>(new Set())
+
+  const debouncedSearch = useDebouncedValue(searchQuery, 300)
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['public-creators', selectedNiche, debouncedSearch],
+    queryFn: async () => {
+      const params = new URLSearchParams()
+      if (selectedNiche && selectedNiche !== 'All niches') {
+        params.set('niche', selectedNiche)
+      }
+      if (debouncedSearch.trim()) {
+        params.set('search', debouncedSearch.trim())
+      }
+      const res = await fetch(`/api/creators?${params.toString()}`, { credentials: 'same-origin' })
+      if (!res.ok) {
+        throw new Error('Failed to load creators')
+      }
+      return res.json() as Promise<{ data: { creators: ApiCreator[], niches: ApiNiche[], total: number } }>
+    },
+    staleTime: 30_000,
+  })
+
+  const creators = useMemo(() => {
+    return (data?.data.creators ?? [])
+      .map(mapApiCreator)
+      .map(creator => ({ ...creator, isFollowing: followingIds.has(creator.id) }))
+  }, [data, followingIds])
+
+  const nicheFilters = useMemo(() => {
+    const total = data?.data.total ?? 0
+    const fromApi = (data?.data.niches ?? []).map(niche => ({
+      label: niche.niche,
+      count: String(niche.count),
+    }))
+    return [{ label: 'All niches', count: String(total) }, ...fromApi]
+  }, [data])
 
   function handleToggleFollow(id: string) {
-    setCreators(prev =>
-      prev.map(c => c.id === id ? { ...c, isFollowing: !c.isFollowing } : c),
-    )
+    setFollowingIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) {
+        next.delete(id)
+      }
+      else {
+        next.add(id)
+      }
+      return next
+    })
   }
 
-  const resolvedFeatured = creators.filter(c => ['c1', 'c2', 'c3', 'c4'].includes(c.id))
-  const resolvedRising = creators.filter(c => ['c5', 'c6', 'c7', 'c8'].includes(c.id))
+  const resolvedFeatured = creators.filter(c => c.tier === 'ELITE')
+  const resolvedRising = creators.filter(c => c.tier === 'PRO')
   const resolvedYouFollow = creators.filter(c => c.isFollowing)
 
   return (
@@ -674,7 +798,7 @@ function UserModeView({ onSwitchToCreator }: { onSwitchToCreator: () => void }) 
       <div className="space-y-2">
         <p className="text-2xs font-bold tracking-[1.8px] text-tm-secondary/50 uppercase">Creator Niche</p>
         <div className="flex flex-wrap gap-2">
-          {NICHE_FILTERS.map(f => (
+          {nicheFilters.map(f => (
             <button
               key={f.label}
               type="button"
@@ -761,34 +885,45 @@ function UserModeView({ onSwitchToCreator }: { onSwitchToCreator: () => void }) 
         <div className="flex items-center gap-2">
           <StarIcon className="size-4 text-amber-400" />
           <h2 className="text-sm font-bold tracking-wide text-tm-primary">Creator Spotlight</h2>
-        </div>
-
-        <SpotlightRow label="Featured" icon="⭐" creators={resolvedFeatured} onToggleFollow={handleToggleFollow} />
-        <div className="border-t border-tm-border" />
-        <SpotlightRow label="Rising" icon="📈" creators={resolvedRising} onToggleFollow={handleToggleFollow} />
-        <div className="border-t border-tm-border" />
-        <SpotlightRow label="Elite" icon="👑" creators={resolvedFeatured.filter(c => c.tier === 'ELITE')} onToggleFollow={handleToggleFollow} />
-        {resolvedYouFollow.length > 0 && (
-          <>
-            <div className="border-t border-tm-border" />
-            <SpotlightRow label="You Follow" icon="❤️" creators={resolvedYouFollow} onToggleFollow={handleToggleFollow} />
-          </>
-        )}
-      </div>
-
-      {/* All creator markets */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-sm font-bold tracking-wide text-tm-primary">All creator markets</h2>
-          <span className="text-xs text-tm-secondary">
-            {MOCK_MARKETS.length}
-            {' '}
-            markets
+          <span className="rounded-full bg-tm-elevated px-2 py-0.5 text-2xs font-semibold text-tm-secondary">
+            {creators.length}
           </span>
         </div>
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {MOCK_MARKETS.map(m => <MarketCard key={m.id} market={m} />)}
-        </div>
+
+        {isLoading
+          ? (
+              <p className="py-6 text-center text-xs text-tm-secondary">Loading creators…</p>
+            )
+          : creators.length === 0
+            ? (
+                <div className="py-8 text-center">
+                  <p className="text-sm font-semibold text-tm-primary">No creators yet</p>
+                  <p className="mt-1 text-xs text-tm-secondary">
+                    {searchQuery || selectedNiche !== 'All niches'
+                      ? 'No creators match your search. Try a different niche or term.'
+                      : 'Approved creators will appear here. Be the first to apply!'}
+                  </p>
+                </div>
+              )
+            : (
+                <>
+                  {resolvedFeatured.length > 0 && (
+                    <SpotlightRow label="Verified" icon="✅" creators={resolvedFeatured} onToggleFollow={handleToggleFollow} />
+                  )}
+                  {resolvedFeatured.length > 0 && resolvedRising.length > 0 && (
+                    <div className="border-t border-tm-border" />
+                  )}
+                  {resolvedRising.length > 0 && (
+                    <SpotlightRow label="Creators" icon="📈" creators={resolvedRising} onToggleFollow={handleToggleFollow} />
+                  )}
+                  {resolvedYouFollow.length > 0 && (
+                    <>
+                      <div className="border-t border-tm-border" />
+                      <SpotlightRow label="You Follow" icon="❤️" creators={resolvedYouFollow} onToggleFollow={handleToggleFollow} />
+                    </>
+                  )}
+                </>
+              )}
       </div>
 
       {/* Become a creator CTA */}

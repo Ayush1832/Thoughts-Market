@@ -1,9 +1,12 @@
 import type { CreatorApplicationStatus } from '@/lib/db/schema/creators/tables'
-import { desc, eq, sql } from 'drizzle-orm'
+import { and, desc, eq, inArray, sql } from 'drizzle-orm'
 import { users } from '@/lib/db/schema/auth/tables'
 import { creator_applications } from '@/lib/db/schema/creators/tables'
 import { runQuery } from '@/lib/db/utils/run-query'
 import { db } from '@/lib/drizzle'
+
+// Statuses that make a creator publicly visible in Creators Corner.
+const PUBLIC_CREATOR_STATUSES: CreatorApplicationStatus[] = ['approved', 'verified']
 
 export const CreatorApplicationsRepository = {
   async submit(data: {
@@ -117,6 +120,78 @@ export const CreatorApplicationsRepository = {
         .returning()
 
       return { data: row ?? null, error: null }
+    })
+  },
+
+  // Public, approved/verified creators for the Creators Corner directory.
+  async listPublicCreators(opts: { niche?: string, search?: string, limit?: number, offset?: number } = {}) {
+    return runQuery(async () => {
+      const limit = opts.limit ?? 60
+      const offset = opts.offset ?? 0
+
+      const conditions = [
+        inArray(creator_applications.status, PUBLIC_CREATOR_STATUSES),
+        eq(creator_applications.is_active, true),
+      ]
+
+      const niche = opts.niche?.trim()
+      if (niche && niche !== 'All niches' && niche !== 'All') {
+        conditions.push(eq(creator_applications.niche, niche))
+      }
+
+      const search = opts.search?.trim().toLowerCase()
+      if (search) {
+        const term = `%${search}%`
+        conditions.push(sql`(
+          LOWER(${creator_applications.display_name}) LIKE ${term}
+          OR LOWER(${creator_applications.username}) LIKE ${term}
+          OR LOWER(${creator_applications.niche}) LIKE ${term}
+        )`)
+      }
+
+      const rows = await db
+        .select({
+          id: creator_applications.id,
+          display_name: creator_applications.display_name,
+          username: creator_applications.username,
+          niche: creator_applications.niche,
+          reason: creator_applications.reason,
+          status: creator_applications.status,
+          social_link: creator_applications.social_link,
+          created_at: creator_applications.created_at,
+          image: users.image,
+          address: users.address,
+        })
+        .from(creator_applications)
+        .leftJoin(users, eq(creator_applications.user_id, users.id))
+        .where(and(...conditions))
+        // verified before approved, then newest first
+        .orderBy(desc(creator_applications.status), desc(creator_applications.created_at))
+        .limit(limit)
+        .offset(offset)
+
+      return { data: rows, error: null }
+    })
+  },
+
+  // Niche → count of public creators, for the filter pills.
+  async nicheCounts() {
+    return runQuery(async () => {
+      const rows = await db
+        .select({
+          niche: creator_applications.niche,
+          count: sql<number>`count(*)::int`,
+        })
+        .from(creator_applications)
+        .where(and(
+          inArray(creator_applications.status, PUBLIC_CREATOR_STATUSES),
+          eq(creator_applications.is_active, true),
+        ))
+        .groupBy(creator_applications.niche)
+        .orderBy(desc(sql`count(*)`))
+
+      const total = rows.reduce((sum, row) => sum + Number(row.count), 0)
+      return { data: { niches: rows, total }, error: null }
     })
   },
 

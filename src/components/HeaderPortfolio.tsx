@@ -3,6 +3,7 @@ import AppLink from '@/components/AppLink'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useBalance } from '@/hooks/useBalance'
+import { useMoneyFormatter } from '@/hooks/useMoneyFormatter'
 import { usePortfolioValue } from '@/hooks/usePortfolioValue'
 import { usePortfolioValueVisibility } from '@/stores/usePortfolioValueVisibility'
 
@@ -13,12 +14,11 @@ export default function HeaderPortfolio() {
   const totalPortfolioValue = (positionsValue ?? 0) + (balance?.raw ?? 0)
   const t = useExtracted()
   const areValuesHidden = usePortfolioValueVisibility(state => state.isHidden)
-  const formattedPortfolioValue = Number.isFinite(totalPortfolioValue)
-    ? totalPortfolioValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-    : '0.00'
-  const formattedCashValue = Number.isFinite(balance?.raw)
-    ? (balance?.raw ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-    : '0.00'
+  // Converts USD balances to the selected fiat using live FX rates.
+  const formatMoney = useMoneyFormatter()
+
+  const formattedPortfolioValue = formatMoney(totalPortfolioValue)
+  const formattedCashValue = formatMoney(balance?.raw ?? 0)
 
   return (
     <div className="grid grid-cols-2 gap-x-1">
@@ -35,12 +35,7 @@ export default function HeaderPortfolio() {
               ? <Skeleton className="h-5 w-12" />
               : areValuesHidden
                 ? '****'
-                : (
-                    <>
-                      $
-                      {formattedPortfolioValue}
-                    </>
-                  )}
+                : formattedPortfolioValue}
           </div>
         </AppLink>
       </Button>
@@ -60,12 +55,7 @@ export default function HeaderPortfolio() {
               ? <Skeleton className="h-5 w-12" />
               : areValuesHidden
                 ? '****'
-                : (
-                    <>
-                      $
-                      {formattedCashValue}
-                    </>
-                  )}
+                : formattedCashValue}
           </div>
         </AppLink>
       </Button>

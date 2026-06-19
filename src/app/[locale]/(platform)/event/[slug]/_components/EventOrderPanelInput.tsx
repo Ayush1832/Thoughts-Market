@@ -1,8 +1,9 @@
 import type { RefObject } from 'react'
 import type { OrderSide } from '@/types'
-import { useExtracted, useLocale } from 'next-intl'
+import { useExtracted } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
+import { useMoneyFormatter } from '@/hooks/useMoneyFormatter'
 import { formatDisplayAmount, getAmountSizeClass, MAX_AMOUNT_INPUT, sanitizeNumericInput } from '@/lib/amount-input'
 import { ORDER_SIDE } from '@/lib/constants'
 import { formatAmountInputValue } from '@/lib/formatters'
@@ -152,11 +153,9 @@ export default function EventOrderPanelInput({
     ))
   }
 
-  const locale = useLocale()
+  const formatMoney = useMoneyFormatter()
   const amountSizeClass = getAmountSizeClass(amount)
-  const formattedBalanceText = Number.isFinite(balance.raw)
-    ? balance.raw.toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-    : '0.00'
+  const formattedBalanceText = formatMoney(Number.isFinite(balance.raw) ? balance.raw : 0)
 
   const formattedAmount = formatDisplayAmount(amount)
   const inputValue = side === ORDER_SIDE.SELL
@@ -229,7 +228,7 @@ export default function EventOrderPanelInput({
                           >
                             {t('Balance')}
                             {' '}
-                            {areValuesHidden ? '****' : `$${formattedBalanceText}`}
+                            {areValuesHidden ? '****' : formattedBalanceText}
                           </button>
                         )}
                 </div>

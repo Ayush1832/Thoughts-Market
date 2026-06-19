@@ -7,6 +7,7 @@ import WalletSettingsDialog from '@/app/[locale]/(platform)/_components/WalletSe
 import AppLink from '@/components/AppLink'
 import Sparkline from '@/components/Sparkline'
 import { useBalance } from '@/hooks/useBalance'
+import { useLiveFiatRate } from '@/hooks/useMoneyFormatter'
 import { usePortfolioValue } from '@/hooks/usePortfolioValue'
 import { getAvatarPlaceholderStyle, shouldUseAvatarPlaceholder } from '@/lib/avatar'
 import { formatFiat } from '@/lib/fiat'
@@ -26,6 +27,7 @@ export default function SidebarProfileCard() {
   const toggleHidden = usePortfolioValueVisibility(state => state.toggle)
   const displayInFiat = useWalletSettings(state => state.displayInFiat)
   const currency = useWalletSettings(state => state.currency)
+  const liveFiatRate = useLiveFiatRate()
   const [settingsOpen, setSettingsOpen] = useState(false)
 
   if (!user) {
@@ -44,7 +46,7 @@ export default function SidebarProfileCard() {
   const totalLabel = isHidden
     ? '••••••'
     : displayInFiat
-      ? formatFiat(total, currency)
+      ? formatFiat(total, currency, liveFiatRate)
       : formatCompactCurrency(total)
 
   const avatarUrl = user.image?.trim() ?? ''

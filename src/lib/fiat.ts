@@ -39,10 +39,15 @@ export function getFiatCurrency(code: string): FiatCurrency {
   return FIAT_CURRENCIES.find(c => c.code === code) ?? FIAT_CURRENCIES[0]
 }
 
-/** Format a USD amount into the selected fiat currency. */
-export function formatFiat(usdAmount: number, code: string): string {
+/**
+ * Format a USD amount into the selected fiat currency.
+ * Pass `overrideRate` (units of `code` per 1 USD) to use a live FX rate; falls
+ * back to the static approximation when no valid live rate is provided.
+ */
+export function formatFiat(usdAmount: number, code: string, overrideRate?: number): string {
   const currency = getFiatCurrency(code)
-  const value = usdAmount * currency.rate
+  const rate = typeof overrideRate === 'number' && overrideRate > 0 ? overrideRate : currency.rate
+  const value = usdAmount * rate
   try {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',

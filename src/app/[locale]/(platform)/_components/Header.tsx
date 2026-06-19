@@ -1,6 +1,7 @@
 import HeaderMenu from '@/app/[locale]/(platform)/_components/HeaderMenu'
 import HeaderSearch from '@/app/[locale]/(platform)/_components/HeaderSearch'
 import HowItWorksDeferred from '@/app/[locale]/(platform)/_components/HowItWorksDeferred'
+import CurrencyChip from '@/components/CurrencyChip'
 import HeaderLogo from '@/components/HeaderLogo'
 
 export default async function Header() {
@@ -8,8 +9,9 @@ export default async function Header() {
     <header className="sticky top-0 z-40 border-b border-tm-border bg-tm-surface/95 backdrop-blur-sm">
       <div className="flex h-14 w-full items-center gap-3 px-3 lg:px-5">
         {/* Left slot: brand logo (icon + name), in the top bar in line with the profile */}
-        <div className="flex min-w-0 flex-1 items-center">
+        <div className="flex min-w-0 flex-1 items-center gap-2">
           <HeaderLogo />
+          <CurrencyChip />
         </div>
 
         {/* Center: search — truly centered across the full-width top bar */}

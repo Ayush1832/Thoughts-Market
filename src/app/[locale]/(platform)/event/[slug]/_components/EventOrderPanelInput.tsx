@@ -3,12 +3,17 @@ import type { OrderSide } from '@/types'
 import { useExtracted } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useMoneyFormatter } from '@/hooks/useMoneyFormatter'
+import { useLiveFiatRate, useMoneyFormatter } from '@/hooks/useMoneyFormatter'
 import { formatDisplayAmount, getAmountSizeClass, MAX_AMOUNT_INPUT, sanitizeNumericInput } from '@/lib/amount-input'
 import { ORDER_SIDE } from '@/lib/constants'
+import { getFiatCurrency } from '@/lib/fiat'
 import { formatAmountInputValue } from '@/lib/formatters'
 import { cn } from '@/lib/utils'
 import { usePortfolioValueVisibility } from '@/stores/usePortfolioValueVisibility'
+import { useWalletSettings } from '@/stores/useWalletSettings'
+
+// Quick-add increments (in whole units of the displayed currency).
+const QUICK_ADD = [1, 5, 10, 100]
 
 interface BalanceSummary {
   raw: number
@@ -29,8 +34,6 @@ interface EventOrderPanelInputProps {
   shouldShake?: boolean
 }
 
-const BUY_CHIPS = ['+$1', '+$5', '+$10', '+$100']
-
 export default function EventOrderPanelInput({
   isMobile,
   side,
@@ -45,6 +48,15 @@ export default function EventOrderPanelInput({
 }: EventOrderPanelInputProps) {
   const t = useExtracted()
   const areValuesHidden = usePortfolioValueVisibility(state => state.isHidden)
+  const displayInFiat = useWalletSettings(state => state.displayInFiat)
+  const currencyCode = useWalletSettings(state => state.currency)
+  const liveRate = useLiveFiatRate()
+  const fiat = getFiatCurrency(currencyCode)
+  // Units of the selected currency per 1 USD (live rate, else static fallback).
+  const rate = displayInFiat ? (liveRate ?? fiat.rate) : 1
+  const currencySymbol = displayInFiat ? fiat.symbol : '$'
+  // Only BUY amounts are money; SELL amounts are share counts (never converted).
+  const useFiat = displayInFiat && side === ORDER_SIDE.BUY
 
   function focusInput() {
     inputRef?.current?.focus()
@@ -55,6 +67,23 @@ export default function EventOrderPanelInput({
 
     if (side === ORDER_SIDE.SELL) {
       onAmountChange(cleaned)
+      return
+    }
+
+    if (useFiat) {
+      if (cleaned === '') {
+        onAmountChange('')
+        return
+      }
+      const typed = Number.parseFloat(cleaned)
+      if (!Number.isFinite(typed)) {
+        return
+      }
+      // Typed value is in the display currency → store the USD equivalent.
+      const usdValue = typed / rate
+      if (usdValue <= MAX_AMOUNT_INPUT) {
+        onAmountChange(formatAmountInputValue(usdValue))
+      }
       return
     }
 
@@ -71,6 +100,12 @@ export default function EventOrderPanelInput({
 
     if (!cleaned || Number.isNaN(numeric)) {
       onAmountChange('')
+      return
+    }
+
+    if (useFiat) {
+      const usdValue = Math.min(numeric / rate, MAX_AMOUNT_INPUT)
+      onAmountChange(formatAmountInputValue(usdValue))
       return
     }
 
@@ -134,33 +169,41 @@ export default function EventOrderPanelInput({
       ))
     }
 
-    return BUY_CHIPS.map(chip => (
-      <button
-        type="button"
-        key={chip}
-        className="pe-chip flex-1"
-        onClick={() => {
-          const chipValue = Number.parseInt(chip.substring(2), 10)
-          const newValue = amountNumber + chipValue
-
-          const limitedValue = Math.min(newValue, MAX_AMOUNT_INPUT)
-          onAmountChange(formatAmountInputValue(limitedValue))
-          focusInput()
-        }}
-      >
-        {chip}
-      </button>
-    ))
+    return QUICK_ADD.map((increment) => {
+      // Adds `increment` units of the displayed currency; convert to USD when in
+      // fiat mode so the underlying order amount stays in USD.
+      const usdIncrement = useFiat ? increment / rate : increment
+      return (
+        <button
+          type="button"
+          key={increment}
+          className="pe-chip flex-1"
+          onClick={() => {
+            const newValue = amountNumber + usdIncrement
+            const limitedValue = Math.min(newValue, MAX_AMOUNT_INPUT)
+            onAmountChange(formatAmountInputValue(limitedValue))
+            focusInput()
+          }}
+        >
+          {`+${currencySymbol}${increment}`}
+        </button>
+      )
+    })
   }
 
   const formatMoney = useMoneyFormatter()
-  const amountSizeClass = getAmountSizeClass(amount)
   const formattedBalanceText = formatMoney(Number.isFinite(balance.raw) ? balance.raw : 0)
 
-  const formattedAmount = formatDisplayAmount(amount)
+  const rawAmountDisplay = formatDisplayAmount(amount)
+  // In fiat mode the Amount is shown in the selected currency (converted from
+  // the USD the engine tracks); otherwise it's the raw USD the user typed.
+  const buyAmountDisplay = useFiat
+    ? (amountNumber > 0 ? formatAmountInputValue(amountNumber * rate) : '')
+    : rawAmountDisplay
   const inputValue = side === ORDER_SIDE.SELL
-    ? formattedAmount
-    : formattedAmount ? `$${formattedAmount}` : ''
+    ? rawAmountDisplay
+    : buyAmountDisplay ? `${currencySymbol}${buyAmountDisplay}` : ''
+  const amountSizeClass = getAmountSizeClass(side === ORDER_SIDE.SELL ? rawAmountDisplay : buyAmountDisplay)
   return (
     <>
       {isMobile
@@ -169,7 +212,7 @@ export default function EventOrderPanelInput({
               <div className="mb-4 flex items-center justify-center gap-4">
                 <Button
                   type="button"
-                  onClick={() => decrementAmount(side === ORDER_SIDE.SELL ? 0.1 : 1)}
+                  onClick={() => decrementAmount(side === ORDER_SIDE.SELL ? 0.1 : useFiat ? 1 / rate : 1)}
                   size="icon"
                   variant="ghost"
                 >
@@ -189,7 +232,7 @@ export default function EventOrderPanelInput({
                       amountSizeClass,
                       { 'animate-order-shake': shouldShake },
                     )}
-                    placeholder={side === ORDER_SIDE.SELL ? '0' : '$0'}
+                    placeholder={side === ORDER_SIDE.SELL ? '0' : `${currencySymbol}0`}
                     value={inputValue}
                     onChange={e => handleInputChange(e.target.value)}
                     onBlur={e => handleBlur(e.target.value)}
@@ -197,7 +240,7 @@ export default function EventOrderPanelInput({
                 </div>
                 <Button
                   type="button"
-                  onClick={() => incrementAmount(side === ORDER_SIDE.SELL ? 0.1 : 1)}
+                  onClick={() => incrementAmount(side === ORDER_SIDE.SELL ? 0.1 : useFiat ? 1 / rate : 1)}
                   size="icon"
                   variant="ghost"
                 >

@@ -3,9 +3,12 @@ import { InfoIcon } from 'lucide-react'
 import { useExtracted } from 'next-intl'
 import Image from 'next/image'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { useLiveFiatRate } from '@/hooks/useMoneyFormatter'
 import { ORDER_SIDE } from '@/lib/constants'
+import { formatFiat } from '@/lib/fiat'
 import { formatCurrency } from '@/lib/formatters'
 import { cn } from '@/lib/utils'
+import { useWalletSettings } from '@/stores/useWalletSettings'
 
 interface EventOrderPanelEarningsProps {
   isMobile: boolean
@@ -35,8 +38,18 @@ export default function EventOrderPanelEarnings({
   buyMultiplier,
 }: EventOrderPanelEarningsProps) {
   const t = useExtracted()
-  const buyToWinLabel = formatCurrency(Math.max(0, buyPayout))
-  const buyProfitLabel = formatCurrency(buyProfit)
+  const displayInFiat = useWalletSettings(state => state.displayInFiat)
+  const currency = useWalletSettings(state => state.currency)
+  const liveFiatRate = useLiveFiatRate()
+
+  // Converts a USD amount to the wallet's selected fiat (any currency), or
+  // leaves it in USD when fiat display is off.
+  function formatMoney(usdAmount: number) {
+    return displayInFiat ? formatFiat(usdAmount, currency, liveFiatRate) : formatCurrency(usdAmount)
+  }
+
+  const buyToWinLabel = formatMoney(Math.max(0, buyPayout))
+  const buyProfitLabel = formatMoney(buyProfit)
   const buyChangeLabel = `${buyChangePct >= 0 ? '+' : '-'}${Math.abs(buyChangePct).toFixed(0)}%`
   const buyMultiplierLabel = `${Math.max(0, buyMultiplier).toFixed(2)}x`
 
@@ -60,7 +73,7 @@ export default function EventOrderPanelEarnings({
     }
     return -100 / (decimalOdds - 1)
   })()
-  const sellProfitLabel = formatCurrency(0)
+  const sellProfitLabel = formatMoney(0)
   const sellChangeLabel = '+0%'
   const sellMultiplierLabel = decimalOdds != null ? `${decimalOdds.toFixed(3)}x` : '—'
   const avgPriceLabel = t('Avg. price {price}', {

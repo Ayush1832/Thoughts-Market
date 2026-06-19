@@ -21,6 +21,7 @@ import {
   parseCommunityError,
 } from '@/lib/community-auth'
 import { buildPublicProfilePath } from '@/lib/platform-routing'
+import { isUserRejectedRequestError } from '@/lib/wallet'
 import { useUser } from '@/stores/useUser'
 
 function useProfileFormState() {
@@ -179,6 +180,13 @@ export default function SettingsProfileContent({ user }: { user: User }) {
       toast.success(t('Profile updated successfully!'))
     }
     catch (err) {
+      // Rejecting the wallet signature is a normal user choice, not an error —
+      // show a friendly note instead of a raw "unknown RPC error".
+      if (isUserRejectedRequestError(err)) {
+        toast.info(t('Signature request cancelled. Please sign to save your profile changes.'))
+        return
+      }
+
       const message = err instanceof Error ? err.message : t('Failed to update profile.')
       setFormError(message)
       toast.error(message)

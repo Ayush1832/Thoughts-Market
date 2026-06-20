@@ -20,6 +20,7 @@ import {
 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
+import CreatorApplicationForm from './CreatorApplicationForm'
 import { cn } from '@/lib/utils'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -977,7 +978,10 @@ function WageringGate({ totalWageredUsd }: { totalWageredUsd: number }) {
             <p className="text-sm/relaxed text-tm-secondary">
               To apply as a creator, you need to have wagered at least
               {' '}
-              <span className="font-bold text-amber-400">$10,000</span>
+              <span className="font-bold text-amber-400">
+                $
+                {WAGER_REQUIREMENT_USD.toLocaleString()}
+              </span>
               {' '}
               on the platform. This ensures our creators have proven market experience.
             </p>
@@ -1709,7 +1713,7 @@ function CreatorModeView() {
   if (status.applicationStatus === 'none' || forceForm) {
     return (
       <div className="py-4">
-        <ApplicationForm
+        <CreatorApplicationForm
           onSubmit={() => {
             setForceForm(false)
             void queryClient.invalidateQueries({ queryKey: ['creator-status'] })

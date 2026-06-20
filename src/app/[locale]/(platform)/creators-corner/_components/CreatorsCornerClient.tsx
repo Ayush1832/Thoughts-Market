@@ -20,6 +20,7 @@ import {
 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
+import AppLink from '@/components/AppLink'
 import CreatorApplicationForm from './CreatorApplicationForm'
 import { cn } from '@/lib/utils'
 
@@ -1038,16 +1039,16 @@ function WageringGate({ totalWageredUsd }: { totalWageredUsd: number }) {
             </div>
           )}
 
-          <button
-            type="button"
+          <AppLink
+            href="/"
             className="
-              w-full rounded-xl bg-primary py-3 text-sm font-semibold text-white shadow-lg shadow-primary/25
-              transition-all duration-200
+              block w-full rounded-xl bg-primary py-3 text-center text-sm font-semibold text-white shadow-lg
+              shadow-primary/25 transition-all duration-200
               hover:-translate-y-px hover:shadow-xl hover:shadow-primary/35
             "
           >
             Start Trading to Unlock
-          </button>
+          </AppLink>
         </div>
       </div>
     </div>

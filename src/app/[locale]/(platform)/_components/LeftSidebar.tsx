@@ -13,6 +13,7 @@ import { usePathname, useSearchParams } from 'next/navigation'
 import { useState } from 'react'
 import SidebarProfileCard from '@/app/[locale]/(platform)/_components/SidebarProfileCard'
 import AppLink from '@/components/AppLink'
+import { stripLocalePrefix } from '@/lib/locale-path'
 import { cn } from '@/lib/utils'
 
 interface SidebarNavItem {
@@ -90,6 +91,8 @@ export default function LeftSidebar() {
   const searchParams = useSearchParams()
   const isBookmarked = searchParams.get('bookmarked') === 'true'
   const sortParam = searchParams.get('sort')
+  const strippedPath = stripLocalePrefix(pathname)
+  const isCommunityActive = (href: string) => strippedPath === href || strippedPath.startsWith(`${href}/`)
   const [collapsed, setCollapsed] = useState(() => {
     if (typeof window === 'undefined') {
       return false
@@ -214,19 +217,24 @@ export default function LeftSidebar() {
               Communities
             </p>
             <div className="space-y-0.5">
-              {COMMUNITIES.map(c => (
-                <AppLink
-                  key={c.label}
-                  href={c.href}
-                  className="
-                    flex items-center gap-3 rounded-lg p-2 text-sm text-tm-secondary transition-all duration-200
-                    hover:bg-tm-elevated hover:text-tm-primary
-                  "
-                >
-                  <HashIcon className="size-3.5 shrink-0 text-tm-secondary/50" />
-                  {c.label}
-                </AppLink>
-              ))}
+              {COMMUNITIES.map((c) => {
+                const active = isCommunityActive(c.href)
+                return (
+                  <AppLink
+                    key={c.label}
+                    href={c.href}
+                    className={cn(
+                      'flex items-center gap-3 rounded-lg p-2 text-sm transition-all duration-200',
+                      active
+                        ? 'bg-tm-elevated font-medium text-[#4f8ef7]'
+                        : 'text-tm-secondary hover:bg-tm-elevated hover:text-tm-primary',
+                    )}
+                  >
+                    <HashIcon className={cn('size-3.5 shrink-0', active ? 'text-[#4f8ef7]' : 'text-tm-secondary/50')} />
+                    {c.label}
+                  </AppLink>
+                )
+              })}
             </div>
           </div>
         )}
@@ -234,20 +242,22 @@ export default function LeftSidebar() {
         {/* Communities — icon-only when collapsed */}
         {collapsed && (
           <div className="space-y-0.5">
-            {COMMUNITIES.map(c => (
-              <AppLink
-                key={c.label}
-                href={c.href}
-                className="
-                  group relative flex items-center justify-center rounded-xl py-2 text-tm-secondary transition-all
-                  duration-200
-                  hover:bg-tm-elevated hover:text-tm-primary
-                "
-              >
-                <HashIcon className="size-3.5" />
-                <CollapseTooltip label={c.label} />
-              </AppLink>
-            ))}
+            {COMMUNITIES.map((c) => {
+              const active = isCommunityActive(c.href)
+              return (
+                <AppLink
+                  key={c.label}
+                  href={c.href}
+                  className={cn(
+                    'group relative flex items-center justify-center rounded-xl py-2 transition-all duration-200',
+                    active ? 'bg-tm-elevated text-[#4f8ef7]' : 'text-tm-secondary hover:bg-tm-elevated hover:text-tm-primary',
+                  )}
+                >
+                  <HashIcon className="size-3.5" />
+                  <CollapseTooltip label={c.label} />
+                </AppLink>
+              )
+            })}
           </div>
         )}
       </nav>

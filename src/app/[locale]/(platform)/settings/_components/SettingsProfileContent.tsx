@@ -1,12 +1,14 @@
 'use client'
 
 import type { User } from '@/types'
+import { useAppKitAccount } from '@reown/appkit/react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useExtracted } from 'next-intl'
 import Image from 'next/image'
 import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { useSignMessage } from 'wagmi'
+import { useAppKit } from '@/hooks/useAppKit'
 import { updateUserAction } from '@/app/[locale]/(platform)/settings/_actions/update-profile'
 import AppLink from '@/components/AppLink'
 import { Button } from '@/components/ui/button'
@@ -18,7 +20,6 @@ import { getAvatarPlaceholderStyle, shouldUseAvatarPlaceholder } from '@/lib/ava
 import {
   clearCommunityAuth,
   ensureCommunityToken,
-  parseCommunityError,
 } from '@/lib/community-auth'
 import { buildPublicProfilePath } from '@/lib/platform-routing'
 import { isUserRejectedRequestError } from '@/lib/wallet'
@@ -55,6 +56,8 @@ export default function SettingsProfileContent({ user }: { user: User }) {
   const queryClient = useQueryClient()
   const { signMessageAsync } = useSignMessage()
   const { runWithSignaturePrompt } = useSignaturePromptRunner()
+  const { isConnected } = useAppKitAccount()
+  const { open } = useAppKit()
   const communityApiUrl = process.env.COMMUNITY_URL!
   const { errors, setErrors, formError, setFormError, isPending, setIsPending, fileInputRef } = useProfileFormState()
   const { previewImage, setPreviewImage } = useAvatarPreview()
@@ -100,62 +103,16 @@ export default function SettingsProfileContent({ user }: { user: User }) {
 
     const shouldUpdateCommunity = hasUsernameChange || Boolean(selectedImageFile)
 
-    let communityUsername = username
-    let updatedAvatarUrl: string | undefined
-
     try {
-      if (shouldUpdateCommunity) {
-        const token = await ensureCommunityToken({
-          address: user.address,
-          signMessageAsync: args => runWithSignaturePrompt(() => signMessageAsync(args)),
-          communityApiUrl,
-          depositWalletAddress: user.deposit_wallet_address ?? null,
-        })
-
-        const communityForm = new FormData()
-        if (hasUsernameChange) {
-          communityForm.append('username', username)
-        }
-        if (selectedImageFile) {
-          communityForm.append('image', selectedImageFile)
-        }
-
-        const response = await fetch(`${communityApiUrl}/profile`, {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          body: communityForm,
-        })
-
-        if (response.status === 401) {
-          clearCommunityAuth()
-        }
-
-        if (!response.ok) {
-          const message = await parseCommunityError(response, t('Failed to update profile.'))
-          setFormError(message)
-          toast.error(message)
-          return
-        }
-
-        const payload = await response.json() as {
-          username?: string
-          avatar_url?: string
-        }
-        communityUsername = payload.username || username
-        if (selectedImageFile) {
-          updatedAvatarUrl = payload.avatar_url?.trim() || undefined
-        }
-      }
-
+      // 1) Local profile update — uploads the avatar to our storage via the
+      //    session. No wallet signature required, so saving always works.
       const localForm = new FormData()
       if (emailValue) {
         localForm.set('email', emailValue)
       }
-      localForm.set('username', communityUsername)
-      if (updatedAvatarUrl) {
-        localForm.set('avatar_url', updatedAvatarUrl)
+      localForm.set('username', username || user.username || '')
+      if (selectedImageFile) {
+        localForm.set('image', selectedImageFile)
       }
 
       const result = await updateUserAction(localForm)
@@ -168,16 +125,50 @@ export default function SettingsProfileContent({ user }: { user: User }) {
       useUser.setState({
         ...user,
         email: emailValue ?? user.email,
-        username: communityUsername,
-        image: updatedAvatarUrl ?? user.image,
+        username: result.username ?? user.username,
+        image: result.image ?? user.image,
       })
+      clearPreview()
+      toast.success(t('Profile updated successfully!'))
+
+      // 2) Best-effort: also sync username/avatar to the community service so
+      //    comments/activity reflect the change — only when a wallet is already
+      //    connected, and never block or fail the save on it.
+      if (shouldUpdateCommunity && isConnected) {
+        try {
+          const token = await ensureCommunityToken({
+            address: user.address,
+            signMessageAsync: args => runWithSignaturePrompt(() => signMessageAsync(args)),
+            communityApiUrl,
+            depositWalletAddress: user.deposit_wallet_address ?? null,
+          })
+          const communityForm = new FormData()
+          if (hasUsernameChange) {
+            communityForm.append('username', username)
+          }
+          if (selectedImageFile) {
+            communityForm.append('image', selectedImageFile)
+          }
+          const response = await fetch(`${communityApiUrl}/profile`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${token}` },
+            body: communityForm,
+          })
+          if (response.status === 401) {
+            clearCommunityAuth()
+          }
+        }
+        catch {
+          // Community sync is optional — ignore failures, the local save succeeded.
+        }
+      }
+
       await queryClient.invalidateQueries({
         predicate: (query) => {
           const [key] = query.queryKey
           return key === 'event-comments' || key === 'event-activity' || key === 'event-holders'
         },
       })
-      toast.success(t('Profile updated successfully!'))
     }
     catch (err) {
       // Rejecting the wallet signature is a normal user choice, not an error —
@@ -187,7 +178,16 @@ export default function SettingsProfileContent({ user }: { user: User }) {
         return
       }
 
-      const message = err instanceof Error ? err.message : t('Failed to update profile.')
+      // Wallet not connected — guide the user to connect instead of showing the
+      // raw "Connector not connected" wagmi error.
+      const rawMessage = err instanceof Error ? err.message : ''
+      if (/connector not connected/i.test(rawMessage)) {
+        toast.info(t('Connect your wallet to save profile changes.'))
+        void open()
+        return
+      }
+
+      const message = rawMessage || t('Failed to update profile.')
       setFormError(message)
       toast.error(message)
     }

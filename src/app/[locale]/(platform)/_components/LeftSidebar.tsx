@@ -129,7 +129,7 @@ export default function LeftSidebar() {
       {/* ── Collapse toggle (logo now lives in the top header bar) ── */}
       <div className={cn(
         'shrink-0',
-        collapsed ? 'flex flex-col items-center py-1' : 'flex h-7 items-center justify-end px-2 pt-1',
+        collapsed ? 'flex flex-col items-center py-1' : 'flex h-6 items-center justify-end px-1.5',
       )}
       >
         <button
@@ -137,7 +137,7 @@ export default function LeftSidebar() {
           onClick={toggle}
           title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           className={cn(
-            'flex size-8 shrink-0 items-center justify-center rounded-lg',
+            'flex size-6 shrink-0 items-center justify-center rounded-lg',
             'text-tm-secondary transition-all duration-200',
             'hover:bg-tm-elevated hover:text-tm-primary',
           )}
@@ -149,7 +149,7 @@ export default function LeftSidebar() {
       </div>
 
       {/* ── Main Navigation ── */}
-      <nav className={cn('flex-1 space-y-0.5 pt-1 pb-4', collapsed ? 'px-2' : 'px-3')}>
+      <nav className={cn('flex-1 space-y-0.5 pb-4', collapsed ? 'px-2' : 'px-3')}>
         {NAV_ITEMS.map((item) => {
           const isHomeRoot = pathname === '/' || pathname === '/en'
           let isActive: boolean

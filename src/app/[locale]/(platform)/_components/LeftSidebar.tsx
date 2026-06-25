@@ -9,7 +9,7 @@ import {
   SparklesIcon,
   TrendingUpIcon,
 } from 'lucide-react'
-import { usePathname } from 'next/navigation'
+import { usePathname, useSearchParams } from 'next/navigation'
 import { useState } from 'react'
 import SidebarProfileCard from '@/app/[locale]/(platform)/_components/SidebarProfileCard'
 import AppLink from '@/components/AppLink'
@@ -87,6 +87,9 @@ function CollapseTooltip({ label }: { label: string }) {
 
 export default function LeftSidebar() {
   const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const isBookmarked = searchParams.get('bookmarked') === 'true'
+  const sortParam = searchParams.get('sort')
   const [collapsed, setCollapsed] = useState(() => {
     if (typeof window === 'undefined') {
       return false
@@ -145,9 +148,21 @@ export default function LeftSidebar() {
       {/* ── Main Navigation ── */}
       <nav className={cn('flex-1 space-y-0.5 pt-1 pb-4', collapsed ? 'px-2' : 'px-3')}>
         {NAV_ITEMS.map((item) => {
-          const isActive = item.href === '/'
-            ? pathname === '/' || pathname === '/en'
-            : pathname.startsWith(item.href)
+          const isHomeRoot = pathname === '/' || pathname === '/en'
+          let isActive: boolean
+          if (item.href === '/') {
+            // Trending = plain home (not the Watchlist or Hot Now filtered views)
+            isActive = isHomeRoot && !isBookmarked && !sortParam
+          }
+          else if (item.href === '/?bookmarked=true') {
+            isActive = isHomeRoot && isBookmarked
+          }
+          else if (item.href === '/?sort=24h-volume') {
+            isActive = isHomeRoot && sortParam === '24h-volume'
+          }
+          else {
+            isActive = pathname.startsWith(item.href)
+          }
 
           return (
             <AppLink

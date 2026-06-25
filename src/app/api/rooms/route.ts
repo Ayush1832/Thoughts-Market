@@ -35,10 +35,11 @@ export async function POST(request: NextRequest) {
     if (!user) { return NextResponse.json({ error: 'Authentication required' }, { status: 401 }) }
 
     const body = await request.json()
-    const { name, maxParticipants, isPrivate } = body as {
+    const { name, maxParticipants, isPrivate, question } = body as {
       name?: string
       maxParticipants?: number
       isPrivate?: boolean
+      question?: string
     }
 
     if (!name?.trim()) { return NextResponse.json({ error: 'Room name is required' }, { status: 400 }) }
@@ -48,6 +49,7 @@ export async function POST(request: NextRequest) {
       name.trim(),
       maxParticipants ?? 50,
       isPrivate ?? false,
+      question?.trim() || undefined,
     )
 
     if (error || !data) { return NextResponse.json({ error: error ?? DEFAULT_ERROR_MESSAGE }, { status: 500 }) }

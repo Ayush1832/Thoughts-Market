@@ -45,29 +45,27 @@ export default function RightSidebarClient({ children }: RightSidebarClientProps
     <aside
       className={cn(
         `
-          sticky top-14 hidden h-[calc(100vh-3.5rem)] shrink-0 flex-col border-l border-border/50 bg-card transition-all
-          duration-300
+          relative sticky top-14 hidden h-[calc(100vh-3.5rem)] shrink-0 flex-col border-l border-border/50 bg-card
+          transition-all duration-300
         `,
         'xl:flex',
         collapsed ? 'w-10' : 'w-80 2xl:w-96',
       )}
     >
-      {/* header row — matches main header h-14 */}
-      <div className="flex h-14 w-full shrink-0 items-center justify-end border-b border-border/40 px-2">
-        <button
-          type="button"
-          onClick={toggle}
-          className={cn(
-            'flex size-7 items-center justify-center rounded-lg transition-colors',
-            'text-muted-foreground hover:bg-muted hover:text-foreground',
-          )}
-          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-        >
-          {collapsed
-            ? <ChevronLeftIcon className="size-4" />
-            : <ChevronRightIcon className="size-4" />}
-        </button>
-      </div>
+      {/* floating collapse toggle — reserves no row, so no empty band */}
+      <button
+        type="button"
+        onClick={toggle}
+        className={cn(
+          'absolute right-1 top-1 z-20 flex size-6 items-center justify-center rounded-lg transition-colors',
+          'text-muted-foreground hover:bg-muted hover:text-foreground',
+        )}
+        aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+      >
+        {collapsed
+          ? <ChevronLeftIcon className="size-4" />
+          : <ChevronRightIcon className="size-4" />}
+      </button>
 
       {/* scrollable content — hidden when collapsed */}
       {!collapsed && (
@@ -78,7 +76,7 @@ export default function RightSidebarClient({ children }: RightSidebarClientProps
 
       {/* collapsed state: show only icons as indicators */}
       {collapsed && (
-        <div className="flex flex-1 flex-col items-center gap-4 pt-4">
+        <div className="flex flex-1 flex-col items-center gap-4 pt-10">
           <div className="size-2 rounded-full bg-primary/60" />
           <div className="size-2 rounded-full bg-green-400/60" />
           <div className="size-2 rounded-full bg-muted-foreground/30" />

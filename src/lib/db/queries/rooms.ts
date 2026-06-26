@@ -42,7 +42,7 @@ export const RoomsRepository = {
     })
   },
 
-  async createRoom(hostId: string, name: string, maxParticipants = 50, isPrivate = false) {
+  async createRoom(hostId: string, name: string, maxParticipants = 50, isPrivate = false, question?: string) {
     return runQuery(async () => {
       const code = generateRoomCode()
       const [room] = await db.insert(rooms).values({
@@ -51,6 +51,7 @@ export const RoomsRepository = {
         host_id: hostId,
         max_participants: maxParticipants,
         is_private: isPrivate,
+        metadata: question ? { question } : {},
       }).returning()
 
       if (!room) { return { data: null, error: 'Failed to create room' } }

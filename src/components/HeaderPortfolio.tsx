@@ -46,7 +46,7 @@ export default function HeaderPortfolio() {
         className="flex h-11 flex-col items-center justify-center gap-0.5 rounded-[6px] px-2.5 py-1"
         asChild
       >
-        <AppLink intentPrefetch href="/portfolio">
+        <AppLink intentPrefetch href="/cash?action=deposit">
           <div className="flex translate-y-px items-center gap-1 text-xs/tight font-medium text-muted-foreground">
             <span>{t('Cash')}</span>
           </div>

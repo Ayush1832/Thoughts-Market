@@ -6,7 +6,7 @@ import sharp from 'sharp'
 import { z } from 'zod'
 import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
 import { UserRepository } from '@/lib/db/queries/user'
-import { uploadPublicAsset } from '@/lib/storage'
+import { getPublicAssetUrl, uploadPublicAsset } from '@/lib/storage'
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024
 const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
@@ -14,6 +14,9 @@ const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/web
 export interface ActionState {
   error?: string
   errors?: Record<string, string | undefined>
+  /** Resolved public URL of the (possibly new) avatar, set on success. */
+  image?: string
+  username?: string
 }
 
 function emptyStringToUndefined(value: unknown) {
@@ -117,7 +120,10 @@ export async function updateUserAction(formData: FormData): Promise<ActionState>
     }
 
     revalidatePath('/settings')
-    return {}
+    return {
+      username: validated.data.username,
+      image: typeof updateData.image === 'string' ? getPublicAssetUrl(updateData.image) : undefined,
+    }
   }
   catch {
     return { error: DEFAULT_ERROR_MESSAGE }

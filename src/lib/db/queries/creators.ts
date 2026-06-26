@@ -16,28 +16,52 @@ export const CreatorApplicationsRepository = {
     niche: string
     socialLink?: string
     reason: string
+    details?: Record<string, unknown>
   }) {
     return runQuery(async () => {
+      const details = data.details ?? {}
+      const username = data.username.toLowerCase()
+
+      // Re-application: if this user already has an application, update it back
+      // to pending (no ON CONFLICT — `username` isn't a unique column).
+      if (data.userId) {
+        const [existing] = await db
+          .select({ id: creator_applications.id })
+          .from(creator_applications)
+          .where(eq(creator_applications.user_id, data.userId))
+          .orderBy(desc(creator_applications.created_at))
+          .limit(1)
+
+        if (existing) {
+          const [updated] = await db
+            .update(creator_applications)
+            .set({
+              display_name: data.displayName,
+              username,
+              niche: data.niche,
+              social_link: data.socialLink ?? null,
+              reason: data.reason,
+              details,
+              status: 'pending',
+              updated_at: new Date(),
+            })
+            .where(eq(creator_applications.id, existing.id))
+            .returning()
+
+          return { data: updated ?? null, error: null }
+        }
+      }
+
       const [row] = await db
         .insert(creator_applications)
         .values({
           user_id: data.userId ?? undefined,
           display_name: data.displayName,
-          username: data.username.toLowerCase(),
+          username,
           niche: data.niche,
           social_link: data.socialLink ?? null,
           reason: data.reason,
-        })
-        .onConflictDoUpdate({
-          target: creator_applications.username,
-          set: {
-            display_name: data.displayName,
-            niche: data.niche,
-            social_link: data.socialLink ?? null,
-            reason: data.reason,
-            status: 'pending',
-            updated_at: new Date(),
-          },
+          details,
         })
         .returning()
 

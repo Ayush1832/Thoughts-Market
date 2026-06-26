@@ -9,10 +9,11 @@ import {
   SparklesIcon,
   TrendingUpIcon,
 } from 'lucide-react'
-import { usePathname } from 'next/navigation'
+import { usePathname, useSearchParams } from 'next/navigation'
 import { useState } from 'react'
 import SidebarProfileCard from '@/app/[locale]/(platform)/_components/SidebarProfileCard'
 import AppLink from '@/components/AppLink'
+import { stripLocalePrefix } from '@/lib/locale-path'
 import { cn } from '@/lib/utils'
 
 interface SidebarNavItem {
@@ -87,6 +88,11 @@ function CollapseTooltip({ label }: { label: string }) {
 
 export default function LeftSidebar() {
   const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const isBookmarked = searchParams.get('bookmarked') === 'true'
+  const sortParam = searchParams.get('sort')
+  const strippedPath = stripLocalePrefix(pathname)
+  const isCommunityActive = (href: string) => strippedPath === href || strippedPath.startsWith(`${href}/`)
   const [collapsed, setCollapsed] = useState(() => {
     if (typeof window === 'undefined') {
       return false
@@ -123,7 +129,7 @@ export default function LeftSidebar() {
       {/* ── Collapse toggle (logo now lives in the top header bar) ── */}
       <div className={cn(
         'shrink-0',
-        collapsed ? 'flex flex-col items-center py-1' : 'flex h-7 items-center justify-end px-2 pt-1',
+        collapsed ? 'flex flex-col items-center py-1' : 'flex h-6 items-center justify-end px-1.5',
       )}
       >
         <button
@@ -131,7 +137,7 @@ export default function LeftSidebar() {
           onClick={toggle}
           title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           className={cn(
-            'flex size-8 shrink-0 items-center justify-center rounded-lg',
+            'flex size-6 shrink-0 items-center justify-center rounded-lg',
             'text-tm-secondary transition-all duration-200',
             'hover:bg-tm-elevated hover:text-tm-primary',
           )}
@@ -143,11 +149,23 @@ export default function LeftSidebar() {
       </div>
 
       {/* ── Main Navigation ── */}
-      <nav className={cn('flex-1 space-y-0.5 pt-1 pb-4', collapsed ? 'px-2' : 'px-3')}>
+      <nav className={cn('flex-1 space-y-0.5 pb-4', collapsed ? 'px-2' : 'px-3')}>
         {NAV_ITEMS.map((item) => {
-          const isActive = item.href === '/'
-            ? pathname === '/' || pathname === '/en'
-            : pathname.startsWith(item.href)
+          const isHomeRoot = pathname === '/' || pathname === '/en'
+          let isActive: boolean
+          if (item.href === '/') {
+            // Trending = plain home (not the Watchlist or Hot Now filtered views)
+            isActive = isHomeRoot && !isBookmarked && !sortParam
+          }
+          else if (item.href === '/?bookmarked=true') {
+            isActive = isHomeRoot && isBookmarked
+          }
+          else if (item.href === '/?sort=24h-volume') {
+            isActive = isHomeRoot && sortParam === '24h-volume'
+          }
+          else {
+            isActive = pathname.startsWith(item.href)
+          }
 
           return (
             <AppLink
@@ -199,19 +217,24 @@ export default function LeftSidebar() {
               Communities
             </p>
             <div className="space-y-0.5">
-              {COMMUNITIES.map(c => (
-                <AppLink
-                  key={c.label}
-                  href={c.href}
-                  className="
-                    flex items-center gap-3 rounded-lg p-2 text-sm text-tm-secondary transition-all duration-200
-                    hover:bg-tm-elevated hover:text-tm-primary
-                  "
-                >
-                  <HashIcon className="size-3.5 shrink-0 text-tm-secondary/50" />
-                  {c.label}
-                </AppLink>
-              ))}
+              {COMMUNITIES.map((c) => {
+                const active = isCommunityActive(c.href)
+                return (
+                  <AppLink
+                    key={c.label}
+                    href={c.href}
+                    className={cn(
+                      'flex items-center gap-3 rounded-lg p-2 text-sm transition-all duration-200',
+                      active
+                        ? 'bg-tm-elevated font-medium text-[#4f8ef7]'
+                        : 'text-tm-secondary hover:bg-tm-elevated hover:text-tm-primary',
+                    )}
+                  >
+                    <HashIcon className={cn('size-3.5 shrink-0', active ? 'text-[#4f8ef7]' : 'text-tm-secondary/50')} />
+                    {c.label}
+                  </AppLink>
+                )
+              })}
             </div>
           </div>
         )}
@@ -219,20 +242,22 @@ export default function LeftSidebar() {
         {/* Communities — icon-only when collapsed */}
         {collapsed && (
           <div className="space-y-0.5">
-            {COMMUNITIES.map(c => (
-              <AppLink
-                key={c.label}
-                href={c.href}
-                className="
-                  group relative flex items-center justify-center rounded-xl py-2 text-tm-secondary transition-all
-                  duration-200
-                  hover:bg-tm-elevated hover:text-tm-primary
-                "
-              >
-                <HashIcon className="size-3.5" />
-                <CollapseTooltip label={c.label} />
-              </AppLink>
-            ))}
+            {COMMUNITIES.map((c) => {
+              const active = isCommunityActive(c.href)
+              return (
+                <AppLink
+                  key={c.label}
+                  href={c.href}
+                  className={cn(
+                    'group relative flex items-center justify-center rounded-xl py-2 transition-all duration-200',
+                    active ? 'bg-tm-elevated text-[#4f8ef7]' : 'text-tm-secondary hover:bg-tm-elevated hover:text-tm-primary',
+                  )}
+                >
+                  <HashIcon className="size-3.5" />
+                  <CollapseTooltip label={c.label} />
+                </AppLink>
+              )
+            })}
           </div>
         )}
       </nav>

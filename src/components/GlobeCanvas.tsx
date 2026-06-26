@@ -1,6 +1,6 @@
 'use client'
 
-import { type PointerEvent as ReactPointerEvent, useEffect, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 
 // [lat, lon, r, g, b, dotSize]
 const SPOTS: [number, number, number, number, number, number][] = [
@@ -109,32 +109,46 @@ export default function GlobeCanvas({
     if (!canvas) return
     const ctx = canvas.getContext('2d')!
 
-    const W = size, H = size, cx = size / 2, cy = size / 2, R = size * 0.445
+    const W = size, H = size, cx = size / 2, cy = size / 2
+    const baseR = size * 0.445
     const INV_2PI = 1 / (2 * Math.PI)
     const INV_PI = 1 / Math.PI
 
     let sx = -0.82, sy = 0.18, sz = -0.54
     { const l = Math.hypot(sx, sy, sz); sx /= l; sy /= l; sz /= l }
 
-    const pxOff: number[] = []
-    const latArr: number[] = []
-    const baseLon: number[] = []
-    const limbArr: number[] = []
-    for (let py = 0; py < H; py++) {
-      for (let px = 0; px < W; px++) {
-        const nx = (px + 0.5 - cx) / R
-        const ny = (py + 0.5 - cy) / R
-        const d2 = nx * nx + ny * ny
-        if (d2 > 1) continue
-        const nz = Math.sqrt(1 - d2)
-        const vy = -ny
-        pxOff.push((py * W + px) * 4)
-        latArr.push(Math.asin(Math.max(-1, Math.min(1, vy))))
-        baseLon.push(Math.atan2(nx, nz))
-        limbArr.push(0.42 + 0.58 * smoothstep(0, 0.42, nz))
+    // Interactive state: zoom (scroll), tilt (vertical drag), rot (horizontal drag / auto-spin).
+    let zoom = 1, tilt = 0, R = baseR
+
+    // Per-pixel sphere projection — rebuilt whenever zoom or tilt changes.
+    let pxOff: number[] = []
+    let latArr: number[] = []
+    let baseLon: number[] = []
+    let limbArr: number[] = []
+    let N = 0
+    function buildProjection() {
+      pxOff = []; latArr = []; baseLon = []; limbArr = []
+      const ct = Math.cos(tilt), st = Math.sin(tilt)
+      for (let py = 0; py < H; py++) {
+        for (let px = 0; px < W; px++) {
+          const nx = (px + 0.5 - cx) / R
+          const ny = (py + 0.5 - cy) / R
+          const d2 = nx * nx + ny * ny
+          if (d2 > 1) continue
+          const nz = Math.sqrt(1 - d2)
+          const yp = -ny
+          // un-tilt the screen point back to sphere coordinates
+          const Y = yp * ct + nz * st
+          const Z = -yp * st + nz * ct
+          pxOff.push((py * W + px) * 4)
+          latArr.push(Math.asin(Math.max(-1, Math.min(1, Y))))
+          baseLon.push(Math.atan2(nx, Z))
+          limbArr.push(0.42 + 0.58 * smoothstep(0, 0.42, nz))
+        }
       }
+      N = pxOff.length
     }
-    const N = pxOff.length
+    buildProjection()
 
     const image = ctx.createImageData(W, H)
     const data = image.data
@@ -148,14 +162,19 @@ export default function GlobeCanvas({
       const lat = (latDeg * Math.PI) / 180
       const theta = (lonDeg * Math.PI) / 180 - rot
       const cosLat = Math.cos(lat)
+      const X = cosLat * Math.sin(theta)
+      const Y = Math.sin(lat)
+      const Z = cosLat * Math.cos(theta)
+      const ct = Math.cos(tilt), st = Math.sin(tilt)
       return {
-        x: cx + R * cosLat * Math.sin(theta),
-        y: cy - R * Math.sin(lat),
-        z: cosLat * Math.cos(theta),
+        x: cx + R * X,
+        y: cy - R * (Y * ct - Z * st),
+        z: Y * st + Z * ct,
       }
     }
 
     function drawEarthPixels() {
+      data.fill(0) // clear so the previous (zoom/tilt) frame doesn't ghost
       for (let i = 0; i < N; i++) {
         const off = pxOff[i]
         const lat = latArr[i]
@@ -423,6 +442,65 @@ export default function GlobeCanvas({
       }
     }
 
+    // ── Interaction: scroll to zoom, drag to rotate (horizontal) / tilt (vertical) ──
+    const cv = canvas // non-null alias for the closures below
+    let autoRotate = true, dragging = false, moved = false, lastX = 0, lastY = 0
+    let resumeTimer: ReturnType<typeof setTimeout> | undefined
+
+    function toCanvas(clientX: number, clientY: number) {
+      const rect = cv.getBoundingClientRect()
+      return {
+        x: (clientX - rect.left) * (W / rect.width),
+        y: (clientY - rect.top) * (H / rect.height),
+      }
+    }
+
+    function onWheel(e: WheelEvent) {
+      e.preventDefault()
+      zoom = Math.min(3, Math.max(0.6, zoom * (e.deltaY < 0 ? 1.12 : 0.892)))
+      R = baseR * zoom
+      buildProjection()
+    }
+    function onDown(e: PointerEvent) {
+      dragging = true; moved = false; autoRotate = false
+      const p = toCanvas(e.clientX, e.clientY); lastX = p.x; lastY = p.y
+      try { cv.setPointerCapture(e.pointerId) }
+      catch {}
+    }
+    function onMove(e: PointerEvent) {
+      if (!dragging) return
+      const p = toCanvas(e.clientX, e.clientY)
+      const dx = p.x - lastX, dy = p.y - lastY
+      lastX = p.x; lastY = p.y
+      if (Math.abs(dx) + Math.abs(dy) > 2) moved = true
+      rot -= dx * 0.006
+      const nt = Math.min(1.2, Math.max(-1.2, tilt + dy * 0.006))
+      if (nt !== tilt) { tilt = nt; buildProjection() }
+    }
+    function onUp(e: PointerEvent) {
+      if (dragging && !moved) {
+        const cb = onClickRef.current
+        if (cb) {
+          const p = toCanvas(e.clientX, e.clientY)
+          const hitR2 = (W * 0.09) ** 2
+          let best = -1, bestD = hitR2
+          for (const pos of positionsRef.current) {
+            const d = (pos.x - p.x) ** 2 + (pos.y - p.y) ** 2
+            if (d < bestD) { bestD = d; best = pos.i }
+          }
+          if (best >= 0) cb(best)
+        }
+      }
+      dragging = false
+      clearTimeout(resumeTimer)
+      resumeTimer = setTimeout(() => { autoRotate = true }, 2500)
+    }
+
+    cv.addEventListener('wheel', onWheel, { passive: false })
+    cv.addEventListener('pointerdown', onDown)
+    cv.addEventListener('pointermove', onMove)
+    window.addEventListener('pointerup', onUp)
+
     function frame() {
       ctx.clearRect(0, 0, W, H)
       if (tex) { drawEarthPixels(); ctx.putImageData(image, 0, 0) }
@@ -432,38 +510,22 @@ export default function GlobeCanvas({
       drawAtmosphere()
       drawFocalGlow()
       drawArcsAndHotspots()
-      rot += 0.0017
+      if (autoRotate && !dragging) rot += 0.0017
       phase += 0.032
       raf = requestAnimationFrame(frame)
     }
 
     frame()
-    return () => { alive = false; cancelAnimationFrame(raf) }
+    return () => {
+      alive = false
+      cancelAnimationFrame(raf)
+      clearTimeout(resumeTimer)
+      cv.removeEventListener('wheel', onWheel)
+      cv.removeEventListener('pointerdown', onDown)
+      cv.removeEventListener('pointermove', onMove)
+      window.removeEventListener('pointerup', onUp)
+    }
   }, [size])
-
-  function handlePointerDown(e: ReactPointerEvent<HTMLCanvasElement>) {
-    const cb = onClickRef.current
-    if (!cb) return
-    const canvas = canvasRef.current
-    if (!canvas) return
-    const rect = canvas.getBoundingClientRect()
-    const scaleX = canvas.width / rect.width
-    const scaleY = canvas.height / rect.height
-    const x = (e.clientX - rect.left) * scaleX
-    const y = (e.clientY - rect.top) * scaleY
-    const hitR2 = (canvas.width * 0.09) ** 2 // generous tap radius
-    let best = -1
-    let bestD = hitR2
-    for (const p of positionsRef.current) {
-      const d = (p.x - x) ** 2 + (p.y - y) ** 2
-      if (d < bestD) { bestD = d; best = p.i }
-    }
-    if (best >= 0) {
-      e.preventDefault()
-      e.stopPropagation()
-      cb(best)
-    }
-  }
 
   return (
     <canvas
@@ -471,8 +533,7 @@ export default function GlobeCanvas({
       width={size}
       height={size}
       className={className}
-      onPointerDown={onHotspotClick ? handlePointerDown : undefined}
-      style={onHotspotClick ? { cursor: 'pointer' } : undefined}
+      style={{ cursor: 'grab', touchAction: 'none' }}
     />
   )
 }

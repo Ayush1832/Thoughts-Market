@@ -43,6 +43,7 @@ export async function POST(request: NextRequest) {
       niche: string
       socialLink?: string
       reason: string
+      details?: Record<string, unknown>
     }
 
     if (!body.displayName?.trim() || !body.username?.trim() || !body.niche?.trim() || !body.reason?.trim()) {
@@ -56,6 +57,7 @@ export async function POST(request: NextRequest) {
       niche: body.niche.trim(),
       socialLink: body.socialLink?.trim(),
       reason: body.reason.trim(),
+      details: body.details && typeof body.details === 'object' ? body.details : undefined,
     })
 
     if (error || !data) {

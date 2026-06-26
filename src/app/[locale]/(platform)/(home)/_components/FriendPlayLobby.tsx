@@ -31,6 +31,7 @@ interface Room {
   participant_count?: number
   host_username?: string | null
   participants?: Participant[]
+  metadata?: { question?: string } | null
 }
 
 interface ChatMessage {
@@ -111,6 +112,7 @@ export default function FriendPlayLobby({ onClose }: { onClose?: () => void }) {
   // Create room form
   const [creating, setCreating] = useState(false)
   const [newRoomName, setNewRoomName] = useState('')
+  const [newRoomQuestion, setNewRoomQuestion] = useState('')
   const [newRoomPrivate, setNewRoomPrivate] = useState(false)
   const [showCreate, setShowCreate] = useState(false)
 
@@ -182,13 +184,14 @@ export default function FriendPlayLobby({ onClose }: { onClose?: () => void }) {
       const res = await fetch('/api/rooms', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: newRoomName.trim(), isPrivate: newRoomPrivate }),
+        body: JSON.stringify({ name: newRoomName.trim(), isPrivate: newRoomPrivate, question: newRoomQuestion.trim() }),
       })
       if (res.ok) {
         const room: Room = await res.json()
         setRooms(prev => [room, ...prev])
         setSelectedRoom(room)
         setNewRoomName('')
+        setNewRoomQuestion('')
         setNewRoomPrivate(false)
         setShowCreate(false)
       }
@@ -302,6 +305,7 @@ export default function FriendPlayLobby({ onClose }: { onClose?: () => void }) {
   const currentParticipants = roomDetails?.participants ?? []
   const isLive = selectedRoom?.status === 'playing'
   const isHost = Boolean(user) && selectedRoom?.host_id === user!.id
+  const roomQuestion = roomDetails?.metadata?.question ?? selectedRoom?.metadata?.question ?? ''
 
   return (
     <div className="
@@ -339,6 +343,13 @@ export default function FriendPlayLobby({ onClose }: { onClose?: () => void }) {
                     placeholder="Room name..."
                     className="h-8 text-xs"
                     autoFocus
+                  />
+                  <Input
+                    value={newRoomQuestion}
+                    onChange={e => setNewRoomQuestion(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && handleCreate()}
+                    placeholder="Prediction question, e.g. Will BTC hit $100k by Friday?"
+                    className="h-8 text-xs"
                   />
                   <label className="flex cursor-pointer items-center gap-2 text-xs text-muted-foreground">
                     <input
@@ -449,9 +460,14 @@ export default function FriendPlayLobby({ onClose }: { onClose?: () => void }) {
               <div className="flex min-h-0 flex-col">
                 {/* Room header */}
                 <div className="flex items-center gap-3 border-b border-border/40 px-5 py-3">
-                  <div>
+                  <div className="min-w-0">
                     <p className="font-bold text-foreground">{selectedRoom.name}</p>
-                    <div className="flex items-center gap-2">
+                    {roomQuestion && (
+                      <p className="mt-0.5 text-sm font-semibold text-primary">
+                        {roomQuestion}
+                      </p>
+                    )}
+                    <div className="mt-0.5 flex items-center gap-2">
                       <span className={cn(
                         'inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold',
                         isLive ? 'bg-green-500/15 text-green-400' : 'bg-muted text-muted-foreground',

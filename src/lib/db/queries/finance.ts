@@ -1,4 +1,4 @@
-import { and, count, desc, eq, gte, lt, sql } from 'drizzle-orm'
+import { and, count, desc, eq, gte, inArray, lt, or, sql } from 'drizzle-orm'
 import {
   finance_alert_configs,
   finance_alert_events,
@@ -38,6 +38,29 @@ export async function listTransactions(opts: {
     .where(conditions.length ? and(...conditions) : undefined)
 
   return { rows, total }
+}
+
+// Deposits + withdrawals belonging to a single user (by user_id or their deposit
+// wallet). Used by the Cash page tabs so a user can see their own cash movements.
+export async function listUserCashTransactions(opts: {
+  userId?: string | null
+  walletAddress?: string | null
+}) {
+  const { userId, walletAddress } = opts
+  const owners = []
+  if (userId) { owners.push(eq(finance_transactions.user_id, userId)) }
+  if (walletAddress) { owners.push(eq(finance_transactions.wallet_address, walletAddress)) }
+  if (!owners.length) { return [] }
+
+  return db
+    .select()
+    .from(finance_transactions)
+    .where(and(
+      or(...owners),
+      inArray(finance_transactions.type, ['deposit', 'withdrawal']),
+    ))
+    .orderBy(desc(finance_transactions.created_at))
+    .limit(100)
 }
 
 export async function getTransactionById(id: string) {

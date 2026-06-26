@@ -2,6 +2,9 @@
 
 // tables
 export * from './finance/tables'
+export * from './deposit-addresses/tables'
+export * from './ledger/tables'
+export * from './trading/tables'
 export * from './content/tables'
 export * from './ai/tables'
 export * from './affiliates/tables'

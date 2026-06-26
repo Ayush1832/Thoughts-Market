@@ -302,6 +302,36 @@ async function createSyncEventCreationsCron(sql, siteUrl, cronSecret) {
   })
 }
 
+async function createSyncDepositsCron(sql, siteUrl, cronSecret) {
+  await createSyncCron(sql, {
+    jobName: 'sync-deposits',
+    schedule: '* * * * *',
+    endpointPath: '/api/sync/deposits',
+    siteUrl,
+    cronSecret,
+  })
+}
+
+async function createSyncWithdrawalsCron(sql, siteUrl, cronSecret) {
+  await createSyncCron(sql, {
+    jobName: 'sync-withdrawals',
+    schedule: '* * * * *',
+    endpointPath: '/api/sync/withdrawals',
+    siteUrl,
+    cronSecret,
+  })
+}
+
+async function createSyncDepositSweepsCron(sql, siteUrl, cronSecret) {
+  await createSyncCron(sql, {
+    jobName: 'sync-deposit-sweeps',
+    schedule: '*/5 * * * *',
+    endpointPath: '/api/sync/deposit-sweeps',
+    siteUrl,
+    cronSecret,
+  })
+}
+
 async function resolveCronExtensionCapabilities(sql) {
   const result = await sql`
     SELECT
@@ -341,6 +371,9 @@ async function configureSupabaseScheduler(sql, siteUrl, cronSecret) {
   await createSyncTranslationsCron(sql, siteUrl, cronSecret)
   await createSyncResolutionCron(sql, siteUrl, cronSecret)
   await createSyncVolumeCron(sql, siteUrl, cronSecret)
+  await createSyncDepositsCron(sql, siteUrl, cronSecret)
+  await createSyncWithdrawalsCron(sql, siteUrl, cronSecret)
+  await createSyncDepositSweepsCron(sql, siteUrl, cronSecret)
 }
 
 function resolveMigrationConnectionString() {

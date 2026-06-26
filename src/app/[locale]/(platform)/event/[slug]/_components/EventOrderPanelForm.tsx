@@ -13,6 +13,7 @@ import Form from 'next/form'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { useSignTypedData } from 'wagmi'
+import { placeOmnibusOrderAction } from '@/app/[locale]/(platform)/_actions/omnibus-trade'
 import { useTradingOnboarding } from '@/app/[locale]/(platform)/_providers/TradingOnboardingProvider'
 import { useOrderBookSummaries } from '@/app/[locale]/(platform)/event/[slug]/_components/EventOrderBook'
 import EventOrderPanelBuySellTabs from '@/app/[locale]/(platform)/event/[slug]/_components/EventOrderPanelBuySellTabs'
@@ -25,7 +26,6 @@ import EventOrderPanelOutcomeSelector
 import EventOrderPanelResolvedMarketDisplay
   from '@/app/[locale]/(platform)/event/[slug]/_components/EventOrderPanelResolvedMarketDisplay'
 import {
-  handleOrderCancelledFeedback,
   handleOrderErrorFeedback,
   handleOrderSuccessFeedback,
   handleValidationError,
@@ -42,15 +42,14 @@ import {
 import {
   resolveResolvedOrderPanelDisplay,
 } from '@/app/[locale]/(platform)/event/[slug]/_utils/resolved-order-panel-market'
-import { useAffiliateOrderMetadata } from '@/hooks/useAffiliateOrderMetadata'
 import { useAppKit } from '@/hooks/useAppKit'
 import { DEPOSIT_WALLET_BALANCE_QUERY_KEY, useBalance } from '@/hooks/useBalance'
 import { useCurrentTimestamp } from '@/hooks/useCurrentTimestamp'
 import { useHasHydrated } from '@/hooks/useHasHydrated'
+import { useLedgerConditionShares, useLedgerUsdcBalance } from '@/hooks/useLedgerPortfolio'
 import { useOutcomeLabel } from '@/hooks/useOutcomeLabel'
 import { useSignaturePromptRunner } from '@/hooks/useSignaturePromptRunner'
-import { addressToBuilderCode } from '@/lib/builder-code'
-import { CLOB_ORDER_TYPE, getExchangeEip712Domain, ORDER_SIDE, ORDER_TYPE, OUTCOME_INDEX } from '@/lib/constants'
+import { CLOB_ORDER_TYPE, ORDER_SIDE, ORDER_TYPE, OUTCOME_INDEX } from '@/lib/constants'
 import { isCurrentNegRiskAdapterAddress } from '@/lib/contracts'
 import { resolveEventPagePath } from '@/lib/events-routing'
 import { formatCentsLabel, formatCurrency, formatSharesLabel, toCents } from '@/lib/formatters'
@@ -62,12 +61,10 @@ import {
   updateQueryDataWhere,
 } from '@/lib/optimistic-trading'
 import { calculateMarketFill, normalizeBookLevels } from '@/lib/order-panel-utils'
-import { buildOrderPayload, submitOrder } from '@/lib/orders'
-import { signOrderPayload } from '@/lib/orders/signing'
 import { MIN_LIMIT_ORDER_SHARES, validateOrder } from '@/lib/orders/validation'
 import { isTradingAuthRequiredError } from '@/lib/trading-auth/errors'
 import { cn } from '@/lib/utils'
-import { isUserRejectedRequestError, normalizeAddress } from '@/lib/wallet'
+import { normalizeAddress } from '@/lib/wallet'
 import { signAndSubmitDepositWalletCalls } from '@/lib/wallet/client'
 import { buildNegRiskRedeemPositionCall, buildRedeemPositionCall } from '@/lib/wallet/transactions'
 import { useNotifications } from '@/stores/useNotifications'
@@ -813,11 +810,6 @@ export default function EventOrderPanelForm({
   const locale = useLocale()
   const currentTimestamp = useCurrentTimestamp({ intervalMs: 60_000 })
   const normalizeOutcomeLabel = useOutcomeLabel()
-  const affiliateMetadata = useAffiliateOrderMetadata()
-  const builderCode = useMemo(
-    () => addressToBuilderCode(affiliateMetadata.referrerAddress),
-    [affiliateMetadata.referrerAddress],
-  )
   const user = useUser()
   const addLocalOrderFillNotification = useNotifications(state => state.addLocalOrderFillNotification)
   const state = useOrder()
@@ -946,17 +938,18 @@ export default function EventOrderPanelForm({
     currentTimestamp,
     resolveDisplayOutcomeLabel,
   })
-  const orderDomain = useMemo(() => getExchangeEip712Domain(isNegRiskMarket), [isNegRiskMarket])
   const { positionsQuery, aggregatedPositionShares } = useEventOrderPanelPositions({
     makerAddress,
     conditionId: activeMarket?.condition_id,
   })
+  const { ledgerUsdc } = useLedgerUsdcBalance()
+  const ledgerConditionShares = useLedgerConditionShares(activeMarket?.condition_id)
 
   const claimedConditionIds = claimedConditionIdsByEvent[event.id] ?? {}
 
-  const availableBalanceForOrders = Math.max(0, balance.raw)
-  const formattedBalanceText = Number.isFinite(balance.raw)
-    ? balance.raw.toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  const availableBalanceForOrders = Math.max(0, ledgerUsdc)
+  const formattedBalanceText = Number.isFinite(ledgerUsdc)
+    ? ledgerUsdc.toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
     : '0.00'
 
   useUserSharesStoreSync({
@@ -982,11 +975,13 @@ export default function EventOrderPanelForm({
   const availableMergeShares = Math.max(0, Math.min(mergeableYesShares, mergeableNoShares))
   const availableSplitBalance = Math.max(0, balance.raw)
   const outcomeIndex = activeOutcome?.outcome_index as typeof OUTCOME_INDEX.YES | typeof OUTCOME_INDEX.NO | undefined
-  const selectedShares = outcomeIndex === undefined
-    ? 0
-    : outcomeIndex === OUTCOME_INDEX.YES
-      ? availableYesTokenShares
-      : availableNoTokenShares
+  const selectedLedgerShares = activeOutcome?.token_id
+    ? (ledgerConditionShares[String(activeOutcome.token_id).toLowerCase()] ?? 0)
+    : 0
+  const lockedSelectedShares = outcomeIndex === OUTCOME_INDEX.YES
+    ? lockedYesShares
+    : outcomeIndex === OUTCOME_INDEX.NO ? lockedNoShares : 0
+  const selectedShares = Math.max(0, selectedLedgerShares - lockedSelectedShares)
   const selectedShareLabel = outcomeIndex === undefined
     ? undefined
     : resolveDisplayOutcomeLabel(
@@ -1073,7 +1068,7 @@ export default function EventOrderPanelForm({
   const shouldShowDepositCta = isInteractiveWalletReady
     && state.side === ORDER_SIDE.BUY
     && state.type === ORDER_TYPE.MARKET
-    && Math.max(effectiveMarketBuyCost, amountNumber) > balance.raw
+    && Math.max(effectiveMarketBuyCost, amountNumber) > ledgerUsdc
 
   const avgBuyPriceDollars = typeof currentBuyPriceCents === 'number' && Number.isFinite(currentBuyPriceCents)
     ? currentBuyPriceCents / 100
@@ -1301,20 +1296,6 @@ export default function EventOrderPanelForm({
       return typeof value === 'number' && Number.isFinite(value) && value > 0 ? value : undefined
     })()
 
-    const payload = buildOrderPayload({
-      makerAddress,
-      outcome: activeOutcome,
-      side: state.side,
-      orderType: state.type,
-      amount: effectiveAmountForOrder,
-      limitPrice: state.limitPrice,
-      limitShares: state.limitShares,
-      marketPriceCents: marketLimitPriceCents,
-      builder: builderCode,
-      expirationTimestamp: state.limitExpirationEnabled
-        ? (customExpirationTimestamp ?? endOfDayTimestamp)
-        : undefined,
-    })
     const submittedSide = state.side
     const submittedIsLimitOrder = state.type === ORDER_TYPE.LIMIT
     const submittedAmountInput = state.amount
@@ -1359,35 +1340,22 @@ export default function EventOrderPanelForm({
     const submittedOutcomeIndex = activeOutcome.outcome_index
     const submittedLastMouseEvent = state.lastMouseEvent
 
-    let signature: string
-    try {
-      signature = await runWithSignaturePrompt(() => signOrderPayload({
-        payload,
-        domain: orderDomain,
-        signTypedDataAsync,
-      }))
-    }
-    catch (error) {
-      if (isUserRejectedRequestError(error)) {
-        handleOrderCancelledFeedback()
-        return
-      }
-
-      handleOrderErrorFeedback(t('Trade failed'), t('We could not sign your order. Please try again.'))
-      return
-    }
-
     state.setIsLoading(true)
     try {
-      const result = await submitOrder({
-        order: payload,
-        signature,
+      const result = await placeOmnibusOrderAction({
+        conditionId: activeMarket.condition_id,
+        tokenId: String(activeOutcome.token_id),
+        outcome: submittedOutcomeText,
+        isNegRisk: isNegRiskMarket,
+        side: submittedSide === ORDER_SIDE.SELL ? 'SELL' : 'BUY',
         orderType: state.type,
-        clobOrderType: state.type === ORDER_TYPE.LIMIT && state.limitExpirationEnabled
+        amount: effectiveAmountForOrder,
+        limitPrice: state.limitPrice,
+        limitShares: state.limitShares,
+        marketPriceCents: marketLimitPriceCents,
+        clobType: state.type === ORDER_TYPE.LIMIT && state.limitExpirationEnabled
           ? CLOB_ORDER_TYPE.GTD
           : undefined,
-        conditionId: activeMarket.condition_id,
-        slug: event.slug,
       })
 
       if (result?.error) {
@@ -1510,7 +1478,7 @@ export default function EventOrderPanelForm({
         const limitPriceValue = (Number.parseFloat(state.limitPrice || '0') || 0) / 100
         const limitSharesValue = Number.parseFloat(state.limitShares || '0') || 0
         const totalValue = limitPriceValue * limitSharesValue
-        const orderId = result?.orderId ?? payload.salt.toString()
+        const orderId = result?.orderId ?? `local-${Date.now()}`
         const optimisticOrder = buildOptimisticOpenOrder({
           id: orderId,
           side: submittedSide === ORDER_SIDE.BUY ? 'buy' : 'sell',
@@ -1518,7 +1486,7 @@ export default function EventOrderPanelForm({
           price: limitPriceValue,
           shares: limitSharesValue,
           totalValue,
-          expiration: state.limitExpirationEnabled ? Number(payload.expiration) : null,
+          expiration: state.limitExpirationEnabled ? (customExpirationTimestamp ?? endOfDayTimestamp) : null,
           outcomeIndex: submittedOutcomeIndex as typeof OUTCOME_INDEX.YES | typeof OUTCOME_INDEX.NO,
           outcomeText: submittedOutcomeText,
           conditionId: activeMarket.condition_id,

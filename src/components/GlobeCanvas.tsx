@@ -80,6 +80,8 @@ interface GlobeCanvasProps {
   hotspots?: GlobeHotspot[]
   /** Called with the hotspot index when a hotspot dot/label is tapped. */
   onHotspotClick?: (index: number) => void
+  /** Enable scroll-to-zoom and drag-to-rotate (off by default — e.g. the sidebar widget stays auto-spin only). */
+  interactive?: boolean
   className?: string
 }
 
@@ -91,6 +93,7 @@ export default function GlobeCanvas({
   showLabels = false,
   hotspots,
   onHotspotClick,
+  interactive = false,
   className,
 }: GlobeCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -462,7 +465,8 @@ export default function GlobeCanvas({
       buildProjection()
     }
     function onDown(e: PointerEvent) {
-      dragging = true; moved = false; autoRotate = false
+      dragging = true; moved = false
+      if (interactive) { autoRotate = false }
       const p = toCanvas(e.clientX, e.clientY); lastX = p.x; lastY = p.y
       try { cv.setPointerCapture(e.pointerId) }
       catch {}
@@ -473,6 +477,7 @@ export default function GlobeCanvas({
       const dx = p.x - lastX, dy = p.y - lastY
       lastX = p.x; lastY = p.y
       if (Math.abs(dx) + Math.abs(dy) > 2) moved = true
+      if (!interactive) { return } // tap-only mode: don't rotate/tilt
       rot -= dx * 0.006
       const nt = Math.min(1.2, Math.max(-1.2, tilt + dy * 0.006))
       if (nt !== tilt) { tilt = nt; buildProjection() }
@@ -492,11 +497,13 @@ export default function GlobeCanvas({
         }
       }
       dragging = false
-      clearTimeout(resumeTimer)
-      resumeTimer = setTimeout(() => { autoRotate = true }, 2500)
+      if (interactive) {
+        clearTimeout(resumeTimer)
+        resumeTimer = setTimeout(() => { autoRotate = true }, 2500)
+      }
     }
 
-    cv.addEventListener('wheel', onWheel, { passive: false })
+    if (interactive) { cv.addEventListener('wheel', onWheel, { passive: false }) }
     cv.addEventListener('pointerdown', onDown)
     cv.addEventListener('pointermove', onMove)
     window.addEventListener('pointerup', onUp)
@@ -525,7 +532,7 @@ export default function GlobeCanvas({
       cv.removeEventListener('pointermove', onMove)
       window.removeEventListener('pointerup', onUp)
     }
-  }, [size])
+  }, [size, interactive])
 
   return (
     <canvas
@@ -533,7 +540,11 @@ export default function GlobeCanvas({
       width={size}
       height={size}
       className={className}
-      style={{ cursor: 'grab', touchAction: 'none' }}
+      style={interactive
+        ? { cursor: 'grab', touchAction: 'none' }
+        : onHotspotClick
+          ? { cursor: 'pointer' }
+          : undefined}
     />
   )
 }

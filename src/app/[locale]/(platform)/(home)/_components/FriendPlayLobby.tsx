@@ -16,6 +16,9 @@ interface Participant {
   address: string
   image: string | null
   joined_at: string
+  outcome_choice?: 'yes' | 'no' | null
+  stake_amount?: string | null
+  pnl?: string | null
 }
 
 interface Room {
@@ -31,7 +34,7 @@ interface Room {
   participant_count?: number
   host_username?: string | null
   participants?: Participant[]
-  metadata?: { question?: string } | null
+  metadata?: { question?: string, outcome?: 'yes' | 'no', pool_total?: number } | null
 }
 
 interface ChatMessage {
@@ -46,14 +49,6 @@ interface ChatMessage {
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const CHAT_TABS = ['Discussion', 'Analytics', 'Resolution', 'Invite']
-
-const AI_STATS = [
-  { label: 'SENTIMENT', value: 74, display: '74 · Bullish bias on UP', color: 'bg-green-500' },
-  { label: 'VOLATILITY', value: 58, display: '58 · Medium', color: 'bg-yellow-400' },
-  { label: 'MANIPULATION', value: 12, display: '12 · Low risk', color: 'bg-green-400' },
-  { label: 'ENGAGEMENT', value: 84, display: '84 · High', color: 'bg-primary' },
-  { label: 'TRENDING SCORE', value: 92, display: '92 · Top 5%', color: 'bg-pink-500' },
-]
 
 const AVATAR_COLORS: Record<string, string> = {
   A: 'bg-green-500',
@@ -122,8 +117,12 @@ export default function FriendPlayLobby({ onClose }: { onClose?: () => void }) {
   const [joinError, setJoinError] = useState('')
 
   // Room actions
-  const [starting, setStarting] = useState(false)
   const [actionError, setActionError] = useState('')
+
+  // ── Market (bet / resolve) ──
+  const [betAmount, setBetAmount] = useState('10')
+  const [betting, setBetting] = useState(false)
+  const [resolving, setResolving] = useState(false)
 
   // Chat
   const [activeTab, setActiveTab] = useState('Discussion')
@@ -266,24 +265,52 @@ export default function FriendPlayLobby({ onClose }: { onClose?: () => void }) {
     catch { setActionError('Network error') }
   }
 
-  // ── Start room ───────────────────────────────────────────────────────────────
-  const handleStart = async () => {
+  const refreshRoom = async () => {
     if (!selectedRoom) { return }
-    setStarting(true)
+    const refreshed = await fetch(`/api/rooms/${selectedRoom.id}`, { cache: 'no-store' }).then(r => (r.ok ? r.json() : null)).catch(() => null)
+    if (refreshed) { setRoomDetails(refreshed) }
+    await fetchRooms()
+  }
+
+  // ── Place a Yes/No bet ───────────────────────────────────────────────────────
+  const handleBet = async (choice: 'yes' | 'no') => {
+    if (!selectedRoom) { return }
+    const amount = Number(betAmount)
+    if (!Number.isFinite(amount) || amount <= 0) { setActionError('Enter a valid amount'); return }
+    setBetting(true)
     setActionError('')
     try {
-      const res = await fetch(`/api/rooms/${selectedRoom.id}/start`, { method: 'POST' })
-      const data = await res.json()
-      if (res.ok) {
-        setSelectedRoom(data)
-        await fetchRooms()
-      }
-      else {
-        setActionError(data.error ?? 'Could not start room')
-      }
+      const res = await fetch(`/api/rooms/${selectedRoom.id}/bet`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ choice, amount }),
+      })
+      const data = await res.json().catch(() => null)
+      if (!res.ok) { setActionError(data?.error ?? 'Could not place bet'); return }
+      await refreshRoom()
     }
     catch { setActionError('Network error') }
-    finally { setStarting(false) }
+    finally { setBetting(false) }
+  }
+
+  // ── Host: resolve the market ─────────────────────────────────────────────────
+  const handleResolve = async (outcome: 'yes' | 'no') => {
+    if (!selectedRoom) { return }
+    setResolving(true)
+    setActionError('')
+    try {
+      const res = await fetch(`/api/rooms/${selectedRoom.id}/resolve`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ outcome }),
+      })
+      const data = await res.json().catch(() => null)
+      if (!res.ok) { setActionError(data?.error ?? 'Could not resolve'); return }
+      if (data?.data) { setSelectedRoom(data.data) }
+      await refreshRoom()
+    }
+    catch { setActionError('Network error') }
+    finally { setResolving(false) }
   }
 
   // ── Chat send ────────────────────────────────────────────────────────────────
@@ -306,6 +333,15 @@ export default function FriendPlayLobby({ onClose }: { onClose?: () => void }) {
   const isLive = selectedRoom?.status === 'playing'
   const isHost = Boolean(user) && selectedRoom?.host_id === user!.id
   const roomQuestion = roomDetails?.metadata?.question ?? selectedRoom?.metadata?.question ?? ''
+  // ── Market state (parimutuel pool from participant stakes) ──
+  const isResolved = selectedRoom?.status === 'resolved'
+  const resolvedOutcome = roomDetails?.metadata?.outcome ?? selectedRoom?.metadata?.outcome
+  const poolYes = currentParticipants.reduce((s, p) => s + (p.outcome_choice === 'yes' ? Number(p.stake_amount ?? 0) : 0), 0)
+  const poolNo = currentParticipants.reduce((s, p) => s + (p.outcome_choice === 'no' ? Number(p.stake_amount ?? 0) : 0), 0)
+  const poolTotal = poolYes + poolNo
+  const priceYes = poolTotal > 0 ? Math.round((poolYes / poolTotal) * 100) : 50
+  const priceNo = 100 - priceYes
+  const myPosition = currentParticipants.find(p => p.user_id === user?.id)
 
   return (
     <div className="
@@ -484,22 +520,112 @@ export default function FriendPlayLobby({ onClose }: { onClose?: () => void }) {
                     </div>
                   </div>
                   <div className="ml-auto flex gap-2">
-                    {selectedRoom.status === 'open' && (
-                      <Button
-                        onClick={handleStart}
-                        size="sm"
-                        className="h-7 text-xs"
-                        disabled={starting || (currentParticipants.length < 3)}
-                      >
-                        {starting ? 'Starting…' : 'Start Game'}
-                      </Button>
+                    {/* Only non-hosts can leave — the host resolves (or the room auto-expires) */}
+                    {!isHost && (
+                      <Button onClick={handleLeave} variant="destructive" size="sm" className="h-7 text-xs">Leave</Button>
                     )}
-                    <Button onClick={handleLeave} variant="destructive" size="sm" className="h-7 text-xs">Leave</Button>
                   </div>
                 </div>
                 {actionError && <p className="px-5 pt-2 text-xs text-destructive">{actionError}</p>}
 
-                <div className="grid gap-4 p-4 lg:grid-cols-[1fr_200px]">
+                {/* ── Prediction market ── */}
+                <div className="mx-5 mt-3 rounded-2xl border border-border/40 bg-muted/20 p-4">
+                  {isResolved
+                    ? (
+                        <div className="space-y-1.5 text-center">
+                          <p className="text-2xs font-semibold tracking-widest text-muted-foreground/60 uppercase">Market resolved</p>
+                          <p className="text-lg font-bold text-foreground">
+                            Winner:
+                            {' '}
+                            <span className={resolvedOutcome === 'yes' ? 'text-green-400' : 'text-red-400'}>{resolvedOutcome?.toUpperCase()}</span>
+                          </p>
+                          {myPosition?.outcome_choice && Number(myPosition.stake_amount ?? 0) > 0 && (
+                            <p className="text-sm text-muted-foreground">
+                              You bet $
+                              {Number(myPosition.stake_amount ?? 0).toFixed(2)}
+                              {' '}
+                              on
+                              {' '}
+                              {myPosition.outcome_choice.toUpperCase()}
+                              {' — '}
+                              <span className={Number(myPosition.pnl ?? 0) >= 0 ? 'font-semibold text-green-400' : 'font-semibold text-red-400'}>
+                                {Number(myPosition.pnl ?? 0) >= 0 ? '+' : ''}
+                                $
+                                {Number(myPosition.pnl ?? 0).toFixed(2)}
+                              </span>
+                            </p>
+                          )}
+                          <p className="text-xs text-muted-foreground/70">
+                            Total pool: $
+                            {poolTotal.toFixed(2)}
+                          </p>
+                        </div>
+                      )
+                    : (
+                        <>
+                          <div className="mb-2 flex items-center justify-between">
+                            <p className="text-2xs font-semibold tracking-widest text-muted-foreground/60 uppercase">Prediction market</p>
+                            <span className="text-2xs text-muted-foreground">
+                              Pool $
+                              {poolTotal.toFixed(2)}
+                            </span>
+                          </div>
+                          <div className="mb-2 flex h-2 overflow-hidden rounded-full bg-red-500/25">
+                            <div className="h-full bg-green-500/70 transition-[width] duration-300" style={{ width: `${priceYes}%` }} />
+                          </div>
+                          <div className="grid grid-cols-2 gap-2">
+                            <button
+                              type="button"
+                              onClick={() => handleBet('yes')}
+                              disabled={betting}
+                              className="flex items-center justify-center gap-1.5 rounded-xl border border-green-500/40 bg-green-500/10 py-2.5 text-sm font-semibold text-green-400 transition hover:bg-green-500/20 disabled:opacity-50"
+                            >
+                              ↑ YES
+                              {' '}
+                              <b>
+                                {priceYes}
+                                ¢
+                              </b>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleBet('no')}
+                              disabled={betting}
+                              className="flex items-center justify-center gap-1.5 rounded-xl border border-red-500/40 bg-red-500/10 py-2.5 text-sm font-semibold text-red-400 transition hover:bg-red-500/20 disabled:opacity-50"
+                            >
+                              ↓ NO
+                              {' '}
+                              <b>
+                                {priceNo}
+                                ¢
+                              </b>
+                            </button>
+                          </div>
+                          <div className="mt-2 flex items-center gap-2">
+                            <Input
+                              value={betAmount}
+                              onChange={e => setBetAmount(e.target.value)}
+                              type="number"
+                              min="1"
+                              placeholder="Amount"
+                              className="h-8 flex-1 text-xs"
+                            />
+                            {myPosition?.outcome_choice && Number(myPosition.stake_amount ?? 0) > 0 && (
+                              <span className="text-2xs whitespace-nowrap text-muted-foreground">
+                                Your bet: $
+                                {Number(myPosition.stake_amount ?? 0).toFixed(0)}
+                                {' '}
+                                on
+                                {' '}
+                                {myPosition.outcome_choice.toUpperCase()}
+                              </span>
+                            )}
+                          </div>
+                        </>
+                      )}
+                </div>
+
+                <div className="grid gap-4 p-4">
                   {/* Chat */}
                   <div className="flex flex-col gap-3">
                     <div className="flex gap-1 rounded-xl bg-muted/50 p-1">
@@ -600,15 +726,87 @@ export default function FriendPlayLobby({ onClose }: { onClose?: () => void }) {
                       </div>
                     )}
 
-                    {activeTab !== 'Discussion' && activeTab !== 'Invite' && (
-                      <div className="
-                        flex h-28 items-center justify-center rounded-xl border border-border/30 text-xs
-                        text-muted-foreground
-                      "
-                      >
-                        {activeTab}
-                        {' '}
-                        — coming soon
+                    {activeTab === 'Analytics' && (
+                      <div className="space-y-2 rounded-xl border border-border/40 bg-muted/20 p-4 text-sm">
+                        <div className="flex items-center justify-between">
+                          <span className="text-muted-foreground">Total pool</span>
+                          <span className="font-semibold text-foreground">
+                            $
+                            {poolTotal.toFixed(2)}
+                          </span>
+                        </div>
+                        <div className="h-2 overflow-hidden rounded-full bg-red-500/25">
+                          <div className="h-full bg-green-500/70" style={{ width: `${priceYes}%` }} />
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="font-semibold text-green-400">
+                            YES ·
+                            {priceYes}
+                            %
+                          </span>
+                          <span className="text-muted-foreground">
+                            $
+                            {poolYes.toFixed(2)}
+                            {' · '}
+                            {currentParticipants.filter(p => p.outcome_choice === 'yes' && Number(p.stake_amount ?? 0) > 0).length}
+                            {' bettor(s)'}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="font-semibold text-red-400">
+                            NO ·
+                            {priceNo}
+                            %
+                          </span>
+                          <span className="text-muted-foreground">
+                            $
+                            {poolNo.toFixed(2)}
+                            {' · '}
+                            {currentParticipants.filter(p => p.outcome_choice === 'no' && Number(p.stake_amount ?? 0) > 0).length}
+                            {' bettor(s)'}
+                          </span>
+                        </div>
+                        {myPosition?.outcome_choice && Number(myPosition.stake_amount ?? 0) > 0 && (
+                          <p className="border-t border-border/40 pt-2 text-xs text-muted-foreground">
+                            Your position: $
+                            {Number(myPosition.stake_amount ?? 0).toFixed(2)}
+                            {' '}
+                            on
+                            {' '}
+                            {myPosition.outcome_choice.toUpperCase()}
+                          </p>
+                        )}
+                      </div>
+                    )}
+
+                    {activeTab === 'Resolution' && (
+                      <div className="space-y-3 rounded-xl border border-border/40 bg-muted/20 p-4 text-sm">
+                        {isResolved
+                          ? (
+                              <p className="text-center font-semibold text-foreground">
+                                Resolved — winner:
+                                {' '}
+                                <span className={resolvedOutcome === 'yes' ? 'text-green-400' : 'text-red-400'}>{resolvedOutcome?.toUpperCase()}</span>
+                              </p>
+                            )
+                          : isHost
+                            ? (
+                                <>
+                                  <p className="text-xs text-muted-foreground">
+                                    As the host, pick the winning outcome. The winning side splits the entire $
+                                    {poolTotal.toFixed(2)}
+                                    {' '}
+                                    pool.
+                                  </p>
+                                  <div className="flex gap-2">
+                                    <Button onClick={() => handleResolve('yes')} disabled={resolving} size="sm" className="h-8 flex-1 bg-green-600 text-xs text-white hover:bg-green-700">Resolve YES</Button>
+                                    <Button onClick={() => handleResolve('no')} disabled={resolving} size="sm" className="h-8 flex-1 bg-red-600 text-xs text-white hover:bg-red-700">Resolve NO</Button>
+                                  </div>
+                                </>
+                              )
+                            : (
+                                <p className="text-center text-xs text-muted-foreground">Waiting for the host to resolve the market.</p>
+                              )}
                       </div>
                     )}
 
@@ -656,36 +854,6 @@ export default function FriendPlayLobby({ onClose }: { onClose?: () => void }) {
                     )}
                   </div>
 
-                  {/* AI Analysis */}
-                  <div className="space-y-3">
-                    <div className="rounded-2xl border border-border/40 bg-muted/30 p-3">
-                      <div className="mb-2 flex items-center gap-2">
-                        <div className="size-5 rounded-full bg-linear-to-br from-purple-500 to-cyan-400" />
-                        <div>
-                          <p className="text-xs font-semibold text-foreground">Market DNA</p>
-                          <p className="text-2xs text-muted-foreground">Live AI analysis</p>
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        {AI_STATS.map(stat => (
-                          <div key={stat.label}>
-                            <div className="mb-0.5 flex items-center justify-between">
-                              <p className="text-2xs font-semibold tracking-wider text-muted-foreground/60 uppercase">{stat.label}</p>
-                              <p className="text-2xs font-semibold text-foreground">{stat.display}</p>
-                            </div>
-                            <div className="h-1 w-full overflow-hidden rounded-full bg-muted">
-                              <div className={cn('h-full rounded-full', stat.color)} style={{ width: `${stat.value}%` }} />
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                      <p className="mt-3 rounded-xl bg-muted/50 p-2 text-xs text-muted-foreground">
-                        <span className="font-medium text-foreground">↑ Pool sentiment leans UP.</span>
-                        {' '}
-                        Consider locking your position.
-                      </p>
-                    </div>
-                  </div>
                 </div>
               </div>
             )

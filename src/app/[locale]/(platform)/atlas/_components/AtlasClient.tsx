@@ -142,6 +142,7 @@ export default function AtlasClient() {
               showHotspots={layers.hotspots}
               showArcs={layers.flow}
               showLabels
+              interactive
               hotspots={HOTSPOTS}
               onHotspotClick={i => router.push(CATEGORIES[i].href as Route)}
               className="block max-w-full"

@@ -2,6 +2,7 @@ import type { Event, Market } from '@/types'
 import { useExtracted } from 'next-intl'
 import AppLink from '@/components/AppLink'
 import EventIconImage from '@/components/EventIconImage'
+import Sparkline from '@/components/Sparkline'
 import { useOutcomeLabel } from '@/hooks/useOutcomeLabel'
 import { OUTCOME_INDEX } from '@/lib/constants'
 import { resolveEventPagePath } from '@/lib/events-routing'
@@ -75,54 +76,30 @@ export default function EventCardHeader({
       </AppLink>
 
       {isSingleMarket && !isResolvedEvent && (
-        <div className="relative -mt-3 flex flex-col items-center">
-          <div className="relative">
-            <svg
-              width="72"
-              height="52"
-              viewBox="0 0 72 52"
-              className="rotate-0 transform"
-            >
-              <path
-                d="M 6 46 A 30 30 0 0 1 66 46"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="5"
-                strokeLinecap="round"
-                className="text-slate-200 dark:text-slate-600"
-              />
-
-              <path
-                d="M 6 46 A 30 30 0 0 1 66 46"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="5"
-                strokeLinecap="round"
-                className={
-                  cn(`transition-all duration-300 ${
-                    roundedPrimaryDisplayChance < 40
-                      ? 'text-no'
-                      : roundedPrimaryDisplayChance === 50
-                        ? 'text-slate-400'
-                        : 'text-yes'
-                  }`)
-                }
-                strokeDasharray={`${(roundedPrimaryDisplayChance / 100) * 94.25} 94.25`}
-                strokeDashoffset="0"
-              />
-            </svg>
-
-            <div className="absolute inset-0 flex items-center justify-center pt-4">
-              <span className="text-sm font-bold text-slate-900 dark:text-slate-100">
-                {roundedPrimaryDisplayChance}
-                %
-              </span>
-            </div>
-          </div>
-
-          <div className="-mt-2 text-xs font-medium text-slate-500 dark:text-slate-400">
+        <div className="flex shrink-0 flex-col items-end gap-0.5">
+          <Sparkline
+            seed={`${title}-${roundedPrimaryDisplayChance}`}
+            trend={roundedPrimaryDisplayChance >= 50 ? 'up' : 'down'}
+            width={68}
+            height={30}
+            className="h-[30px] w-[68px]"
+          />
+          <span
+            className={cn(
+              'text-sm leading-none font-bold',
+              roundedPrimaryDisplayChance < 40
+                ? 'text-no'
+                : roundedPrimaryDisplayChance === 50
+                  ? 'text-slate-400'
+                  : 'text-yes',
+            )}
+          >
+            {roundedPrimaryDisplayChance}
+            %
+          </span>
+          <span className="text-2xs font-medium text-slate-500 dark:text-slate-400">
             {chanceFooterLabel}
-          </div>
+          </span>
         </div>
       )}
     </div>

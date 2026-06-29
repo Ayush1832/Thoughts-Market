@@ -2,7 +2,7 @@
 
 import type { LucideIcon } from 'lucide-react'
 import type { Route } from 'next'
-import { BadgePercentIcon, BellIcon, CoinsIcon, FingerprintIcon, LaptopIcon, LockIcon, PackageIcon, ShieldIcon, TriangleAlertIcon, UserIcon } from 'lucide-react'
+import { BadgePercentIcon, BellIcon, CoinsIcon, FingerprintIcon, LaptopIcon, LockIcon, PackageIcon, ShieldIcon, SunMoonIcon, TriangleAlertIcon, UserIcon } from 'lucide-react'
 import { useExtracted } from 'next-intl'
 import AppLink from '@/components/AppLink'
 import { Button } from '@/components/ui/button'
@@ -71,6 +71,19 @@ export default function SettingsSidebar() {
             </Button>
           )
         })}
+
+        {/* Static Theme button — visual only for now; toggle behavior to be added later. */}
+        <Button
+          type="button"
+          variant="ghost"
+          className={`
+            group relative h-auto shrink-0 snap-start flex-col gap-1.5 px-3 py-2 text-foreground hover:bg-white/[0.04]
+            lg:h-11 lg:min-w-0 lg:flex-row lg:justify-start lg:gap-2 lg:px-4 lg:py-2
+          `}
+        >
+          <SunMoonIcon className="size-6 text-muted-foreground lg:size-5" />
+          <span>{t('Theme')}</span>
+        </Button>
       </nav>
     </aside>
   )

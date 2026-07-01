@@ -1,4 +1,5 @@
 import { and, desc, eq, isNull, lt, sql } from 'drizzle-orm'
+import { applyP2pDelta, ensureP2pWallet } from '@/lib/db/queries/p2p-wallet'
 import { users } from '@/lib/db/schema/auth/tables'
 import { room_participants, rooms } from '@/lib/db/schema/rooms/tables'
 import { runQuery } from '@/lib/db/utils/run-query'
@@ -129,75 +130,94 @@ export const RoomsRepository = {
   },
 
   // Place / add to a Yes or No bet (parimutuel pool). Players commit to one side.
+  // The stake is deducted from the player's isolated P2P wallet atomically.
   async placeBet(roomId: string, userId: string, choice: 'yes' | 'no', amount: number) {
     return runQuery(async () => {
-      const [room] = await db.select().from(rooms).where(eq(rooms.id, roomId)).limit(1)
-      if (!room) { return { data: null, error: 'Room not found' } }
-      if (room.status !== 'open' && room.status !== 'playing') { return { data: null, error: 'Betting is closed for this room' } }
-      if (!Number.isFinite(amount) || amount <= 0) { return { data: null, error: 'Enter a valid amount' } }
+      return db.transaction(async (tx) => {
+        const [room] = await tx.select().from(rooms).where(eq(rooms.id, roomId)).limit(1)
+        if (!room) { return { data: null, error: 'Room not found' } }
+        if (room.status !== 'open' && room.status !== 'playing') { return { data: null, error: 'Betting is closed for this room' } }
+        if (!Number.isFinite(amount) || amount <= 0) { return { data: null, error: 'Enter a valid amount' } }
 
-      const [participant] = await db.select().from(room_participants)
-        .where(and(
-          eq(room_participants.room_id, roomId),
-          eq(room_participants.user_id, userId),
-          isNull(room_participants.left_at),
-        ))
-        .limit(1)
-      if (!participant) { return { data: null, error: 'Join the room before betting' } }
+        const [participant] = await tx.select().from(room_participants)
+          .where(and(
+            eq(room_participants.room_id, roomId),
+            eq(room_participants.user_id, userId),
+            isNull(room_participants.left_at),
+          ))
+          .limit(1)
+        if (!participant) { return { data: null, error: 'Join the room before betting' } }
 
-      const prevChoice = participant.outcome_choice
-      const prevStake = Number(participant.stake_amount ?? 0)
-      if (prevChoice && prevChoice !== choice && prevStake > 0) {
-        return { data: null, error: `You already bet ${prevChoice.toUpperCase()}. You can only add to that side.` }
-      }
-      const newStake = (prevChoice === choice ? prevStake : 0) + amount
+        const prevChoice = participant.outcome_choice
+        const prevStake = Number(participant.stake_amount ?? 0)
+        if (prevChoice && prevChoice !== choice && prevStake > 0) {
+          return { data: null, error: `You already bet ${prevChoice.toUpperCase()}. You can only add to that side.` }
+        }
+        const newStake = (prevChoice === choice ? prevStake : 0) + amount
 
-      await db.update(room_participants)
-        .set({ outcome_choice: choice, stake_amount: String(newStake) })
-        .where(eq(room_participants.id, participant.id))
-      return { data: { choice, stake: newStake }, error: null }
+        // Check + deduct the stake from the player's P2P balance first.
+        const balance = await ensureP2pWallet(tx, userId)
+        if (balance < amount) {
+          return { data: null, error: `Not enough P2P balance. You have ${balance.toFixed(2)}.` }
+        }
+        const newBalance = await applyP2pDelta(tx, userId, -amount, 'bet', roomId)
+
+        await tx.update(room_participants)
+          .set({ outcome_choice: choice, stake_amount: String(newStake) })
+          .where(eq(room_participants.id, participant.id))
+        return { data: { choice, stake: newStake, balance: newBalance }, error: null }
+      })
     })
   },
 
   // Host resolves the market; winning side splits the whole pool proportionally.
+  // Payouts are credited back to each winner's P2P wallet atomically.
   async resolveRoom(roomId: string, hostId: string, outcome: 'yes' | 'no') {
     return runQuery(async () => {
-      const [room] = await db.select().from(rooms).where(eq(rooms.id, roomId)).limit(1)
-      if (!room) { return { data: null, error: 'Room not found' } }
-      if (room.host_id !== hostId) { return { data: null, error: 'Only the host can resolve the market' } }
-      if (room.status === 'resolved') { return { data: null, error: 'This room is already resolved' } }
+      return db.transaction(async (tx) => {
+        const [room] = await tx.select().from(rooms).where(eq(rooms.id, roomId)).limit(1)
+        if (!room) { return { data: null, error: 'Room not found' } }
+        if (room.host_id !== hostId) { return { data: null, error: 'Only the host can resolve the market' } }
+        if (room.status === 'resolved') { return { data: null, error: 'This room is already resolved' } }
 
-      const parts = await db.select().from(room_participants)
-        .where(and(eq(room_participants.room_id, roomId), isNull(room_participants.left_at)))
+        const parts = await tx.select().from(room_participants)
+          .where(and(eq(room_participants.room_id, roomId), isNull(room_participants.left_at)))
 
-      let poolYes = 0, poolNo = 0
-      for (const p of parts) {
-        const s = Number(p.stake_amount ?? 0)
-        if (s <= 0) { continue }
-        if (p.outcome_choice === 'yes') { poolYes += s }
-        else if (p.outcome_choice === 'no') { poolNo += s }
-      }
-      const total = poolYes + poolNo
-      const winPool = outcome === 'yes' ? poolYes : poolNo
-
-      for (const p of parts) {
-        const stake = Number(p.stake_amount ?? 0)
-        let payout = 0
-        if (stake > 0) {
-          if (winPool === 0) { payout = stake } // no one on winning side → refund all
-          else if (p.outcome_choice === outcome) { payout = (stake / winPool) * total }
+        let poolYes = 0, poolNo = 0
+        for (const p of parts) {
+          const s = Number(p.stake_amount ?? 0)
+          if (s <= 0) { continue }
+          if (p.outcome_choice === 'yes') { poolYes += s }
+          else if (p.outcome_choice === 'no') { poolNo += s }
         }
-        await db.update(room_participants)
-          .set({ pnl: String(payout - stake) })
-          .where(eq(room_participants.id, p.id))
-      }
+        const total = poolYes + poolNo
+        const winPool = outcome === 'yes' ? poolYes : poolNo
 
-      const meta = (room.metadata && typeof room.metadata === 'object') ? room.metadata as Record<string, unknown> : {}
-      const [updated] = await db.update(rooms)
-        .set({ status: 'resolved', resolved_at: new Date(), metadata: { ...meta, outcome, pool_total: total } })
-        .where(eq(rooms.id, roomId))
-        .returning()
-      return { data: updated, error: null }
+        for (const p of parts) {
+          const stake = Number(p.stake_amount ?? 0)
+          let payout = 0
+          if (stake > 0) {
+            if (winPool === 0) { payout = stake } // no one on winning side → refund all
+            else if (p.outcome_choice === outcome) { payout = (stake / winPool) * total }
+          }
+          await tx.update(room_participants)
+            .set({ pnl: String(payout - stake) })
+            .where(eq(room_participants.id, p.id))
+
+          // Credit the payout back to the winner's P2P wallet (stakes were
+          // already deducted at bet time; losers get 0 → nothing to credit).
+          if (payout > 0) {
+            await applyP2pDelta(tx, p.user_id, payout, winPool === 0 ? 'refund' : 'win', roomId)
+          }
+        }
+
+        const meta = (room.metadata && typeof room.metadata === 'object') ? room.metadata as Record<string, unknown> : {}
+        const [updated] = await tx.update(rooms)
+          .set({ status: 'resolved', resolved_at: new Date(), metadata: { ...meta, outcome, pool_total: total } })
+          .where(eq(rooms.id, roomId))
+          .returning()
+        return { data: updated, error: null }
+      })
     })
   },
 

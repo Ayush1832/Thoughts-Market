@@ -761,7 +761,23 @@ function UserModeView({ onSwitchToCreator }: { onSwitchToCreator: () => void }) 
     return [{ label: 'All niches', count: String(total) }, ...fromApi]
   }, [data])
 
+  // Load persisted follows so the state survives a page refresh.
+  useEffect(() => {
+    let active = true
+    fetch('/api/creators/follows', { credentials: 'same-origin' })
+      .then(res => (res.ok ? res.json() : null))
+      .then((json) => {
+        if (active && Array.isArray(json?.data)) {
+          setFollowingIds(new Set(json.data as string[]))
+        }
+      })
+      .catch(() => {})
+    return () => { active = false }
+  }, [])
+
   function handleToggleFollow(id: string) {
+    const wasFollowing = followingIds.has(id)
+    // Optimistic UI update.
     setFollowingIds((prev) => {
       const next = new Set(prev)
       if (next.has(id)) {
@@ -772,6 +788,30 @@ function UserModeView({ onSwitchToCreator }: { onSwitchToCreator: () => void }) 
       }
       return next
     })
+    // Persist to the server; revert if it fails.
+    fetch('/api/creators/follows', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({ creatorId: id }),
+    })
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error('Failed to update follow')
+        }
+      })
+      .catch(() => {
+        setFollowingIds((prev) => {
+          const next = new Set(prev)
+          if (wasFollowing) {
+            next.add(id)
+          }
+          else {
+            next.delete(id)
+          }
+          return next
+        })
+      })
   }
 
   const resolvedFeatured = creators.filter(c => c.tier === 'ELITE')

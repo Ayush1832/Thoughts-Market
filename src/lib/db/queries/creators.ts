@@ -1,7 +1,7 @@
 import type { CreatorApplicationStatus } from '@/lib/db/schema/creators/tables'
 import { and, desc, eq, inArray, sql } from 'drizzle-orm'
 import { users } from '@/lib/db/schema/auth/tables'
-import { creator_applications } from '@/lib/db/schema/creators/tables'
+import { creator_applications, creator_follows } from '@/lib/db/schema/creators/tables'
 import { runQuery } from '@/lib/db/utils/run-query'
 import { db } from '@/lib/drizzle'
 
@@ -229,6 +229,46 @@ export const CreatorApplicationsRepository = {
         .limit(1)
 
       return { data: row ?? null, error: null }
+    })
+  },
+
+  // ── Follows ──────────────────────────────────────────────────────────────
+
+  // Creator IDs the given user currently follows.
+  async listFollowedCreatorIds(userId: string) {
+    return runQuery(async () => {
+      const rows = await db
+        .select({ creator_id: creator_follows.creator_id })
+        .from(creator_follows)
+        .where(eq(creator_follows.follower_id, userId))
+      return { data: rows.map(r => r.creator_id), error: null }
+    })
+  },
+
+  // Follow / unfollow a creator. Returns the resulting state (`following`).
+  async toggleFollow(userId: string, creatorId: string) {
+    return runQuery(async () => {
+      const [existing] = await db
+        .select({ creator_id: creator_follows.creator_id })
+        .from(creator_follows)
+        .where(and(
+          eq(creator_follows.follower_id, userId),
+          eq(creator_follows.creator_id, creatorId),
+        ))
+        .limit(1)
+
+      if (existing) {
+        await db.delete(creator_follows).where(and(
+          eq(creator_follows.follower_id, userId),
+          eq(creator_follows.creator_id, creatorId),
+        ))
+        return { data: { following: false }, error: null }
+      }
+
+      await db.insert(creator_follows)
+        .values({ follower_id: userId, creator_id: creatorId })
+        .onConflictDoNothing()
+      return { data: { following: true }, error: null }
     })
   },
 }

@@ -11,18 +11,36 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/select'
 
-const COINS = ['USDC', 'USDT'] as const
-const NETWORKS = ['polygon', 'ethereum', 'base', 'arbitrum', 'bsc', 'optimism'] as const
-const DEST_COINS = ['USDC', 'USDT', 'ETH', 'DAI', 'POL'] as const
+const NETWORK_LABELS: Record<string, string> = {
+  polygon: 'Polygon',
+  ethereum: 'Ethereum',
+  bsc: 'BNB Smart Chain',
+  avalanche: 'Avalanche',
+  arbitrum: 'Arbitrum',
+  base: 'Base',
+  optimism: 'Optimism',
+}
 
-type Coin = (typeof COINS)[number]
-type Network = (typeof NETWORKS)[number]
+const COIN_NETWORKS: Record<string, readonly string[]> = {
+  USDC: ['polygon', 'ethereum', 'bsc', 'avalanche', 'arbitrum', 'base', 'optimism'],
+  USDT: ['polygon', 'ethereum', 'bsc', 'avalanche', 'arbitrum', 'optimism'],
+  POL: ['polygon'],
+  ETH: ['ethereum', 'arbitrum', 'base', 'optimism'],
+  BNB: ['bsc'],
+  AVAX: ['avalanche'],
+  LINK: ['ethereum'],
+  UNI: ['ethereum'],
+  SAND: ['ethereum'],
+  IMX: ['ethereum'],
+  RLB: ['ethereum'],
+}
+
+const COINS = ['USDC', 'USDT', 'POL', 'ETH', 'BNB', 'AVAX', 'LINK', 'UNI', 'SAND', 'IMX', 'RLB'] as const
 
 function CustodialWithdrawForm({ onClose }: { onClose: () => void }) {
   const [balances, setBalances] = useState<Record<string, string>>({})
-  const [coin, setCoin] = useState<Coin>('USDC')
-  const [destNetwork, setDestNetwork] = useState<Network>('polygon')
-  const [destCoin, setDestCoin] = useState<string>('USDC')
+  const [coin, setCoin] = useState<string>('USDC')
+  const [network, setNetwork] = useState<string>('polygon')
   const [amount, setAmount] = useState('')
   const [toAddress, setToAddress] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -46,7 +64,16 @@ function CustodialWithdrawForm({ onClose }: { onClose: () => void }) {
     }
   }, [])
 
+  function handleCoinChange(value: string) {
+    setCoin(value)
+    const networks = COIN_NETWORKS[value] ?? []
+    if (!networks.includes(network)) {
+      setNetwork(networks[0] ?? '')
+    }
+  }
+
   const available = Number(balances[coin] ?? '0')
+  const networks = COIN_NETWORKS[coin] ?? []
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -69,8 +96,7 @@ function CustodialWithdrawForm({ onClose }: { onClose: () => void }) {
       const result = await requestWithdrawalAction({
         coin,
         amount,
-        destNetwork,
-        destCoin,
+        destNetwork: network,
         toAddress,
       })
       if (result.error) {
@@ -89,9 +115,9 @@ function CustodialWithdrawForm({ onClose }: { onClose: () => void }) {
     <form className="space-y-4" onSubmit={handleSubmit}>
       <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2">
-          <Label>From balance</Label>
-          <Select value={coin} onValueChange={value => setCoin(value as Coin)}>
-            <SelectTrigger className="h-12 w-full justify-between">{coin}</SelectTrigger>
+          <Label className="text-foreground">Token</Label>
+          <Select value={coin} onValueChange={handleCoinChange}>
+            <SelectTrigger className="h-12 w-full justify-between bg-card text-foreground">{coin}</SelectTrigger>
             <SelectContent position="popper" side="bottom" align="start" sideOffset={6}>
               {COINS.map(option => (
                 <SelectItem key={option} value={option}>{option}</SelectItem>
@@ -108,50 +134,14 @@ function CustodialWithdrawForm({ onClose }: { onClose: () => void }) {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="custodial-withdraw-amount">Amount</Label>
-          <div className="relative">
-            <Input
-              id="custodial-withdraw-amount"
-              inputMode="decimal"
-              value={amount}
-              onChange={event => setAmount(event.target.value.replace(/[^0-9.]/g, ''))}
-              placeholder="0.00"
-              className="h-12 pr-16"
-              required
-            />
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="absolute inset-y-2 right-2 text-xs"
-              onClick={() => setAmount(String(available))}
-            >
-              Max
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2">
-        <div className="space-y-2">
-          <Label>Receive network</Label>
-          <Select value={destNetwork} onValueChange={value => setDestNetwork(value as Network)}>
-            <SelectTrigger className="h-12 w-full justify-between capitalize">{destNetwork}</SelectTrigger>
+          <Label className="text-foreground">Network</Label>
+          <Select value={network} onValueChange={setNetwork}>
+            <SelectTrigger className="h-12 w-full justify-between bg-card text-foreground">
+              {NETWORK_LABELS[network] ?? network}
+            </SelectTrigger>
             <SelectContent position="popper" side="bottom" align="start" sideOffset={6}>
-              {NETWORKS.map(option => (
-                <SelectItem key={option} value={option} className="capitalize">{option}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-2">
-          <Label>Receive token</Label>
-          <Select value={destCoin} onValueChange={setDestCoin}>
-            <SelectTrigger className="h-12 w-full justify-between">{destCoin}</SelectTrigger>
-            <SelectContent position="popper" side="bottom" align="start" sideOffset={6}>
-              {DEST_COINS.map(option => (
-                <SelectItem key={option} value={option}>{option}</SelectItem>
+              {networks.map(option => (
+                <SelectItem key={option} value={option}>{NETWORK_LABELS[option] ?? option}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -159,7 +149,31 @@ function CustodialWithdrawForm({ onClose }: { onClose: () => void }) {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="custodial-withdraw-to">Recipient address</Label>
+        <Label htmlFor="custodial-withdraw-amount" className="text-foreground">Amount</Label>
+        <div className="relative">
+          <Input
+            id="custodial-withdraw-amount"
+            inputMode="decimal"
+            value={amount}
+            onChange={event => setAmount(event.target.value.replace(/[^0-9.]/g, ''))}
+            placeholder="0.00"
+            className="h-12 pr-16"
+            required
+          />
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="absolute inset-y-2 right-2 text-xs"
+            onClick={() => setAmount(String(available))}
+          >
+            Max
+          </Button>
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="custodial-withdraw-to" className="text-foreground">Recipient address</Label>
         <Input
           id="custodial-withdraw-to"
           value={toAddress}
@@ -169,6 +183,17 @@ function CustodialWithdrawForm({ onClose }: { onClose: () => void }) {
           required
         />
       </div>
+
+      <p className="text-center text-xs text-muted-foreground">
+        Sending
+        {' '}
+        {coin}
+        {' '}
+        on
+        {' '}
+        {NETWORK_LABELS[network] ?? network}
+        . Make sure the recipient address supports this network.
+      </p>
 
       <Button type="submit" className="h-12 w-full text-base" disabled={submitting}>
         {submitting ? 'Submitting…' : 'Withdraw'}

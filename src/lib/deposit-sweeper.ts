@@ -1,14 +1,12 @@
 import { createPublicClient, createWalletClient, erc20Abi, http, isAddress } from 'viem'
 import { privateKeyToAccount } from 'viem/accounts'
 import { listMonitoredDepositAddresses } from '@/lib/db/queries/deposit-addresses'
+import { getEnabledDepositChains } from '@/lib/deposit-chains'
 import { deriveDepositAccount } from '@/lib/deposit-hd'
-import { DEPOSIT_TOKENS } from '@/lib/deposit-tokens'
-import { defaultViemNetwork, defaultViemRpcUrl } from '@/lib/viem-network'
 import 'server-only'
 
-const NETWORK = 'polygon'
-const MIN_SWEEP_UNITS = 100000n
 const SWEEP_GAS_LIMIT = 120000n
+const NATIVE_GAS_LIMIT = 21000n
 const MAX_SWEEPS_PER_RUN = 25
 
 export interface SweepResult {
@@ -21,6 +19,10 @@ function normalizePrivateKey(value: string): `0x${string}` {
   return (trimmed.startsWith('0x') ? trimmed : `0x${trimmed}`) as `0x${string}`
 }
 
+function minSweepUnits(decimals: number): bigint {
+  return 10n ** BigInt(Math.max(decimals - 1, 0))
+}
+
 export async function runDepositSweep(): Promise<SweepResult> {
   const treasury = process.env.DEPOSIT_TREASURY_ADDRESS?.trim()
   const gasKey = process.env.DEPOSIT_GAS_PRIVATE_KEY?.trim()
@@ -28,59 +30,87 @@ export async function runDepositSweep(): Promise<SweepResult> {
     return { disabled: true, swept: 0 }
   }
 
-  const publicClient = createPublicClient({ chain: defaultViemNetwork, transport: http(defaultViemRpcUrl) })
-  const gasWallet = createWalletClient({
-    account: privateKeyToAccount(normalizePrivateKey(gasKey)),
-    chain: defaultViemNetwork,
-    transport: http(defaultViemRpcUrl),
-  })
-
+  const gasAccount = privateKeyToAccount(normalizePrivateKey(gasKey))
   const monitored = await listMonitoredDepositAddresses()
-  const addresses = monitored.filter(record => record.network === NETWORK)
   let swept = 0
 
-  for (const record of addresses) {
-    const depositAddress = record.address as `0x${string}`
+  for (const chainConfig of getEnabledDepositChains()) {
+    const addresses = monitored.filter(record => record.network === chainConfig.network)
+    if (addresses.length === 0) {
+      continue
+    }
 
-    for (const token of DEPOSIT_TOKENS) {
-      const balance = await publicClient.readContract({
-        address: token.address,
-        abi: erc20Abi,
-        functionName: 'balanceOf',
-        args: [depositAddress],
-      })
-      if (balance < MIN_SWEEP_UNITS) {
-        continue
-      }
+    const publicClient = createPublicClient({ chain: chainConfig.chain, transport: http(chainConfig.rpcUrl) })
+    const gasWallet = createWalletClient({ account: gasAccount, chain: chainConfig.chain, transport: http(chainConfig.rpcUrl) })
 
-      const gasPrice = await publicClient.getGasPrice()
-      const requiredGas = gasPrice * SWEEP_GAS_LIMIT * 3n
-      const nativeBalance = await publicClient.getBalance({ address: depositAddress })
-      if (nativeBalance < requiredGas) {
-        const topUpHash = await gasWallet.sendTransaction({
-          to: depositAddress,
-          value: requiredGas - nativeBalance,
+    for (const record of addresses) {
+      const depositAddress = record.address as `0x${string}`
+
+      for (const token of chainConfig.tokens) {
+        const balance = await publicClient.readContract({
+          address: token.address,
+          abi: erc20Abi,
+          functionName: 'balanceOf',
+          args: [depositAddress],
         })
-        await publicClient.waitForTransactionReceipt({ hash: topUpHash })
+        if (balance < minSweepUnits(token.decimals)) {
+          continue
+        }
+
+        const gasPrice = await publicClient.getGasPrice()
+        const requiredGas = gasPrice * SWEEP_GAS_LIMIT * 3n
+        const nativeBalance = await publicClient.getBalance({ address: depositAddress })
+        if (nativeBalance < requiredGas) {
+          const topUpHash = await gasWallet.sendTransaction({
+            to: depositAddress,
+            value: requiredGas - nativeBalance,
+          })
+          await publicClient.waitForTransactionReceipt({ hash: topUpHash })
+        }
+
+        const wallet = createWalletClient({
+          account: deriveDepositAccount(record.derivationIndex),
+          chain: chainConfig.chain,
+          transport: http(chainConfig.rpcUrl),
+        })
+        const sweepHash = await wallet.writeContract({
+          address: token.address,
+          abi: erc20Abi,
+          functionName: 'transfer',
+          args: [treasury as `0x${string}`, balance],
+          gas: SWEEP_GAS_LIMIT,
+        })
+        await publicClient.waitForTransactionReceipt({ hash: sweepHash })
+
+        swept += 1
+        if (swept >= MAX_SWEEPS_PER_RUN) {
+          return { disabled: false, swept }
+        }
       }
 
-      const wallet = createWalletClient({
-        account: deriveDepositAccount(record.derivationIndex),
-        chain: defaultViemNetwork,
-        transport: http(defaultViemRpcUrl),
-      })
-      const sweepHash = await wallet.writeContract({
-        address: token.address,
-        abi: erc20Abi,
-        functionName: 'transfer',
-        args: [treasury as `0x${string}`, balance],
-        gas: SWEEP_GAS_LIMIT,
-      })
-      await publicClient.waitForTransactionReceipt({ hash: sweepHash })
+      const nativeBalance = await publicClient.getBalance({ address: depositAddress })
+      if (nativeBalance >= chainConfig.native.minSweep) {
+        const gasPrice = await publicClient.getGasPrice()
+        const gasReserve = gasPrice * NATIVE_GAS_LIMIT * 3n
+        const value = nativeBalance - gasReserve
+        if (value > 0n) {
+          const wallet = createWalletClient({
+            account: deriveDepositAccount(record.derivationIndex),
+            chain: chainConfig.chain,
+            transport: http(chainConfig.rpcUrl),
+          })
+          const nativeHash = await wallet.sendTransaction({
+            to: treasury as `0x${string}`,
+            value,
+            gas: NATIVE_GAS_LIMIT,
+          })
+          await publicClient.waitForTransactionReceipt({ hash: nativeHash })
 
-      swept += 1
-      if (swept >= MAX_SWEEPS_PER_RUN) {
-        return { disabled: false, swept }
+          swept += 1
+          if (swept >= MAX_SWEEPS_PER_RUN) {
+            return { disabled: false, swept }
+          }
+        }
       }
     }
   }

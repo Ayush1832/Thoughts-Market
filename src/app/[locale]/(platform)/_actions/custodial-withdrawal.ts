@@ -6,18 +6,18 @@ import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
 import { debitTx } from '@/lib/db/queries/ledger'
 import { UserRepository } from '@/lib/db/queries/user'
 import { withdrawals } from '@/lib/db/schema/ledger/tables'
+import { isCoinSupportedOnNetwork, SUPPORTED_DEPOSIT_NETWORKS } from '@/lib/deposit-chains'
 import { db } from '@/lib/drizzle'
 
-const SUPPORTED_COINS = ['USDC', 'USDT'] as const
-const SUPPORTED_NETWORKS = ['polygon', 'ethereum', 'base', 'arbitrum', 'bsc', 'optimism'] as const
-
 const WithdrawalInputSchema = z.object({
-  coin: z.enum(SUPPORTED_COINS),
+  coin: z.string().trim().min(1).max(16),
   amount: z.string().regex(/^\d+(?:\.\d+)?$/, 'Invalid amount.'),
-  destNetwork: z.enum(SUPPORTED_NETWORKS),
-  destCoin: z.string().trim().min(1).max(16),
+  destNetwork: z.string().trim().min(1),
   toAddress: z.string().refine(value => isAddress(value), 'Invalid destination address.'),
-})
+}).refine(
+  input => SUPPORTED_DEPOSIT_NETWORKS.includes(input.destNetwork) && isCoinSupportedOnNetwork(input.destNetwork, input.coin),
+  { message: 'Unsupported coin or network.' },
+)
 
 export type WithdrawalInput = z.input<typeof WithdrawalInputSchema>
 
@@ -49,7 +49,7 @@ export async function requestWithdrawalAction(input: WithdrawalInput): Promise<W
           coin: parsed.data.coin,
           amount: parsed.data.amount,
           dest_network: parsed.data.destNetwork,
-          dest_coin: parsed.data.destCoin.toUpperCase(),
+          dest_coin: parsed.data.coin,
           to_address: parsed.data.toAddress,
           status: 'pending',
         })

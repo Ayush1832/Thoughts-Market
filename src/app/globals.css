@@ -336,12 +336,13 @@
 
 /* ─── Global component overrides ─── */
 
-/* Dialogs: glass dark background */
+/* Dialogs: glass background that follows the active theme tokens */
 [data-slot='dialog-content'] {
-  background: oklch(0.16 0.02 266 / 95%) !important;
-  border: 1px solid oklch(1 0 0 / 10%) !important;
-  box-shadow: 0 25px 50px -12px oklch(0 0 0 / 50%), 0 0 0 1px oklch(1 0 0 / 5%) !important;
+  background: color-mix(in oklab, var(--popover) 95%, transparent) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: 0 25px 50px -12px oklch(0 0 0 / 40%), 0 0 0 1px var(--border) !important;
   backdrop-filter: blur(20px) !important;
+  color: var(--popover-foreground);
 }
 
 /* Navigation tabs: active pill */

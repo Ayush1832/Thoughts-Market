@@ -4,25 +4,61 @@ import { useEffect, useState } from 'react'
 import QRCode from 'react-qr-code'
 import { getDepositAddressAction, refreshDepositAddressAction } from '@/app/[locale]/(platform)/_actions/deposit-address'
 import { Button } from '@/components/ui/button'
+import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/select'
 
-const COINS = ['USDC', 'USDT'] as const
-type Coin = (typeof COINS)[number]
+const NETWORKS = [
+  { value: 'polygon', label: 'Polygon' },
+  { value: 'ethereum', label: 'Ethereum' },
+  { value: 'bsc', label: 'BNB Smart Chain' },
+  { value: 'avalanche', label: 'Avalanche' },
+  { value: 'arbitrum', label: 'Arbitrum' },
+  { value: 'base', label: 'Base' },
+  { value: 'optimism', label: 'Optimism' },
+] as const
+type Network = (typeof NETWORKS)[number]['value']
+
+const NETWORK_TOKENS: Record<Network, readonly string[]> = {
+  polygon: ['POL', 'USDC', 'USDT'],
+  ethereum: ['ETH', 'USDC', 'USDT', 'LINK', 'UNI', 'SAND', 'IMX', 'RLB'],
+  bsc: ['BNB', 'USDC', 'USDT'],
+  avalanche: ['AVAX', 'USDC', 'USDT'],
+  arbitrum: ['ETH', 'USDC', 'USDT'],
+  base: ['ETH', 'USDC'],
+  optimism: ['ETH', 'USDC', 'USDT'],
+}
+
+function networkLabel(value: Network): string {
+  return NETWORKS.find(option => option.value === value)?.label ?? value
+}
 
 function CustodialDepositPanel() {
-  const [coin, setCoin] = useState<Coin>('USDC')
+  const [network, setNetwork] = useState<Network>('polygon')
+  const [coin, setCoin] = useState<string>(NETWORK_TOKENS.polygon[0] ?? 'USDC')
   const [address, setAddress] = useState<string | null>(null)
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading')
   const [error, setError] = useState('')
   const [copied, setCopied] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
 
+  function handleNetworkChange(value: string) {
+    const next = value as Network
+    setNetwork(next)
+    if (!NETWORK_TOKENS[next].includes(coin)) {
+      setCoin(NETWORK_TOKENS[next][0] ?? '')
+    }
+  }
+
   useEffect(() => {
+    if (!network || !coin) {
+      return
+    }
     let cancelled = false
     setStatus('loading')
     setAddress(null)
     setError('')
 
-    getDepositAddressAction({ coin, network: 'polygon' })
+    getDepositAddressAction({ coin, network })
       .then((result) => {
         if (cancelled) {
           return
@@ -45,13 +81,16 @@ function CustodialDepositPanel() {
     return () => {
       cancelled = true
     }
-  }, [coin])
+  }, [coin, network])
 
   async function handleRefresh() {
+    if (!network || !coin) {
+      return
+    }
     setRefreshing(true)
     setError('')
     try {
-      const result = await refreshDepositAddressAction({ coin, network: 'polygon' })
+      const result = await refreshDepositAddressAction({ coin, network })
       if (result.error || !result.data) {
         setError(result.error ?? 'Could not generate a new address.')
         return
@@ -78,18 +117,30 @@ function CustodialDepositPanel() {
 
   return (
     <div className="space-y-4">
-      <div className="flex gap-2">
-        {COINS.map(option => (
-          <Button
-            key={option}
-            type="button"
-            variant={option === coin ? 'default' : 'outline'}
-            className="flex-1"
-            onClick={() => setCoin(option)}
-          >
-            {option}
-          </Button>
-        ))}
+      <div className="grid gap-4 md:grid-cols-2">
+        <div className="space-y-2">
+          <Label className="text-foreground">Network</Label>
+          <Select value={network} onValueChange={handleNetworkChange}>
+            <SelectTrigger className="h-12 w-full justify-between bg-card text-foreground">{networkLabel(network)}</SelectTrigger>
+            <SelectContent position="popper" side="bottom" align="start" sideOffset={6}>
+              {NETWORKS.map(option => (
+                <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label className="text-foreground">Token</Label>
+          <Select value={coin} onValueChange={setCoin}>
+            <SelectTrigger className="h-12 w-full justify-between bg-card text-foreground">{coin}</SelectTrigger>
+            <SelectContent position="popper" side="bottom" align="start" sideOffset={6}>
+              {NETWORK_TOKENS[network].map(option => (
+                <SelectItem key={option} value={option}>{option}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       <p className="text-center text-sm text-muted-foreground">
@@ -97,7 +148,11 @@ function CustodialDepositPanel() {
         {' '}
         {coin}
         {' '}
-        on Polygon to this address. Your balance updates automatically after the network confirms.
+        on
+        {' '}
+        {networkLabel(network)}
+        {' '}
+        to this address. Sending on any other network will result in lost funds. Your balance updates automatically after the network confirms.
       </p>
 
       <div className="flex justify-center">
@@ -117,7 +172,7 @@ function CustodialDepositPanel() {
 
       {address && (
         <div className="space-y-2">
-          <div className="rounded-md border bg-muted/40 p-3 text-center font-mono text-xs break-all">
+          <div className="rounded-md border bg-muted/40 p-3 text-center font-mono text-xs break-all text-foreground">
             {address}
           </div>
           <div className="flex gap-2">

@@ -8,15 +8,16 @@ import {
 } from '@/lib/db/queries/deposit-addresses'
 import { listBalances } from '@/lib/db/queries/ledger'
 import { UserRepository } from '@/lib/db/queries/user'
+import { isCoinSupportedOnNetwork, SUPPORTED_DEPOSIT_NETWORKS } from '@/lib/deposit-chains'
 import { isDepositHdConfigured } from '@/lib/deposit-hd'
 
-const SUPPORTED_COINS = ['USDC', 'USDT'] as const
-const SUPPORTED_NETWORKS = ['polygon'] as const
-
 const DepositAddressInputSchema = z.object({
-  coin: z.enum(SUPPORTED_COINS),
-  network: z.enum(SUPPORTED_NETWORKS),
-})
+  coin: z.string().min(1),
+  network: z.string().min(1),
+}).refine(
+  input => SUPPORTED_DEPOSIT_NETWORKS.includes(input.network) && isCoinSupportedOnNetwork(input.network, input.coin),
+  { message: 'Unsupported coin or network.' },
+)
 
 export type DepositAddressInput = z.input<typeof DepositAddressInputSchema>
 

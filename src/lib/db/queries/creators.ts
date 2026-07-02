@@ -185,6 +185,10 @@ export const CreatorApplicationsRepository = {
           created_at: creator_applications.created_at,
           image: users.image,
           address: users.address,
+          follower_count: sql<number>`(
+            SELECT count(*)::int FROM creator_follows cf
+            WHERE cf.creator_id = ${creator_applications.id}
+          )`,
         })
         .from(creator_applications)
         .leftJoin(users, eq(creator_applications.user_id, users.id))

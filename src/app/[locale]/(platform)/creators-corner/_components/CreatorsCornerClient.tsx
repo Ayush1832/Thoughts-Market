@@ -52,6 +52,7 @@ interface Creator {
   volume: string
   niche: string
   bio: string
+  createdAt?: string
   isFollowing?: boolean
 }
 
@@ -301,8 +302,10 @@ const NICHE_FILTERS = [
   { label: 'Sports', count: '318' },
 ]
 
-const MARKET_FILTERS = ['All', 'Trending', 'New', 'Ending soon', 'High volume', 'Top accuracy', 'Most followed', 'Private pools']
-const CATEGORIES = ['All', 'Crypto', 'Sports', 'Politics', 'Stocks', 'Macro', 'Entertainment', 'Climate']
+// Sort options backed by real data (follower count / creation date).
+const MARKET_FILTERS = ['Trending', 'New', 'Most followed']
+const CATEGORIES = ['Crypto', 'Sports', 'Politics', 'Stocks', 'Macro', 'Entertainment', 'Climate']
+
 const CREATOR_TABS = ['Overview', 'Create market', 'Audience', 'Monetization', 'Levels & XP', 'Featured & boards', 'Public profile']
 
 const PRESTIGE_BADGES = [
@@ -394,13 +397,6 @@ function SuggestedNicheCard({ item }: { item: typeof AI_SUGGESTIONS[0] }) {
         <span className="text-2xl">{item.emoji}</span>
         <div>
           <div className="text-sm font-bold text-tm-primary">{item.title}</div>
-          <div className="flex items-center gap-1 text-2xs font-semibold text-primary">
-            <ZapIcon className="size-2.5" />
-            AI Match
-            {' '}
-            {item.matchScore}
-            %
-          </div>
         </div>
         <div className="
           ml-auto flex size-7 items-center justify-center rounded-full bg-primary/15 text-xs font-bold text-primary
@@ -659,6 +655,7 @@ interface ApiCreator {
   created_at: string
   image: string | null
   address: string | null
+  follower_count?: number
 }
 
 interface ApiNiche {
@@ -687,8 +684,8 @@ function hashSeed(seed: string): number {
 }
 
 // Map a real (approved/verified) creator application into the card shape.
-// Metrics like followers/accuracy aren't tracked yet, so they're left at 0 and
-// the card renders a "New creator" state instead of fake numbers.
+// Follower count is real (from creator_follows); accuracy/volume aren't tracked
+// yet, so they're left at 0.
 function mapApiCreator(row: ApiCreator): Creator {
   const seed = hashSeed(row.username || row.id)
   return {
@@ -698,12 +695,13 @@ function mapApiCreator(row: ApiCreator): Creator {
     avatarGradient: AVATAR_GRADIENTS[seed % AVATAR_GRADIENTS.length],
     avatarEmoji: AVATAR_EMOJIS[seed % AVATAR_EMOJIS.length],
     tier: row.status === 'verified' ? 'ELITE' : 'PRO',
-    followers: 0,
+    followers: row.follower_count ?? 0,
     trustScore: 0,
     accuracy: 0,
     volume: '$0',
     niche: row.niche,
     bio: row.reason,
+    createdAt: row.created_at,
     isFollowing: false,
   }
 }
@@ -721,8 +719,9 @@ function useDebouncedValue<T>(value: T, delay = 300): T {
 function UserModeView({ onSwitchToCreator }: { onSwitchToCreator: () => void }) {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedNiche, setSelectedNiche] = useState('All niches')
-  const [selectedFilter, setSelectedFilter] = useState('All')
-  const [selectedCategory, setSelectedCategory] = useState('All')
+  const [selectedFilter, setSelectedFilter] = useState('Trending')
+  // Empty = no category filter (show all niches). Clicking a pill filters; clicking it again clears.
+  const [selectedCategory, setSelectedCategory] = useState('')
   const [followingIds, setFollowingIds] = useState<Set<string>>(new Set())
 
   const debouncedSearch = useDebouncedValue(searchQuery, 300)
@@ -747,10 +746,28 @@ function UserModeView({ onSwitchToCreator }: { onSwitchToCreator: () => void }) 
   })
 
   const creators = useMemo(() => {
-    return (data?.data.creators ?? [])
+    let list = (data?.data.creators ?? [])
       .map(mapApiCreator)
       .map(creator => ({ ...creator, isFollowing: followingIds.has(creator.id) }))
-  }, [data, followingIds])
+
+    // Category pill → filter by the creator's niche.
+    if (selectedCategory) {
+      const cat = selectedCategory.toLowerCase()
+      list = list.filter(c => c.niche.toLowerCase().includes(cat))
+    }
+
+    // Market filter → sort order (all backed by real data).
+    list = [...list].sort((a, b) => {
+      if (selectedFilter === 'New') {
+        // Newest creators first.
+        return (b.createdAt ?? '').localeCompare(a.createdAt ?? '')
+      }
+      // 'Trending' + 'Most followed' → most followers first.
+      return b.followers - a.followers
+    })
+
+    return list
+  }, [data, followingIds, selectedCategory, selectedFilter])
 
   const nicheFilters = useMemo(() => {
     const total = data?.data.total ?? 0
@@ -896,11 +913,11 @@ function UserModeView({ onSwitchToCreator }: { onSwitchToCreator: () => void }) 
             <button
               key={cat}
               type="button"
-              onClick={() => setSelectedCategory(cat)}
+              onClick={() => setSelectedCategory(prev => (prev === cat ? '' : cat))}
               className={cn(
                 'shrink-0 rounded-lg px-2.5 py-1 text-[11px] font-semibold transition-all duration-200',
                 selectedCategory === cat
-                  ? 'bg-tm-primary text-tm-surface'
+                  ? 'bg-red-500 text-white'
                   : 'bg-tm-elevated text-tm-secondary hover:bg-tm-border hover:text-tm-primary',
               )}
             >
@@ -915,7 +932,6 @@ function UserModeView({ onSwitchToCreator }: { onSwitchToCreator: () => void }) 
         <div className="flex items-center gap-2">
           <SparklesIcon className="size-4 text-primary" />
           <h3 className="text-xs font-bold tracking-[1.5px] text-tm-secondary/70 uppercase">Suggested for you</h3>
-          <span className="rounded-full bg-primary/15 px-2 py-0.5 text-2xs font-bold text-primary">AI curated</span>
         </div>
         <div className="flex gap-4 overflow-x-auto pb-2">
           {AI_SUGGESTIONS.map(s => <SuggestedNicheCard key={s.id} item={s} />)}

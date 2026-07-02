@@ -123,6 +123,8 @@ export default function FriendPlayLobby({ onClose }: { onClose?: () => void }) {
   const [betAmount, setBetAmount] = useState('10')
   const [betting, setBetting] = useState(false)
   const [resolving, setResolving] = useState(false)
+  // Isolated P2P play-money balance (separate from on-chain / trading funds).
+  const [p2pBalance, setP2pBalance] = useState<number | null>(null)
 
   // Chat
   const [activeTab, setActiveTab] = useState('Discussion')
@@ -265,11 +267,23 @@ export default function FriendPlayLobby({ onClose }: { onClose?: () => void }) {
     catch { setActionError('Network error') }
   }
 
+  // Refresh the player's isolated P2P play-money balance.
+  const refreshBalance = useCallback(async () => {
+    const data = await fetch('/api/rooms/wallet', { cache: 'no-store' })
+      .then(r => (r.ok ? r.json() : null))
+      .catch(() => null)
+    if (data && typeof data.balance === 'number') { setP2pBalance(data.balance) }
+  }, [])
+
+  useEffect(() => {
+    void refreshBalance()
+  }, [refreshBalance])
+
   const refreshRoom = async () => {
     if (!selectedRoom) { return }
     const refreshed = await fetch(`/api/rooms/${selectedRoom.id}`, { cache: 'no-store' }).then(r => (r.ok ? r.json() : null)).catch(() => null)
     if (refreshed) { setRoomDetails(refreshed) }
-    await fetchRooms()
+    await Promise.all([fetchRooms(), refreshBalance()])
   }
 
   // ── Place a Yes/No bet ───────────────────────────────────────────────────────
@@ -565,10 +579,18 @@ export default function FriendPlayLobby({ onClose }: { onClose?: () => void }) {
                         <>
                           <div className="mb-2 flex items-center justify-between">
                             <p className="text-2xs font-semibold tracking-widest text-muted-foreground/60 uppercase">Prediction market</p>
-                            <span className="text-2xs text-muted-foreground">
-                              Pool $
-                              {poolTotal.toFixed(2)}
-                            </span>
+                            <div className="flex items-center gap-2">
+                              {p2pBalance !== null && (
+                                <span className="text-2xs font-semibold text-primary" title="Your P2P play-money balance">
+                                  Balance $
+                                  {p2pBalance.toFixed(2)}
+                                </span>
+                              )}
+                              <span className="text-2xs text-muted-foreground">
+                                Pool $
+                                {poolTotal.toFixed(2)}
+                              </span>
+                            </div>
                           </div>
                           <div className="mb-2 flex h-2 overflow-hidden rounded-full bg-red-500/25">
                             <div className="h-full bg-green-500/70 transition-[width] duration-300" style={{ width: `${priceYes}%` }} />

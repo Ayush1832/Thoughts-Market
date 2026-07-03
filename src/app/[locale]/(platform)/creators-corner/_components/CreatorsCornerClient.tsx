@@ -861,7 +861,13 @@ function UserModeView({ onSwitchToCreator }: { onSwitchToCreator: () => void }) 
             <button
               key={f.label}
               type="button"
-              onClick={() => setSelectedNiche(f.label)}
+              onClick={() => {
+                setSelectedNiche(f.label)
+                // "All niches" clears any category pill so every category lights up (all selected).
+                if (f.label === 'All niches') {
+                  setSelectedCategory('')
+                }
+              }}
               className={cn(
                 `
                   flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-all
@@ -907,23 +913,27 @@ function UserModeView({ onSwitchToCreator }: { onSwitchToCreator: () => void }) 
           ))}
         </div>
 
-        {/* Category pills */}
+        {/* Category pills — when no specific category is picked ("all" mode), every pill is highlighted. */}
         <div className="flex gap-2 overflow-x-auto pb-1">
-          {CATEGORIES.map(cat => (
-            <button
-              key={cat}
-              type="button"
-              onClick={() => setSelectedCategory(prev => (prev === cat ? '' : cat))}
-              className={cn(
-                'shrink-0 rounded-lg px-2.5 py-1 text-[11px] font-semibold transition-all duration-200',
-                selectedCategory === cat
-                  ? 'bg-red-500 text-white'
-                  : 'bg-tm-elevated text-tm-secondary hover:bg-tm-border hover:text-tm-primary',
-              )}
-            >
-              {cat}
-            </button>
-          ))}
+          {CATEGORIES.map((cat) => {
+            const allSelected = selectedCategory === ''
+            const isActive = allSelected || selectedCategory === cat
+            return (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => setSelectedCategory(prev => (prev === cat ? '' : cat))}
+                className={cn(
+                  'shrink-0 rounded-lg px-2.5 py-1 text-[11px] font-semibold transition-all duration-200',
+                  isActive
+                    ? 'bg-red-500 text-white shadow-sm shadow-red-500/30'
+                    : 'bg-tm-elevated text-tm-secondary hover:bg-tm-border hover:text-tm-primary',
+                )}
+              >
+                {cat}
+              </button>
+            )
+          })}
         </div>
       </div>
 

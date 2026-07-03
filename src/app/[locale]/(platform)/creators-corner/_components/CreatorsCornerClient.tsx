@@ -722,6 +722,8 @@ function UserModeView({ onSwitchToCreator }: { onSwitchToCreator: () => void }) 
   const [selectedFilter, setSelectedFilter] = useState('Trending')
   // Empty = no category filter (show all niches). Clicking a pill filters; clicking it again clears.
   const [selectedCategory, setSelectedCategory] = useState('')
+  // Toggled by the "All niches" pill: true = every category pill lit red, false = all grey.
+  const [allCategories, setAllCategories] = useState(false)
   const [followingIds, setFollowingIds] = useState<Set<string>>(new Set())
 
   const debouncedSearch = useDebouncedValue(searchQuery, 300)
@@ -862,10 +864,15 @@ function UserModeView({ onSwitchToCreator }: { onSwitchToCreator: () => void }) 
               key={f.label}
               type="button"
               onClick={() => {
-                setSelectedNiche(f.label)
-                // "All niches" clears any category pill so every category lights up (all selected).
                 if (f.label === 'All niches') {
+                  // Toggle every category pill on/off (red ↔ grey).
+                  setSelectedNiche('All niches')
                   setSelectedCategory('')
+                  setAllCategories(prev => !prev)
+                }
+                else {
+                  setSelectedNiche(f.label)
+                  setAllCategories(false)
                 }
               }}
               className={cn(
@@ -913,16 +920,18 @@ function UserModeView({ onSwitchToCreator }: { onSwitchToCreator: () => void }) 
           ))}
         </div>
 
-        {/* Category pills — when no specific category is picked ("all" mode), every pill is highlighted. */}
+        {/* Category pills — "All niches" toggles every pill red/grey; clicking one selects just it. */}
         <div className="flex gap-2 overflow-x-auto pb-1">
           {CATEGORIES.map((cat) => {
-            const allSelected = selectedCategory === ''
-            const isActive = allSelected || selectedCategory === cat
+            const isActive = allCategories || selectedCategory === cat
             return (
               <button
                 key={cat}
                 type="button"
-                onClick={() => setSelectedCategory(prev => (prev === cat ? '' : cat))}
+                onClick={() => {
+                  setAllCategories(false)
+                  setSelectedCategory(prev => (prev === cat ? '' : cat))
+                }}
                 className={cn(
                   'shrink-0 rounded-lg px-2.5 py-1 text-[11px] font-semibold transition-all duration-200',
                   isActive

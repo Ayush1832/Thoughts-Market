@@ -1,13 +1,12 @@
-import { isAdminAuthorized } from '@/lib/admin-auth-check'
 import type { NextRequest } from 'next/server'
+import { desc, eq, inArray } from 'drizzle-orm'
 import { NextResponse } from 'next/server'
-import { eq, desc, inArray, sql } from 'drizzle-orm'
-import { isAdminWallet } from '@/lib/admin'
+import { isAdminAuthorized } from '@/lib/admin-auth-check'
 import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
-import { db } from '@/lib/drizzle'
-import { users, sessions, wallets } from '@/lib/db/schema/auth/tables'
-import { affiliate_referrals } from '@/lib/db/schema/affiliates/tables'
 import { UserRepository } from '@/lib/db/queries/user'
+import { affiliate_referrals } from '@/lib/db/schema/affiliates/tables'
+import { sessions, users, wallets } from '@/lib/db/schema/auth/tables'
+import { db } from '@/lib/drizzle'
 import { getPublicAssetUrl } from '@/lib/storage'
 
 function getAdminControls(settings: Record<string, any> = {}) {
@@ -128,7 +127,7 @@ export async function GET(request: NextRequest, context: any) {
       .orderBy(desc(affiliate_referrals.created_at))
       .limit(20)
 
-    const referredUserIds = referralsData.map((referral) => referral.user_id)
+    const referredUserIds = referralsData.map(referral => referral.user_id)
     const referredUsers = referredUserIds.length > 0
       ? await db
           .select({ id: users.id, username: users.username, deposit_wallet_address: users.deposit_wallet_address })
@@ -136,9 +135,9 @@ export async function GET(request: NextRequest, context: any) {
           .where(inArray(users.id, referredUserIds))
       : []
 
-    const referralMap = new Map(referredUsers.map((ref) => [ref.id, ref]))
+    const referralMap = new Map(referredUsers.map(ref => [ref.id, ref]))
 
-    const referrals = referralsData.map((referral) => ({
+    const referrals = referralsData.map(referral => ({
       id: referral.id,
       username: referralMap.get(referral.user_id)?.username ?? null,
       deposit_wallet_address: referralMap.get(referral.user_id)?.deposit_wallet_address ?? null,

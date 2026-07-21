@@ -1,9 +1,8 @@
-import { isAdminAuthorized } from '@/lib/admin-auth-check'
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
+import { isAdminAuthorized } from '@/lib/admin-auth-check'
 import { fetchOpenRouterModels } from '@/lib/ai/openrouter'
 import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
-import { UserRepository } from '@/lib/db/queries/user'
 
 const RequestSchema = z.object({
   apiKey: z.string().min(16, 'API key is required.'),

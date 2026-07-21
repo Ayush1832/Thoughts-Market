@@ -1,15 +1,15 @@
-import { isAdminAuthorized } from '@/lib/admin-auth-check'
 import type { NextRequest } from 'next/server'
+import { count, desc, inArray, sql } from 'drizzle-orm'
 import { NextResponse } from 'next/server'
 import { isAdminWallet } from '@/lib/admin'
+import { isAdminAuthorized } from '@/lib/admin-auth-check'
 import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
 import { UserRepository } from '@/lib/db/queries/user'
-import { buildPublicProfilePath, buildUsernameProfilePath } from '@/lib/platform-routing'
-import { getPublicAssetUrl } from '@/lib/storage'
-import { db } from '@/lib/drizzle'
 import { sessions } from '@/lib/db/schema/auth/tables'
 import { orders } from '@/lib/db/schema/orders/tables'
-import { inArray, sql, count, desc } from 'drizzle-orm'
+import { db } from '@/lib/drizzle'
+import { buildPublicProfilePath, buildUsernameProfilePath } from '@/lib/platform-routing'
+import { getPublicAssetUrl } from '@/lib/storage'
 
 export async function GET(request: NextRequest) {
   try {
@@ -90,11 +90,13 @@ export async function GET(request: NextRequest) {
     })()
 
     const userIds = (data ?? []).map(u => u.id)
-    const sessionsRows = userIds.length ? await db
-      .select({ user_id: sessions.user_id, last_seen: sessions.created_at })
-      .from(sessions)
-      .where(inArray(sessions.user_id, userIds))
-      .orderBy(desc(sessions.created_at)) : []
+    const sessionsRows = userIds.length
+      ? await db
+          .select({ user_id: sessions.user_id, last_seen: sessions.created_at })
+          .from(sessions)
+          .where(inArray(sessions.user_id, userIds))
+          .orderBy(desc(sessions.created_at))
+      : []
 
     const lastSeenMap = new Map<string, string>()
     for (const s of sessionsRows as any[]) {
@@ -104,11 +106,13 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    const ordersAggRows = userIds.length ? await db
-      .select({ user_id: orders.user_id, trade_count: count(orders.id), trade_volume: sql`coalesce(sum(${orders.taker_amount}), 0)` })
-      .from(orders)
-      .where(inArray(orders.user_id, userIds))
-      .groupBy(orders.user_id) : []
+    const ordersAggRows = userIds.length
+      ? await db
+          .select({ user_id: orders.user_id, trade_count: count(orders.id), trade_volume: sql`coalesce(sum(${orders.taker_amount}), 0)` })
+          .from(orders)
+          .where(inArray(orders.user_id, userIds))
+          .groupBy(orders.user_id)
+      : []
 
     const tradeMap = new Map<string, { trade_count: number, trade_volume: string }>()
     for (const r of ordersAggRows as any[]) {

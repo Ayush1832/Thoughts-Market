@@ -1,11 +1,12 @@
 'use client'
 
+import type { CreateRoomActionState } from '@/app/[locale]/admin/p2p/_actions/room-actions'
 import { Loader2Icon, PlusIcon } from 'lucide-react'
 import { useActionState, useEffect, useRef } from 'react'
 import { toast } from 'sonner'
 import {
   createRoomAction,
-  type CreateRoomActionState,
+
 } from '@/app/[locale]/admin/p2p/_actions/room-actions'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -66,7 +67,7 @@ export default function AdminCreateRoomForm() {
         <input
           type="checkbox"
           name="is_private"
-          className="size-4 rounded border-input accent-primary"
+          className="size-4 rounded-sm border-input accent-primary"
         />
         <span>Private room (hidden from public lobby)</span>
       </label>

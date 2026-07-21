@@ -1,10 +1,9 @@
-import { isAdminAuthorized } from '@/lib/admin-auth-check'
 import type { NextRequest } from 'next/server'
 import type { TicketCategory, TicketStatus } from '@/lib/db/schema/support/tables'
 import { NextResponse } from 'next/server'
+import { isAdminAuthorized } from '@/lib/admin-auth-check'
 import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
 import { SupportRepository } from '@/lib/db/queries/support'
-import { UserRepository } from '@/lib/db/queries/user'
 import { TICKET_CATEGORIES, TICKET_STATUSES } from '@/lib/db/schema/support/tables'
 
 export async function GET(request: NextRequest) {

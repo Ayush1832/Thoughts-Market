@@ -3,7 +3,7 @@ import type { TxStatus } from '@/lib/db/queries/finance'
 import { NextResponse } from 'next/server'
 import { isAdminAuthorized } from '@/lib/admin-auth-check'
 import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
-import { updateTransactionStatus } from '@/lib/db/queries/finance'
+import { creditManualDepositTransaction, updateTransactionStatus } from '@/lib/db/queries/finance'
 import { UserRepository } from '@/lib/db/queries/user'
 
 export async function PATCH(
@@ -33,6 +33,10 @@ export async function PATCH(
     const tx = await updateTransactionStatus(id, status, currentUser.address ?? '')
     if (!tx) {
       return NextResponse.json({ error: 'Transaction not found.' }, { status: 404 })
+    }
+
+    if (tx.type === 'deposit' && tx.status === 'completed' && !tx.withdrawal_id) {
+      await creditManualDepositTransaction(tx.id)
     }
 
     return NextResponse.json(tx)

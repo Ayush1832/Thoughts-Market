@@ -1,17 +1,18 @@
 'use client'
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import AutoAlertsSection from './_components/AutoAlertsSection'
+import FeesManagementSection from './_components/FeesManagementSection'
 import PaymentControlSection from './_components/PaymentControlSection'
 import TreasuryPanelSection from './_components/TreasuryPanelSection'
-import FeesManagementSection from './_components/FeesManagementSection'
-import AutoAlertsSection from './_components/AutoAlertsSection'
+import TreasuryPayoutSection from './_components/TreasuryPayoutSection'
 
 export default function FinancePage() {
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Finance & Treasury</h1>
-        <p className="text-muted-foreground mt-2">
+        <p className="mt-2 text-muted-foreground">
           Manage payments, treasury, fees, and alerts
         </p>
       </div>
@@ -30,6 +31,7 @@ export default function FinancePage() {
 
         <TabsContent value="treasury" className="space-y-4">
           <TreasuryPanelSection />
+          <TreasuryPayoutSection />
         </TabsContent>
 
         <TabsContent value="fees" className="space-y-4">

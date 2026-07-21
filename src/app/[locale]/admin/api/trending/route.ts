@@ -1,9 +1,8 @@
-import { isAdminAuthorized } from '@/lib/admin-auth-check'
 import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
+import { isAdminAuthorized } from '@/lib/admin-auth-check'
 import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
 import { SettingsRepository } from '@/lib/db/queries/settings'
-import { UserRepository } from '@/lib/db/queries/user'
 
 const TRENDING_KEYS = ['featured_markets', 'hot_picks', 'viral_topics', 'live_event_mode'] as const
 type TrendingKey = (typeof TRENDING_KEYS)[number]

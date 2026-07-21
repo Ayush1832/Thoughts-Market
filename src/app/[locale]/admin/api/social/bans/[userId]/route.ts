@@ -1,9 +1,8 @@
-import { isAdminAuthorized } from '@/lib/admin-auth-check'
 import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
+import { isAdminAuthorized } from '@/lib/admin-auth-check'
 import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
 import { SocialRepository } from '@/lib/db/queries/social'
-import { UserRepository } from '@/lib/db/queries/user'
 
 export async function DELETE(_request: NextRequest, { params }: { params: Promise<{ userId: string }> }) {
   try {

@@ -1,9 +1,8 @@
-import { isAdminAuthorized } from '@/lib/admin-auth-check'
 import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
+import { isAdminAuthorized } from '@/lib/admin-auth-check'
 import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
 import { SupportRepository } from '@/lib/db/queries/support'
-import { UserRepository } from '@/lib/db/queries/user'
 import { TICKET_PRIORITIES, TICKET_STATUSES } from '@/lib/db/schema/support/tables'
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {

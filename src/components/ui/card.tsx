@@ -10,7 +10,7 @@ function Card({ className, ...props }: React.ComponentProps<'div'>) {
         'flex flex-col gap-6 rounded-2xl border border-border/50 bg-card text-card-foreground',
         'shadow-sm shadow-black/10 dark:shadow-black/30',
         // Prism glass surface (dark mode only; light mode keeps the solid card)
-        'dark:border-white/[0.07] dark:bg-white/[0.03] dark:backdrop-blur-xl',
+        'dark:border-white/[0.07] dark:bg-white/3 dark:backdrop-blur-xl',
         'dark:shadow-[0_1px_0_rgba(255,255,255,0.06)_inset,0_24px_60px_-24px_rgba(0,0,0,0.6)]',
         className,
       )}

@@ -25,7 +25,7 @@ function Input({ className, defaultValue, type, value, ...props }: React.Compone
           placeholder:text-muted-foreground/50
           disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50
           md:text-sm
-          dark:bg-card dark:border-border/50
+          dark:border-border/50 dark:bg-card
         `,
         'focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50',
         'aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40',

@@ -42,15 +42,13 @@ const buttonVariants = cva(
           'hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50',
         link: 'text-primary underline-offset-4 hover:underline',
         yes: `
-          border border-yes/35 bg-yes/15 font-semibold text-yes-foreground
-          shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]
+          border border-yes/35 bg-yes/15 font-semibold text-yes-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]
           transition-all duration-150
           hover:-translate-y-px hover:border-yes/55 hover:bg-yes/25 hover:text-yes hover:shadow-md hover:shadow-yes/25
           active:translate-y-0 active:scale-[0.98] active:shadow-none
         `,
         no: `
-          border border-no/35 bg-no/15 font-semibold text-no-foreground
-          shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]
+          border border-no/35 bg-no/15 font-semibold text-no-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]
           transition-all duration-150
           hover:-translate-y-px hover:border-no/55 hover:bg-no/25 hover:text-no hover:shadow-md hover:shadow-no/25
           active:translate-y-0 active:scale-[0.98] active:shadow-none

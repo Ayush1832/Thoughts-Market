@@ -1,5 +1,6 @@
+import { Buffer } from 'node:buffer'
+import crypto from 'node:crypto'
 import { cookies } from 'next/headers'
-import crypto from 'crypto'
 
 const SESSION_SECRET = process.env.SESSION_SECRET || 'admin_session_secret_key_change_in_production'
 const MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000 // 7 days

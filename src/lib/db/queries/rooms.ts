@@ -28,9 +28,15 @@ export const RoomsRepository = {
   async kickParticipant(roomId: string, hostId: string, targetUserId: string) {
     return runQuery(async () => {
       const [room] = await db.select().from(rooms).where(eq(rooms.id, roomId)).limit(1)
-      if (!room) { return { data: null, error: 'Room not found' } }
-      if (room.host_id !== hostId) { return { data: null, error: 'Only the host can remove players' } }
-      if (targetUserId === hostId) { return { data: null, error: 'The host cannot be removed' } }
+      if (!room) {
+        return { data: null, error: 'Room not found' }
+      }
+      if (room.host_id !== hostId) {
+        return { data: null, error: 'Only the host can remove players' }
+      }
+      if (targetUserId === hostId) {
+        return { data: null, error: 'The host cannot be removed' }
+      }
 
       await db.update(room_participants)
         .set({ left_at: new Date() })
@@ -55,7 +61,9 @@ export const RoomsRepository = {
         metadata: question ? { question } : {},
       }).returning()
 
-      if (!room) { return { data: null, error: 'Failed to create room' } }
+      if (!room) {
+        return { data: null, error: 'Failed to create room' }
+      }
 
       // Auto-join host as participant
       await db.insert(room_participants).values({
@@ -71,8 +79,12 @@ export const RoomsRepository = {
   async joinRoom(roomId: string, userId: string) {
     return runQuery(async () => {
       const [room] = await db.select().from(rooms).where(eq(rooms.id, roomId)).limit(1)
-      if (!room) { return { data: null, error: 'Room not found' } }
-      if (room.status !== 'open') { return { data: null, error: 'Room is not open for joining' } }
+      if (!room) {
+        return { data: null, error: 'Room not found' }
+      }
+      if (room.status !== 'open') {
+        return { data: null, error: 'Room is not open for joining' }
+      }
 
       const countResult = await db
         .select({ count: sql<number>`count(*)::int` })
@@ -80,7 +92,9 @@ export const RoomsRepository = {
         .where(and(eq(room_participants.room_id, roomId), isNull(room_participants.left_at)))
 
       const count = countResult[0]?.count ?? 0
-      if (count >= room.max_participants) { return { data: null, error: 'Room is full' } }
+      if (count >= room.max_participants) {
+        return { data: null, error: 'Room is full' }
+      }
 
       const [participant] = await db.insert(room_participants)
         .values({ room_id: roomId, user_id: userId, role: 'player' })
@@ -109,16 +123,24 @@ export const RoomsRepository = {
   async startRoom(roomId: string, hostId: string) {
     return runQuery(async () => {
       const [room] = await db.select().from(rooms).where(eq(rooms.id, roomId)).limit(1)
-      if (!room) { return { data: null, error: 'Room not found' } }
-      if (room.host_id !== hostId) { return { data: null, error: 'Only the host can start the room' } }
-      if (room.status !== 'open') { return { data: null, error: 'Room is already started or closed' } }
+      if (!room) {
+        return { data: null, error: 'Room not found' }
+      }
+      if (room.host_id !== hostId) {
+        return { data: null, error: 'Only the host can start the room' }
+      }
+      if (room.status !== 'open') {
+        return { data: null, error: 'Room is already started or closed' }
+      }
 
       const countResult = await db
         .select({ count: sql<number>`count(*)::int` })
         .from(room_participants)
         .where(and(eq(room_participants.room_id, roomId), isNull(room_participants.left_at)))
 
-      if ((countResult[0]?.count ?? 0) < 3) { return { data: null, error: 'Need at least 3 participants to start' } }
+      if ((countResult[0]?.count ?? 0) < 3) {
+        return { data: null, error: 'Need at least 3 participants to start' }
+      }
 
       const [updated] = await db.update(rooms)
         .set({ status: 'playing', started_at: new Date() })
@@ -135,18 +157,24 @@ export const RoomsRepository = {
     return runQuery(async () => {
       return db.transaction(async (tx) => {
         const [room] = await tx.select().from(rooms).where(eq(rooms.id, roomId)).limit(1)
-        if (!room) { return { data: null, error: 'Room not found' } }
-        if (room.status !== 'open' && room.status !== 'playing') { return { data: null, error: 'Betting is closed for this room' } }
-        if (!Number.isFinite(amount) || amount <= 0) { return { data: null, error: 'Enter a valid amount' } }
+        if (!room) {
+          return { data: null, error: 'Room not found' }
+        }
+        if (room.status !== 'open' && room.status !== 'playing') {
+          return { data: null, error: 'Betting is closed for this room' }
+        }
+        if (!Number.isFinite(amount) || amount <= 0) {
+          return { data: null, error: 'Enter a valid amount' }
+        }
 
-        const [participant] = await tx.select().from(room_participants)
-          .where(and(
-            eq(room_participants.room_id, roomId),
-            eq(room_participants.user_id, userId),
-            isNull(room_participants.left_at),
-          ))
-          .limit(1)
-        if (!participant) { return { data: null, error: 'Join the room before betting' } }
+        const [participant] = await tx.select().from(room_participants).where(and(
+          eq(room_participants.room_id, roomId),
+          eq(room_participants.user_id, userId),
+          isNull(room_participants.left_at),
+        )).limit(1)
+        if (!participant) {
+          return { data: null, error: 'Join the room before betting' }
+        }
 
         const prevChoice = participant.outcome_choice
         const prevStake = Number(participant.stake_amount ?? 0)
@@ -176,19 +204,31 @@ export const RoomsRepository = {
     return runQuery(async () => {
       return db.transaction(async (tx) => {
         const [room] = await tx.select().from(rooms).where(eq(rooms.id, roomId)).limit(1)
-        if (!room) { return { data: null, error: 'Room not found' } }
-        if (room.host_id !== hostId) { return { data: null, error: 'Only the host can resolve the market' } }
-        if (room.status === 'resolved') { return { data: null, error: 'This room is already resolved' } }
+        if (!room) {
+          return { data: null, error: 'Room not found' }
+        }
+        if (room.host_id !== hostId) {
+          return { data: null, error: 'Only the host can resolve the market' }
+        }
+        if (room.status === 'resolved') {
+          return { data: null, error: 'This room is already resolved' }
+        }
 
-        const parts = await tx.select().from(room_participants)
-          .where(and(eq(room_participants.room_id, roomId), isNull(room_participants.left_at)))
+        const parts = await tx.select().from(room_participants).where(and(eq(room_participants.room_id, roomId), isNull(room_participants.left_at)))
 
-        let poolYes = 0, poolNo = 0
+        let poolYes = 0
+        let poolNo = 0
         for (const p of parts) {
           const s = Number(p.stake_amount ?? 0)
-          if (s <= 0) { continue }
-          if (p.outcome_choice === 'yes') { poolYes += s }
-          else if (p.outcome_choice === 'no') { poolNo += s }
+          if (s <= 0) {
+            continue
+          }
+          if (p.outcome_choice === 'yes') {
+            poolYes += s
+          }
+          else if (p.outcome_choice === 'no') {
+            poolNo += s
+          }
         }
         const total = poolYes + poolNo
         const winPool = outcome === 'yes' ? poolYes : poolNo
@@ -197,8 +237,12 @@ export const RoomsRepository = {
           const stake = Number(p.stake_amount ?? 0)
           let payout = 0
           if (stake > 0) {
-            if (winPool === 0) { payout = stake } // no one on winning side → refund all
-            else if (p.outcome_choice === outcome) { payout = (stake / winPool) * total }
+            if (winPool === 0) {
+              payout = stake // no one on winning side → refund all
+            }
+            else if (p.outcome_choice === outcome) {
+              payout = (stake / winPool) * total
+            }
           }
           await tx.update(room_participants)
             .set({ pnl: String(payout - stake) })
@@ -231,7 +275,9 @@ export const RoomsRepository = {
   async getRoomWithParticipants(roomId: string) {
     return runQuery(async () => {
       const [room] = await db.select().from(rooms).where(eq(rooms.id, roomId)).limit(1)
-      if (!room) { return { data: null, error: 'Room not found' } }
+      if (!room) {
+        return { data: null, error: 'Room not found' }
+      }
 
       const participants = await db
         .select({

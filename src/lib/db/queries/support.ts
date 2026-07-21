@@ -2,11 +2,11 @@ import type { TicketCategory, TicketPriority, TicketStatus } from '@/lib/db/sche
 import { randomUUID } from 'node:crypto'
 import { and, asc, count, desc, eq, ilike, or } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/pg-core'
+import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
 import { users } from '@/lib/db/schema/auth/tables'
 import { support_tickets } from '@/lib/db/schema/support/tables'
 import { runQuery } from '@/lib/db/utils/run-query'
 import { db } from '@/lib/drizzle'
-import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
 
 const reporter = alias(users, 'reporter')
 
@@ -20,8 +20,8 @@ export const SupportRepository = {
     sortBy?: 'created_at' | 'updated_at' | 'priority' | 'status'
     sortOrder?: 'asc' | 'desc'
   } = {}): Promise<
-    | { data: { id: string; category: TicketCategory; subject: string; description: string; status: TicketStatus; priority: TicketPriority; resolution_notes: string | null; created_at: Date; updated_at: Date; user_id: string | null; assigned_to: string | null; reporter_username: string | null; reporter_address: string | null; reporter_email: string | null }[]; count: number; error: null }
-    | { data: null; count: null; error: string }
+    | { data: { id: string, category: TicketCategory, subject: string, description: string, status: TicketStatus, priority: TicketPriority, resolution_notes: string | null, created_at: Date, updated_at: Date, user_id: string | null, assigned_to: string | null, reporter_username: string | null, reporter_address: string | null, reporter_email: string | null }[], count: number, error: null }
+    | { data: null, count: null, error: string }
   > {
     try {
       const {
@@ -35,8 +35,12 @@ export const SupportRepository = {
       } = params
 
       const conditions = []
-      if (status) { conditions.push(eq(support_tickets.status, status)) }
-      if (category) { conditions.push(eq(support_tickets.category, category)) }
+      if (status) {
+        conditions.push(eq(support_tickets.status, status))
+      }
+      if (category) {
+        conditions.push(eq(support_tickets.category, category))
+      }
       if (search?.trim()) {
         conditions.push(or(
           ilike(support_tickets.subject, `%${search.trim()}%`),

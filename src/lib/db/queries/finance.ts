@@ -1,17 +1,21 @@
 import { and, count, desc, eq, gte, inArray, lt, or, sql } from 'drizzle-orm'
+import { creditTx } from '@/lib/db/queries/ledger'
 import {
   finance_alert_configs,
   finance_alert_events,
   finance_fee_configs,
   finance_transactions,
 } from '@/lib/db/schema/finance/tables'
+import { ledger_entries } from '@/lib/db/schema/ledger/tables'
 import { orders } from '@/lib/db/schema/orders/tables'
 import { db } from '@/lib/drizzle'
+
+type DbExecutor = Parameters<Parameters<typeof db.transaction>[0]>[0] | typeof db
 
 // ─── Transactions ─────────────────────────────────────────────────────────────
 
 export type TxType = 'deposit' | 'withdrawal' | 'settlement' | 'refund'
-export type TxStatus = 'pending' | 'completed' | 'failed' | 'chargeback'
+export type TxStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'chargeback'
 
 export async function listTransactions(opts: {
   type?: TxType
@@ -21,8 +25,12 @@ export async function listTransactions(opts: {
 }) {
   const { type, status, limit = 50, offset = 0 } = opts
   const conditions = []
-  if (type) { conditions.push(eq(finance_transactions.type, type)) }
-  if (status) { conditions.push(eq(finance_transactions.status, status)) }
+  if (type) {
+    conditions.push(eq(finance_transactions.type, type))
+  }
+  if (status) {
+    conditions.push(eq(finance_transactions.status, status))
+  }
 
   const rows = await db
     .select()
@@ -48,9 +56,15 @@ export async function listUserCashTransactions(opts: {
 }) {
   const { userId, walletAddress } = opts
   const owners = []
-  if (userId) { owners.push(eq(finance_transactions.user_id, userId)) }
-  if (walletAddress) { owners.push(eq(finance_transactions.wallet_address, walletAddress)) }
-  if (!owners.length) { return [] }
+  if (userId) {
+    owners.push(eq(finance_transactions.user_id, userId))
+  }
+  if (walletAddress) {
+    owners.push(eq(finance_transactions.wallet_address, walletAddress))
+  }
+  if (!owners.length) {
+    return []
+  }
 
   return db
     .select()
@@ -78,6 +92,77 @@ export async function createTransaction(data: typeof finance_transactions.$infer
     .values(data)
     .returning()
   return rows[0]!
+}
+
+// Admin-created "deposit" finance_transactions rows (manual off-chain top-ups) don't
+// go through recordAndCreditDeposit, so nothing ever touches the user's ledger balance
+// unless we do it here. Guarded by a unique ledger_entries.reference per transaction id
+// so re-approving (pending -> completed more than once) can't double-credit.
+export async function creditManualDepositTransaction(txId: string): Promise<void> {
+  await db.transaction(async (tx) => {
+    const [row] = await tx
+      .select()
+      .from(finance_transactions)
+      .where(eq(finance_transactions.id, txId))
+      .for('update')
+      .limit(1)
+
+    if (!row || row.type !== 'deposit' || row.status !== 'completed' || !row.user_id) {
+      return
+    }
+
+    const reference = `admin-tx:${row.id}`
+    const [existing] = await tx
+      .select({ id: ledger_entries.id })
+      .from(ledger_entries)
+      .where(eq(ledger_entries.reference, reference))
+      .limit(1)
+
+    if (existing) {
+      return
+    }
+
+    await creditTx(tx, {
+      userId: row.user_id,
+      currency: row.currency,
+      amount: row.amount,
+      type: 'adjustment',
+      reference,
+      metadata: { source: 'admin-manual-deposit', financeTransactionId: row.id },
+    })
+  })
+}
+
+// Keeps the single finance_transactions row created at withdrawal-request time
+// in sync as the withdrawal moves through review/processing/payout, instead of
+// inserting a new row after the fact (which hid pending/processing/failed
+// withdrawals from both the admin dashboard and the user's own cash history).
+export async function updateWithdrawalTransaction(
+  withdrawalId: string,
+  patch: { status: TxStatus, amount?: string, txHash?: string, notes?: string, reviewedBy?: string },
+  executor: DbExecutor = db,
+): Promise<void> {
+  await executor
+    .update(finance_transactions)
+    .set({
+      status: patch.status,
+      ...(patch.amount !== undefined && { amount: patch.amount }),
+      ...(patch.txHash !== undefined && { tx_hash: patch.txHash }),
+      ...(patch.notes !== undefined && { notes: patch.notes }),
+      ...(patch.reviewedBy !== undefined && { reviewed_by: patch.reviewedBy, reviewed_at: new Date() }),
+      updated_at: new Date(),
+    })
+    .where(eq(finance_transactions.withdrawal_id, withdrawalId))
+}
+
+export async function markWithdrawalTransactionsProcessing(withdrawalIds: string[]): Promise<void> {
+  if (withdrawalIds.length === 0) {
+    return
+  }
+  await db
+    .update(finance_transactions)
+    .set({ status: 'processing', updated_at: new Date() })
+    .where(inArray(finance_transactions.withdrawal_id, withdrawalIds))
 }
 
 export async function updateTransactionStatus(

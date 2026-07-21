@@ -24,6 +24,42 @@
     {
       "path": "/api/sync/event-creations",
       "schedule": "0 3 * * *"
+    },
+    {
+      "path": "/api/sync/deposits",
+      "schedule": "* * * * *"
+    },
+    {
+      "path": "/api/sync/withdrawals",
+      "schedule": "* * * * *"
+    },
+    {
+      "path": "/api/sync/tron-deposits",
+      "schedule": "* * * * *"
+    },
+    {
+      "path": "/api/sync/solana-deposits",
+      "schedule": "* * * * *"
+    },
+    {
+      "path": "/api/sync/bitcoin-deposits",
+      "schedule": "*/2 * * * *"
+    },
+    {
+      "path": "/api/sync/deposit-sweeps",
+      "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/sync/tron-sweeps",
+      "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/sync/solana-sweeps",
+      "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/sync/bitcoin-sweeps",
+      "schedule": "*/10 * * * *"
     }
   ]
 }

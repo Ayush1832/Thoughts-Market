@@ -239,7 +239,7 @@ export default function HeaderDropdownUserMenuAuth() {
             ? (
                 <>
                   <div className="flex items-center gap-4 p-4">
-                    <div className="size-12 shrink-0 rounded-full bg-gradient-to-br from-purple-500 to-pink-500" />
+                    <div className="size-12 shrink-0 rounded-full bg-linear-to-br from-purple-500 to-pink-500" />
                     <div className="min-w-0 flex-1 space-y-1.5">
                       <span className="truncate text-base/tight font-semibold text-foreground">Admin Profile</span>
                       <span className="text-xs text-muted-foreground">System Administrator</span>

@@ -1,18 +1,17 @@
 'use client'
 
-import { useCallback } from 'react'
-import { useExtracted } from 'next-intl'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Activity, AlertTriangle, ArrowLeft, BadgeCheck, Globe2, Lock, ShieldAlert, Star, UserCheck, UserMinus } from 'lucide-react'
+import { useExtracted } from 'next-intl'
 import { useRouter } from 'next/navigation'
-import { Activity, AlertTriangle, ArrowLeft, BadgeCheck, Globe2, Lock, ShieldAlert, ShieldCheck, Smartphone, Star, UserCheck, UserMinus, UserPlus } from 'lucide-react'
+import { useCallback } from 'react'
 import AppLink from '@/components/AppLink'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Progress } from '@/components/ui/progress'
-import { Separator } from '@/components/ui/separator'
 import { Switch } from '@/components/ui/switch'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { routing } from '@/i18n/routing'
 
 interface UserDetail {
@@ -42,14 +41,14 @@ interface UserDetail {
     limit_trading: boolean
     limit_withdrawals: boolean
   }
-  wallets: Array<{ address: string; chain_id: number; is_primary: boolean; created_at: string }>
-  sessions: Array<{ ip_address: string | null; user_agent: string | null; created_at: string }>
-  referrals: Array<{ id: string; username?: string | null; deposit_wallet_address?: string | null; created_at: string }>
-  risk_flags: Array<{ key: string; label: string; status: 'clear' | 'warning' | 'critical'; description: string }>
-  suspicious_patterns: Array<{ key: string; label: string; description: string }>
+  wallets: Array<{ address: string, chain_id: number, is_primary: boolean, created_at: string }>
+  sessions: Array<{ ip_address: string | null, user_agent: string | null, created_at: string }>
+  referrals: Array<{ id: string, username?: string | null, deposit_wallet_address?: string | null, created_at: string }>
+  risk_flags: Array<{ key: string, label: string, status: 'clear' | 'warning' | 'critical', description: string }>
+  suspicious_patterns: Array<{ key: string, label: string, description: string }>
 }
 
-const getAdminApiBasePath = (locale?: string) => {
+function getAdminApiBasePath(locale?: string) {
   if (!locale || locale === routing.defaultLocale) {
     return '/admin/api'
   }
@@ -81,7 +80,7 @@ async function patchAdminUserDetail(userId: string, locale: string | undefined, 
     credentials: 'same-origin',
     headers: {
       'Content-Type': 'application/json',
-      Accept: 'application/json',
+      'Accept': 'application/json',
     },
     body: JSON.stringify(payload),
   })
@@ -93,7 +92,7 @@ async function patchAdminUserDetail(userId: string, locale: string | undefined, 
   return response.json() as Promise<{ data: UserDetail }>
 }
 
-export default function UserDetailPage({ userId, locale }: { userId: string; locale?: string }) {
+export default function UserDetailPage({ userId, locale }: { userId: string, locale?: string }) {
   const t = useExtracted()
   const router = useRouter()
   const queryClient = useQueryClient()
@@ -113,7 +112,9 @@ export default function UserDetailPage({ userId, locale }: { userId: string; loc
   })
 
   const toggleControl = useCallback((field: keyof UserDetail['admin_controls']) => {
-    if (!data?.data) return
+    if (!data?.data) {
+      return
+    }
 
     const updatedControls = {
       ...data.data.admin_controls,
@@ -124,7 +125,9 @@ export default function UserDetailPage({ userId, locale }: { userId: string; loc
   }, [data, mutation])
 
   const toggleBadge = useCallback((field: 'badge_verified_trader' | 'badge_influencer' | 'badge_market_creator' | 'badge_whale') => {
-    if (!data?.data) return
+    if (!data?.data) {
+      return
+    }
 
     const updatedBadge = !data.data[field]
     mutation.mutate({ settings: { badges: { [field.replace('badge_', '')]: updatedBadge } } })
@@ -186,7 +189,14 @@ export default function UserDetailPage({ userId, locale }: { userId: string; loc
             {t('Refresh')}
           </Button>
           {user.profileUrl && (
-            <AppLink href={user.profileUrl} className="inline-flex items-center gap-2 rounded-md border border-input bg-transparent px-4 py-2 text-sm font-medium text-foreground hover:bg-muted">
+            <AppLink
+              href={user.profileUrl}
+              className="
+                inline-flex items-center gap-2 rounded-md border border-input bg-transparent px-4 py-2 text-sm
+                font-medium text-foreground
+                hover:bg-muted
+              "
+            >
               <Globe2 className="size-4" />
               {t('View public profile')}
             </AppLink>
@@ -208,7 +218,10 @@ export default function UserDetailPage({ userId, locale }: { userId: string; loc
                     <p className="text-sm font-medium text-muted-foreground">{t('KYC status')}</p>
                     <p className="text-lg font-semibold capitalize">{user.kyc_status}</p>
                   </div>
-                  <Badge className={user.kyc_status === 'verified' ? 'bg-green-600 text-white' : 'bg-yellow-600 text-white'}>
+                  <Badge className={user.kyc_status === 'verified'
+                    ? 'bg-green-600 text-white'
+                    : `bg-yellow-600 text-white`}
+                  >
                     {user.kyc_status === 'verified' ? t('Verified') : t('Unverified')}
                   </Badge>
                 </div>
@@ -284,8 +297,11 @@ export default function UserDetailPage({ userId, locale }: { userId: string; loc
                 { label: t('Influencer'), active: user.badge_influencer, icon: Star },
                 { label: t('Market creator'), active: user.badge_market_creator, icon: BadgeCheck },
                 { label: t('Whale'), active: user.badge_whale, icon: ShieldAlert },
-              ].map((item) => (
-                <div key={item.label} className="flex items-center justify-between rounded-lg border border-border px-3 py-3">
+              ].map(item => (
+                <div
+                  key={item.label}
+                  className="flex items-center justify-between rounded-lg border border-border p-3"
+                >
                   <div className="flex items-center gap-3">
                     <item.icon className="size-5 text-muted-foreground" />
                     <div>
@@ -310,7 +326,7 @@ export default function UserDetailPage({ userId, locale }: { userId: string; loc
                 { label: t('Freeze account'), description: t('Prevent new orders and withdrawals immediately.'), value: user.admin_controls.is_frozen, field: 'is_frozen', icon: Lock },
                 { label: t('Limit trading'), description: t('Restrict this user from placing new trades.'), value: user.admin_controls.limit_trading, field: 'limit_trading', icon: Activity },
                 { label: t('Limit withdrawals'), description: t('Temporarily restrict withdrawal activity.'), value: user.admin_controls.limit_withdrawals, field: 'limit_withdrawals', icon: AlertTriangle },
-              ].map((item) => (
+              ].map(item => (
                 <div key={item.label} className="flex items-center justify-between rounded-lg border border-border p-3">
                   <div className="flex items-start gap-3">
                     <item.icon className="size-5 text-muted-foreground" />
@@ -340,21 +356,23 @@ export default function UserDetailPage({ userId, locale }: { userId: string; loc
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {user.risk_flags.length > 0 ? user.risk_flags.map((flag) => (
-                    <div key={flag.key} className="rounded-lg border border-border p-4">
-                      <div className="flex items-center justify-between gap-3">
-                        <div>
-                          <p className="font-medium">{flag.label}</p>
-                          <p className="text-xs text-muted-foreground">{flag.description}</p>
+                  {user.risk_flags.length > 0
+                    ? user.risk_flags.map(flag => (
+                        <div key={flag.key} className="rounded-lg border border-border p-4">
+                          <div className="flex items-center justify-between gap-3">
+                            <div>
+                              <p className="font-medium">{flag.label}</p>
+                              <p className="text-xs text-muted-foreground">{flag.description}</p>
+                            </div>
+                            <Badge variant={flag.status === 'critical' ? 'destructive' : flag.status === 'warning' ? 'secondary' : 'outline'}>
+                              {flag.status}
+                            </Badge>
+                          </div>
                         </div>
-                        <Badge variant={flag.status === 'critical' ? 'destructive' : flag.status === 'warning' ? 'secondary' : 'outline'}>
-                          {flag.status}
-                        </Badge>
-                      </div>
-                    </div>
-                  )) : (
-                    <p className="text-sm text-muted-foreground">{t('No active risk flags')}</p>
-                  )}
+                      ))
+                    : (
+                        <p className="text-sm text-muted-foreground">{t('No active risk flags')}</p>
+                      )}
                 </div>
               </CardContent>
             </Card>
@@ -364,14 +382,16 @@ export default function UserDetailPage({ userId, locale }: { userId: string; loc
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {user.suspicious_patterns.length > 0 ? user.suspicious_patterns.map((pattern) => (
-                    <div key={pattern.key} className="rounded-lg border border-border p-4">
-                      <p className="font-medium">{pattern.label}</p>
-                      <p className="text-xs text-muted-foreground mt-2">{pattern.description}</p>
-                    </div>
-                  )) : (
-                    <p className="text-sm text-muted-foreground">{t('No suspicious patterns detected')}</p>
-                  )}
+                  {user.suspicious_patterns.length > 0
+                    ? user.suspicious_patterns.map(pattern => (
+                        <div key={pattern.key} className="rounded-lg border border-border p-4">
+                          <p className="font-medium">{pattern.label}</p>
+                          <p className="mt-2 text-xs text-muted-foreground">{pattern.description}</p>
+                        </div>
+                      ))
+                    : (
+                        <p className="text-sm text-muted-foreground">{t('No suspicious patterns detected')}</p>
+                      )}
                 </div>
               </CardContent>
             </Card>
@@ -396,7 +416,7 @@ export default function UserDetailPage({ userId, locale }: { userId: string; loc
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {user.wallets.map((wallet) => (
+                {user.wallets.map(wallet => (
                   <TableRow key={wallet.address}>
                     <TableCell className="font-mono text-sm">{wallet.address}</TableCell>
                     <TableCell>{wallet.chain_id}</TableCell>
@@ -442,28 +462,30 @@ export default function UserDetailPage({ userId, locale }: { userId: string; loc
           <CardDescription>{t('Recent users referred by this account.')}</CardDescription>
         </CardHeader>
         <CardContent>
-          {user.referrals.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t('User')}</TableHead>
-                  <TableHead>{t('Wallet')}</TableHead>
-                  <TableHead>{t('Joined')}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {user.referrals.map((referral) => (
-                  <TableRow key={referral.id}>
-                    <TableCell>{referral.username || referral.deposit_wallet_address || t('Unknown')}</TableCell>
-                    <TableCell className="font-mono text-sm">{referral.deposit_wallet_address || '—'}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{new Date(referral.created_at).toLocaleDateString()}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          ) : (
-            <p className="text-sm text-muted-foreground">{t('No referral history found.')}</p>
-          )}
+          {user.referrals.length > 0
+            ? (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>{t('User')}</TableHead>
+                      <TableHead>{t('Wallet')}</TableHead>
+                      <TableHead>{t('Joined')}</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {user.referrals.map(referral => (
+                      <TableRow key={referral.id}>
+                        <TableCell>{referral.username || referral.deposit_wallet_address || t('Unknown')}</TableCell>
+                        <TableCell className="font-mono text-sm">{referral.deposit_wallet_address || '—'}</TableCell>
+                        <TableCell className="text-sm text-muted-foreground">{new Date(referral.created_at).toLocaleDateString()}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )
+            : (
+                <p className="text-sm text-muted-foreground">{t('No referral history found.')}</p>
+              )}
         </CardContent>
       </Card>
     </div>

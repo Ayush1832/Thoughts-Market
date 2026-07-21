@@ -16,36 +16,72 @@ interface SessionRow {
 }
 
 function relativeTime(value: string | Date | undefined): string {
-  if (!value) return ''
+  if (!value) {
+    return ''
+  }
   const d = value instanceof Date ? value : new Date(value)
   const diff = Date.now() - d.getTime()
-  if (Number.isNaN(diff)) return ''
+  if (Number.isNaN(diff)) {
+    return ''
+  }
   const mins = Math.floor(diff / 60000)
-  if (mins < 1) return 'just now'
-  if (mins < 60) return `${mins}m ago`
+  if (mins < 1) {
+    return 'just now'
+  }
+  if (mins < 60) {
+    return `${mins}m ago`
+  }
   const hrs = Math.floor(mins / 60)
-  if (hrs < 24) return `${hrs}h ago`
+  if (hrs < 24) {
+    return `${hrs}h ago`
+  }
   const days = Math.floor(hrs / 24)
-  if (days === 0) return 'today'
-  if (days === 1) return 'yesterday'
+  if (days === 0) {
+    return 'today'
+  }
+  if (days === 1) {
+    return 'yesterday'
+  }
   return `${days} days ago`
 }
 
 function describeUserAgent(ua: string | undefined): string {
-  if (!ua) return 'Unknown device'
+  if (!ua) {
+    return 'Unknown device'
+  }
   let os = 'Unknown'
-  if (/iphone/i.test(ua)) os = 'iPhone'
-  else if (/ipad/i.test(ua)) os = 'iPad'
-  else if (/android/i.test(ua)) os = 'Android'
-  else if (/mac os x/i.test(ua)) os = 'Mac'
-  else if (/windows/i.test(ua)) os = 'Windows'
-  else if (/linux/i.test(ua)) os = 'Linux'
+  if (/iphone/i.test(ua)) {
+    os = 'iPhone'
+  }
+  else if (/ipad/i.test(ua)) {
+    os = 'iPad'
+  }
+  else if (/android/i.test(ua)) {
+    os = 'Android'
+  }
+  else if (/mac os x/i.test(ua)) {
+    os = 'Mac'
+  }
+  else if (/windows/i.test(ua)) {
+    os = 'Windows'
+  }
+  else if (/linux/i.test(ua)) {
+    os = 'Linux'
+  }
 
   let browser = 'Browser'
-  if (/edg\//i.test(ua)) browser = 'Edge'
-  else if (/chrome\//i.test(ua) && !/edg\//i.test(ua)) browser = 'Chrome'
-  else if (/safari\//i.test(ua) && !/chrome\//i.test(ua)) browser = 'Safari'
-  else if (/firefox\//i.test(ua)) browser = 'Firefox'
+  if (/edg\//i.test(ua)) {
+    browser = 'Edge'
+  }
+  else if (/chrome\//i.test(ua) && !/edg\//i.test(ua)) {
+    browser = 'Chrome'
+  }
+  else if (/safari\//i.test(ua) && !/chrome\//i.test(ua)) {
+    browser = 'Safari'
+  }
+  else if (/firefox\//i.test(ua)) {
+    browser = 'Firefox'
+  }
 
   return `${os} · ${browser}`
 }
@@ -80,7 +116,9 @@ export default function SettingsSessionsContent() {
     }
   }, [t])
 
-  useEffect(() => { void load() }, [load])
+  useEffect(() => {
+    void load()
+  }, [load])
 
   function revoke(token: string) {
     setRevoking(token)
@@ -139,7 +177,15 @@ export default function SettingsSessionsContent() {
                     <p className="truncate text-sm text-muted-foreground">{row.meta}</p>
                   </div>
                   {row.current
-                    ? <span className="shrink-0 rounded-md border border-green-500/40 px-3 py-1.5 text-xs font-semibold text-green-400">{t('Current')}</span>
+                    ? (
+                        <span className="
+                          shrink-0 rounded-md border border-green-500/40 px-3 py-1.5 text-xs font-semibold
+                          text-green-400
+                        "
+                        >
+                          {t('Current')}
+                        </span>
+                      )
                     : (
                         <Button
                           type="button"
@@ -160,7 +206,12 @@ export default function SettingsSessionsContent() {
           type="button"
           onClick={revokeOthers}
           disabled={isPending}
-          className="mt-3 w-full rounded-xl border border-destructive/30 bg-destructive/5 py-3 text-sm font-semibold text-destructive transition-colors hover:bg-destructive/10 disabled:opacity-50"
+          className="
+            mt-3 w-full rounded-xl border border-destructive/30 bg-destructive/5 py-3 text-sm font-semibold
+            text-destructive transition-colors
+            hover:bg-destructive/10
+            disabled:opacity-50
+          "
         >
           {t('Sign out all other sessions')}
         </button>

@@ -1,10 +1,11 @@
 'use client'
 
+import type { PrivacySettingsInput } from '@/app/[locale]/(platform)/settings/_actions/update-privacy-settings'
 import { useExtracted } from 'next-intl'
 import { useState, useTransition } from 'react'
 import { toast } from 'sonner'
 import {
-  type PrivacySettingsInput,
+
   updatePrivacySettingsAction,
 } from '@/app/[locale]/(platform)/settings/_actions/update-privacy-settings'
 import { Button } from '@/components/ui/button'
@@ -137,7 +138,11 @@ export default function SettingsPrivacyContent({ initial }: { initial: PrivacySe
               value={newBlock}
               onChange={e => setNewBlock(e.target.value)}
               placeholder={t('Wallet address or username')}
-              onKeyDown={(e) => { if (e.key === 'Enter') addBlocked() }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  addBlocked()
+                }
+              }}
             />
             <Button type="button" onClick={addBlocked} disabled={isPending}>{t('Block')}</Button>
           </div>
@@ -146,7 +151,10 @@ export default function SettingsPrivacyContent({ initial }: { initial: PrivacySe
             {state.blocked.length === 0
               ? <p className="py-4 text-center text-sm text-muted-foreground">{t('No blocked accounts.')}</p>
               : state.blocked.map(addr => (
-                  <div key={addr} className="flex items-center justify-between rounded-lg border border-border/50 px-3 py-2">
+                  <div
+                    key={addr}
+                    className="flex items-center justify-between rounded-lg border border-border/50 px-3 py-2"
+                  >
                     <span className="truncate text-sm">{addr}</span>
                     <Button type="button" variant="ghost" size="sm" onClick={() => removeBlocked(addr)} disabled={isPending}>
                       {t('Unblock')}

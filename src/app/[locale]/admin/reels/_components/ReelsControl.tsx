@@ -1,10 +1,10 @@
 'use client'
 
 import type { ReelStatus, ReelType } from '@/lib/db/schema/content/tables'
-import { useParams } from 'next/navigation'
-import { useCallback, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { FilmIcon, PlusIcon, StarIcon, Trash2Icon } from 'lucide-react'
+import { useParams } from 'next/navigation'
+import { useCallback, useState } from 'react'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -41,7 +41,9 @@ const STATUS_VARIANTS: Record<ReelStatus, 'default' | 'secondary' | 'outline' | 
 }
 
 function getBasePath(locale?: string) {
-  if (!locale || locale === routing.defaultLocale) return '/admin/api'
+  if (!locale || locale === routing.defaultLocale) {
+    return '/admin/api'
+  }
   return `/${locale}/admin/api`
 }
 
@@ -62,10 +64,16 @@ export default function ReelsControl() {
     queryKey: ['admin-reels', filterStatus, filterType],
     queryFn: async () => {
       const params = new URLSearchParams({ limit: '50', offset: '0' })
-      if (filterStatus !== 'all') params.set('status', filterStatus)
-      if (filterType !== 'all') params.set('type', filterType)
+      if (filterStatus !== 'all') {
+        params.set('status', filterStatus)
+      }
+      if (filterType !== 'all') {
+        params.set('type', filterType)
+      }
       const res = await fetch(`${basePath}/reels?${params}`, { credentials: 'same-origin' })
-      if (!res.ok) throw new Error('Failed to fetch')
+      if (!res.ok) {
+        throw new Error('Failed to fetch')
+      }
       return res.json() as Promise<{ data: Reel[], totalCount: number }>
     },
     staleTime: 30_000,
@@ -84,7 +92,9 @@ export default function ReelsControl() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
       })
-      if (!res.ok) throw new Error()
+      if (!res.ok) {
+        throw new Error('Failed to create reel')
+      }
       toast.success('Reel created.')
       void queryClient.invalidateQueries({ queryKey: ['admin-reels'] })
       setDialogOpen(false)
@@ -106,7 +116,9 @@ export default function ReelsControl() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status }),
       })
-      if (!res.ok) throw new Error()
+      if (!res.ok) {
+        throw new Error('Failed to update status')
+      }
       toast.success('Status updated.')
       void queryClient.invalidateQueries({ queryKey: ['admin-reels'] })
     }
@@ -123,7 +135,9 @@ export default function ReelsControl() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ is_featured: !reel.is_featured }),
       })
-      if (!res.ok) throw new Error()
+      if (!res.ok) {
+        throw new Error('Failed to toggle featured')
+      }
       toast.success(reel.is_featured ? 'Removed from featured.' : 'Added to featured.')
       void queryClient.invalidateQueries({ queryKey: ['admin-reels'] })
     }
@@ -135,7 +149,9 @@ export default function ReelsControl() {
   const handleDelete = useCallback(async (id: string) => {
     try {
       const res = await fetch(`${basePath}/reels/${id}`, { method: 'DELETE', credentials: 'same-origin' })
-      if (!res.ok) throw new Error()
+      if (!res.ok) {
+        throw new Error('Failed to delete reel')
+      }
       toast.success('Reel deleted.')
       void queryClient.invalidateQueries({ queryKey: ['admin-reels'] })
     }
@@ -195,7 +211,12 @@ export default function ReelsControl() {
                         <Badge variant={STATUS_VARIANTS[reel.status]} className="shrink-0 text-xs">{reel.status}</Badge>
                         {reel.is_featured && <Badge className="shrink-0 text-xs">Featured</Badge>}
                       </div>
-                      <a href={reel.url} target="_blank" rel="noopener noreferrer" className="mt-1 truncate text-xs text-muted-foreground hover:underline">
+                      <a
+                        href={reel.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-1 truncate text-xs text-muted-foreground hover:underline"
+                      >
                         {reel.url}
                       </a>
                     </div>
@@ -203,13 +224,27 @@ export default function ReelsControl() {
                       {reel.status === 'pending' && (
                         <>
                           <Button type="button" variant="outline" size="sm" className="h-7 px-2 text-xs" onClick={() => updateStatus(reel.id, 'approved')}>Approve</Button>
-                          <Button type="button" variant="outline" size="sm" className="h-7 px-2 text-xs text-destructive" onClick={() => updateStatus(reel.id, 'rejected')}>Reject</Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="h-7 px-2 text-xs text-destructive"
+                            onClick={() => updateStatus(reel.id, 'rejected')}
+                          >
+                            Reject
+                          </Button>
                         </>
                       )}
                       <Button type="button" variant="ghost" size="sm" className="h-7 px-2" onClick={() => toggleFeatured(reel)}>
                         <StarIcon className={`size-4 ${reel.is_featured ? 'fill-yellow-400 text-yellow-400' : ''}`} />
                       </Button>
-                      <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-destructive hover:text-destructive" onClick={() => handleDelete(reel.id)}>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 px-2 text-destructive hover:text-destructive"
+                        onClick={() => handleDelete(reel.id)}
+                      >
                         <Trash2Icon className="size-4" />
                       </Button>
                     </div>

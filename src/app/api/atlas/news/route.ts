@@ -44,15 +44,25 @@ interface FeedItem {
 
 // "20260605T024500Z" → minutes/hours/days ago
 function relativeFromSeendate(seendate?: string): string {
-  if (!seendate || seendate.length < 15) return 'now'
+  if (!seendate || seendate.length < 15) {
+    return 'now'
+  }
   const iso = `${seendate.slice(0, 4)}-${seendate.slice(4, 6)}-${seendate.slice(6, 8)}T${seendate.slice(9, 11)}:${seendate.slice(11, 13)}:${seendate.slice(13, 15)}Z`
   const t = Date.parse(iso)
-  if (Number.isNaN(t)) return 'now'
+  if (Number.isNaN(t)) {
+    return 'now'
+  }
   const mins = Math.max(0, Math.round((Date.now() - t) / 60000))
-  if (mins < 1) return 'now'
-  if (mins < 60) return `${mins}m`
+  if (mins < 1) {
+    return 'now'
+  }
+  if (mins < 60) {
+    return `${mins}m`
+  }
   const hrs = Math.round(mins / 60)
-  if (hrs < 24) return `${hrs}h`
+  if (hrs < 24) {
+    return `${hrs}h`
+  }
   return `${Math.round(hrs / 24)}d`
 }
 

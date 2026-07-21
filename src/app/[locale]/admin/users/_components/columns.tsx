@@ -1,9 +1,9 @@
 'use client'
 
 import type { ColumnDef } from '@tanstack/react-table'
-import Link from 'next/link'
 import { ArrowUpDownIcon, MailIcon } from 'lucide-react'
 import { useExtracted } from 'next-intl'
+import Link from 'next/link'
 import ProfileLink from '@/components/ProfileLink'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'

@@ -46,6 +46,7 @@ function DeleteRoomButton({ roomId, roomName }: { roomId: string, roomName: stri
   const [isPending, startTransition] = useTransition()
 
   function handleDelete() {
+    // eslint-disable-next-line no-alert -- no confirm-dialog primitive exists in this codebase yet
     if (!window.confirm(`Delete room "${roomName}"? This cannot be undone.`)) {
       return
     }
@@ -123,7 +124,10 @@ export default function AdminRoomsTable({ rows }: { rows: AdminRoomRow[] }) {
                 <td className="px-6 py-4 text-sm">{row.host}</td>
                 <td className="px-6 py-4 text-right text-sm tabular-nums">
                   {row.participantCount}
-                  <span className="text-muted-foreground">/{row.maxParticipants}</span>
+                  <span className="text-muted-foreground">
+                    /
+                    {row.maxParticipants}
+                  </span>
                 </td>
                 <td className="px-6 py-4"><StatusBadge status={row.status} /></td>
                 <td className="px-6 py-4 text-right text-sm tabular-nums">{row.pot}</td>
@@ -158,7 +162,11 @@ export default function AdminRoomsTable({ rows }: { rows: AdminRoomRow[] }) {
               </div>
               <div>
                 <p className="text-xs text-muted-foreground uppercase">Players</p>
-                <p className="font-medium tabular-nums">{row.participantCount}/{row.maxParticipants}</p>
+                <p className="font-medium tabular-nums">
+                  {row.participantCount}
+                  /
+                  {row.maxParticipants}
+                </p>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground uppercase">Pot</p>

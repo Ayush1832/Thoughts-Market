@@ -28,7 +28,13 @@ const POINTS: AtlasPoint[] = [
 ]
 
 const HOTSPOTS = POINTS.map(p => ({
-  lat: p.lat, lon: p.lon, r: p.r, g: p.g, b: p.b, size: p.size, label: p.name,
+  lat: p.lat,
+  lon: p.lon,
+  r: p.r,
+  g: p.g,
+  b: p.b,
+  size: p.size,
+  label: p.name,
 }))
 
 function rgb(p: AtlasPoint, a = 1) {
@@ -42,19 +48,27 @@ export default function AtlasGlobe() {
   const active = selected != null ? POINTS[selected] : null
 
   return (
-    <div className="rounded-2xl border border-border bg-card overflow-hidden dark:border-[rgba(0,210,255,0.14)]">
+    <div className="overflow-hidden rounded-2xl border border-border bg-card dark:border-[rgba(0,210,255,0.14)]">
 
       {/* ── Header ── */}
       <div className="flex items-center justify-between px-4 pt-4 pb-1">
         <div className="flex items-center gap-2">
-          <span className="size-[7px] rounded-full shrink-0 bg-[#00d4ff] shadow-[0_0_8px_#00d4ff,0_0_20px_rgba(0,212,255,0.35)] animate-atlas-blink" />
-          <span className="text-[10px] font-bold uppercase tracking-[1.8px] text-muted-foreground">
+          <span className="
+            size-[7px] shrink-0 animate-atlas-blink rounded-full bg-[#00d4ff]
+            shadow-[0_0_8px_#00d4ff,0_0_20px_rgba(0,212,255,0.35)]
+          "
+          />
+          <span className="text-2xs font-bold tracking-[1.8px] text-muted-foreground uppercase">
             Atlas
-            <span className="text-muted-foreground/50 mx-1">·</span>
+            <span className="mx-1 text-muted-foreground/50">·</span>
             Global Intel
           </span>
         </div>
-        <AppLink href="/atlas" aria-label="Open Atlas" className="text-xs text-muted-foreground/60 hover:text-foreground transition-colors cursor-pointer">
+        <AppLink
+          href="/atlas"
+          aria-label="Open Atlas"
+          className="cursor-pointer text-xs text-muted-foreground/60 transition-colors hover:text-foreground"
+        >
           ↗
         </AppLink>
       </div>
@@ -72,15 +86,17 @@ export default function AtlasGlobe() {
         {/* Detail popup for the tapped hotspot */}
         {active && (
           <div
-            className="absolute inset-x-3 bottom-1 z-10 rounded-xl border bg-popover/95 p-3 backdrop-blur-md animate-tm-pop"
+            className="
+              absolute inset-x-3 bottom-1 z-10 animate-tm-pop rounded-xl border bg-popover/95 p-3 backdrop-blur-md
+            "
             style={{ borderColor: rgb(active, 0.4), boxShadow: `0 0 24px ${rgb(active, 0.2)}` }}
           >
             <div className="flex items-start justify-between gap-2">
               <div className="flex items-center gap-2">
                 <span className="size-2.5 rounded-full" style={{ background: rgb(active), boxShadow: `0 0 8px ${rgb(active, 0.7)}` }} />
                 <div>
-                  <p className="text-[13px] font-semibold text-foreground leading-tight">{active.name}</p>
-                  <p className="text-[10px] text-muted-foreground">{active.region}</p>
+                  <p className="text-[13px] leading-tight font-semibold text-foreground">{active.name}</p>
+                  <p className="text-2xs text-muted-foreground">{active.region}</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -89,7 +105,10 @@ export default function AtlasGlobe() {
                   type="button"
                   onClick={() => setSelected(null)}
                   aria-label="Close"
-                  className="flex size-5 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+                  className="
+                    flex size-5 items-center justify-center rounded-md text-muted-foreground
+                    hover:bg-muted hover:text-foreground
+                  "
                 >
                   ✕
                 </button>
@@ -101,43 +120,47 @@ export default function AtlasGlobe() {
       </div>
 
       {/* ── Stats row ── */}
-      <div className="mx-4 mb-3 grid grid-cols-3 rounded-xl border border-border bg-[rgba(0,195,255,0.04)] py-[10px] px-2 text-center">
+      <div className="
+        mx-4 mb-3 grid grid-cols-3 rounded-xl border border-border bg-[rgba(0,195,255,0.04)] px-2 py-[10px] text-center
+      "
+      >
         <div>
-          <p className="text-lg font-bold leading-none text-red-500 dark:text-red-400">
+          <p className="text-lg leading-none font-bold text-red-500 dark:text-red-400">
             72
             <span className="text-[11px] font-normal text-muted-foreground/60">/100</span>
           </p>
-          <p className="mt-1 text-[8.5px] font-medium uppercase tracking-[0.7px] text-muted-foreground/60">
+          <p className="mt-1 text-[8.5px] font-medium tracking-[0.7px] text-muted-foreground/60 uppercase">
             Global Risk
           </p>
         </div>
         <div className="border-x border-border">
-          <p className="text-lg font-bold leading-none text-foreground">18</p>
-          <p className="mt-1 text-[8.5px] font-medium uppercase tracking-[0.7px] text-muted-foreground/60">
+          <p className="text-lg leading-none font-bold text-foreground">18</p>
+          <p className="mt-1 text-[8.5px] font-medium tracking-[0.7px] text-muted-foreground/60 uppercase">
             Live Events
           </p>
         </div>
         <div>
-          <p className="text-lg font-bold leading-none text-foreground">6</p>
-          <p className="mt-1 text-[8.5px] font-medium uppercase tracking-[0.7px] text-muted-foreground/60">
+          <p className="text-lg leading-none font-bold text-foreground">6</p>
+          <p className="mt-1 text-[8.5px] font-medium tracking-[0.7px] text-muted-foreground/60 uppercase">
             Hot Regions
           </p>
         </div>
       </div>
 
-
       {/* ── Threat list (tap a row to focus its hotspot) ── */}
-      <div className="px-4 pb-1 divide-y divide-border">
+      <div className="divide-y divide-border px-4 pb-1">
         {POINTS.map((p, i) => (
           <button
             key={p.name}
             type="button"
             onClick={() => setSelected(prev => (prev === i ? null : i))}
-            className={`flex w-full items-center justify-between rounded-lg py-2 transition-colors ${selected === i ? 'bg-muted' : 'hover:bg-muted/60'}`}
+            className={`flex w-full items-center justify-between rounded-lg py-2 transition-colors ${selected === i
+              ? `bg-muted`
+              : `hover:bg-muted/60`}`}
           >
             <div className="flex items-center gap-2.5">
-              <span className="relative size-2 rounded-full shrink-0" style={{ background: rgb(p), boxShadow: `0 0 7px ${rgb(p, 0.55)}` }}>
-                <span className="absolute inset-[-3px] rounded-full border animate-atlas-ring" style={{ borderColor: rgb(p) }} />
+              <span className="relative size-2 shrink-0 rounded-full" style={{ background: rgb(p), boxShadow: `0 0 7px ${rgb(p, 0.55)}` }}>
+                <span className="absolute inset-[-3px] animate-atlas-ring rounded-full border" style={{ borderColor: rgb(p) }} />
               </span>
               <span className="text-[12px] text-foreground/70">{p.name}</span>
             </div>
@@ -151,15 +174,10 @@ export default function AtlasGlobe() {
         <AppLink
           href="/atlas"
           className="
-            flex w-full items-center justify-center rounded-xl py-[10px] text-[13px] font-semibold cursor-pointer
-            text-[#00d4ff]
-            border border-[rgba(0,212,255,0.26)]
-            bg-[rgba(0,212,255,0.08)]
-            transition-all duration-200
-            hover:bg-[rgba(0,212,255,0.16)]
-            hover:border-[rgba(0,212,255,0.45)]
+            flex w-full cursor-pointer items-center justify-center rounded-xl border border-[rgba(0,212,255,0.26)]
+            bg-[rgba(0,212,255,0.08)] py-[10px] text-[13px] font-semibold text-[#00d4ff] transition-all duration-200
+            hover:-translate-y-px hover:border-[rgba(0,212,255,0.45)] hover:bg-[rgba(0,212,255,0.16)]
             hover:shadow-[0_0_24px_rgba(0,212,255,0.18)]
-            hover:-translate-y-px
             active:translate-y-0
           "
         >

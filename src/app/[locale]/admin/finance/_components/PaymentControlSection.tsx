@@ -6,6 +6,17 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import {
   Table,
   TableBody,
   TableCell,
@@ -42,7 +53,9 @@ function fmt(n: number) {
 }
 
 function trendLabel(t: number) {
-  if (!t) { return '' }
+  if (!t) {
+    return ''
+  }
   return `${t > 0 ? '+' : ''}${t.toFixed(1)}%`
 }
 
@@ -66,12 +79,23 @@ function getStatusBadge(status: string) {
   }
 }
 
+const TX_TYPES = ['deposit', 'withdrawal', 'settlement', 'refund'] as const
+
 export default function PaymentControlSection() {
   const [stats, setStats] = useState<Stats | null>(null)
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('all')
   const [updating, setUpdating] = useState<string | null>(null)
+  const [addOpen, setAddOpen] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [form, setForm] = useState({
+    type: 'deposit' as typeof TX_TYPES[number],
+    amount: '',
+    currency: 'USDC',
+    wallet_address: '',
+    notes: '',
+  })
 
   const fetchData = useCallback(async (type?: string) => {
     setLoading(true)
@@ -90,7 +114,9 @@ export default function PaymentControlSection() {
         fetch(`/en/admin/api/finance/transactions?limit=50${txParam}${statusParam}`),
       ])
 
-      if (statsRes.ok) { setStats(await statsRes.json()) }
+      if (statsRes.ok) {
+        setStats(await statsRes.json())
+      }
       if (txRes.ok) {
         const { data } = await txRes.json()
         setTransactions(data ?? [])
@@ -105,7 +131,29 @@ export default function PaymentControlSection() {
     fetchData(activeTab)
   }, [activeTab, fetchData])
 
-  const updateStatus = async (id: string, status: string) => {
+  async function submitNewTransaction() {
+    if (!form.amount || Number(form.amount) <= 0) {
+      return
+    }
+    setSubmitting(true)
+    try {
+      const res = await fetch('/en/admin/api/finance/transactions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      })
+      if (res.ok) {
+        setAddOpen(false)
+        setForm({ type: 'deposit', amount: '', currency: 'USDC', wallet_address: '', notes: '' })
+        fetchData(activeTab)
+      }
+    }
+    finally {
+      setSubmitting(false)
+    }
+  }
+
+  async function updateStatus(id: string, status: string) {
     setUpdating(id)
     try {
       const res = await fetch(`/en/admin/api/finance/transactions/${id}`, {
@@ -113,7 +161,9 @@ export default function PaymentControlSection() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status }),
       })
-      if (res.ok) { fetchData(activeTab) }
+      if (res.ok) {
+        fetchData(activeTab)
+      }
     }
     finally {
       setUpdating(null)
@@ -167,9 +217,15 @@ export default function PaymentControlSection() {
 
       {/* Transaction Management */}
       <Card>
-        <CardHeader>
-          <CardTitle>Payment Control Dashboard</CardTitle>
-          <CardDescription>Manage deposits, withdrawals, settlements, and disputes</CardDescription>
+        <CardHeader className="flex flex-row items-start justify-between gap-4">
+          <div>
+            <CardTitle>Payment Control Dashboard</CardTitle>
+            <CardDescription>Manage deposits, withdrawals, settlements, and disputes</CardDescription>
+          </div>
+          <Button size="sm" variant="outline" onClick={() => setAddOpen(true)}>
+            <PlusIcon className="mr-1 size-4" />
+            Add Transaction
+          </Button>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="all" className="w-full" onValueChange={setActiveTab}>
@@ -199,7 +255,7 @@ export default function PaymentControlSection() {
                     ? (
                         <div className="flex flex-col items-center justify-center gap-3 py-12 text-muted-foreground">
                           <p className="text-sm">No transactions yet.</p>
-                          <Button size="sm" variant="outline" onClick={() => {}}>
+                          <Button size="sm" variant="outline" onClick={() => setAddOpen(true)}>
                             <PlusIcon className="mr-1 size-4" />
                             Add Transaction
                           </Button>
@@ -263,7 +319,7 @@ export default function PaymentControlSection() {
                                         size="sm"
                                         variant="destructive"
                                         disabled={updating === tx.id}
-                                        onClick={() => updateStatus(tx.id, 'resolved')}
+                                        onClick={() => updateStatus(tx.id, 'completed')}
                                       >
                                         Resolve
                                       </Button>
@@ -290,6 +346,74 @@ export default function PaymentControlSection() {
           </Tabs>
         </CardContent>
       </Card>
+
+      <Dialog open={addOpen} onOpenChange={setAddOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Transaction</DialogTitle>
+            <DialogDescription>Manually record a transaction (e.g. an off-chain adjustment).</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Type</Label>
+              <Select value={form.type} onValueChange={value => setForm(f => ({ ...f, type: value as typeof TX_TYPES[number] }))}>
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {TX_TYPES.map(type => (
+                    <SelectItem key={type} value={type} className="capitalize">{type}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="tx-amount">Amount</Label>
+                <Input
+                  id="tx-amount"
+                  inputMode="decimal"
+                  value={form.amount}
+                  onChange={e => setForm(f => ({ ...f, amount: e.target.value.replace(/[^0-9.]/g, '') }))}
+                  placeholder="0.00"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="tx-currency">Currency</Label>
+                <Input
+                  id="tx-currency"
+                  value={form.currency}
+                  onChange={e => setForm(f => ({ ...f, currency: e.target.value.toUpperCase() }))}
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="tx-wallet">Wallet address</Label>
+              <Input
+                id="tx-wallet"
+                value={form.wallet_address}
+                onChange={e => setForm(f => ({ ...f, wallet_address: e.target.value }))}
+                placeholder="0x…"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="tx-notes">Notes</Label>
+              <Input
+                id="tx-notes"
+                value={form.notes}
+                onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
+                placeholder="Optional"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAddOpen(false)}>Cancel</Button>
+            <Button onClick={submitNewTransaction} disabled={submitting}>
+              {submitting ? 'Adding…' : 'Add Transaction'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

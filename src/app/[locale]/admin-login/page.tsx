@@ -1,8 +1,8 @@
 'use client'
 
 import { EyeIcon, EyeOffIcon } from 'lucide-react'
-import { useRouter } from 'next/navigation'
 import { useLocale } from 'next-intl'
+import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import HeaderLogo from '@/components/HeaderLogo'
 import { Button } from '@/components/ui/button'
@@ -20,7 +20,7 @@ export default function AdminLoginPage() {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
 
-  const handleLogin = async (e: React.FormEvent) => {
+  async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
     setSuccess(false)
@@ -69,9 +69,9 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800 px-4">
+    <div className="flex min-h-screen items-center justify-center bg-linear-to-br from-slate-900 to-slate-800 px-4">
       <div className="w-full max-w-md">
-        <div className="bg-slate-800 border border-slate-700 rounded-lg shadow-xl p-8">
+        <div className="rounded-lg border border-slate-700 bg-slate-800 p-8 shadow-xl">
           {/* Brand */}
           <div className="mb-6 flex justify-center text-white">
             <HeaderLogo />
@@ -79,15 +79,15 @@ export default function AdminLoginPage() {
 
           {/* Header */}
           <div className="mb-8 text-center">
-            <h1 className="text-2xl font-bold text-white mb-2">Admin Portal</h1>
-            <p className="text-slate-400 text-sm">Secure authentication required</p>
+            <h1 className="mb-2 text-2xl font-bold text-white">Admin Portal</h1>
+            <p className="text-sm text-slate-400">Secure authentication required</p>
           </div>
 
           {/* Form */}
           <form onSubmit={handleLogin} className="space-y-4">
             {/* Email */}
             <div>
-              <Label htmlFor="email" className="text-slate-300 text-sm font-medium block mb-2">
+              <Label htmlFor="email" className="mb-2 block text-sm font-medium text-slate-300">
                 Email
               </Label>
               <Input
@@ -95,16 +95,20 @@ export default function AdminLoginPage() {
                 type="email"
                 placeholder="Enter your email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={e => setEmail(e.target.value)}
                 disabled={isLoading}
-                className="w-full bg-slate-700 border-slate-600 text-white placeholder:text-slate-500 focus:border-blue-500"
+                className="
+                  w-full border-slate-600 bg-slate-700 text-white
+                  placeholder:text-slate-500
+                  focus:border-blue-500
+                "
                 required
               />
             </div>
 
             {/* Password */}
             <div>
-              <Label htmlFor="password" className="text-slate-300 text-sm font-medium block mb-2">
+              <Label htmlFor="password" className="mb-2 block text-sm font-medium text-slate-300">
                 Password
               </Label>
               <div className="relative">
@@ -113,9 +117,13 @@ export default function AdminLoginPage() {
                   type={showPassword ? 'text' : 'password'}
                   placeholder="Enter your password"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={e => setPassword(e.target.value)}
                   disabled={isLoading}
-                  className="w-full bg-slate-700 border-slate-600 text-white placeholder:text-slate-500 focus:border-blue-500 pr-11"
+                  className="
+                    w-full border-slate-600 bg-slate-700 pr-11 text-white
+                    placeholder:text-slate-500
+                    focus:border-blue-500
+                  "
                   required
                 />
                 <button
@@ -131,14 +139,14 @@ export default function AdminLoginPage() {
 
             {/* Error Message */}
             {error && (
-              <div className="rounded-md bg-red-500/10 border border-red-500/20 p-3 text-sm text-red-400">
+              <div className="rounded-md border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-400">
                 {error}
               </div>
             )}
 
             {/* Success Message */}
             {success && (
-              <div className="rounded-md bg-green-500/10 border border-green-500/20 p-3 text-sm text-green-400">
+              <div className="rounded-md border border-green-500/20 bg-green-500/10 p-3 text-sm text-green-400">
                 ✓ Authentication successful. Redirecting...
               </div>
             )}
@@ -147,15 +155,15 @@ export default function AdminLoginPage() {
             <Button
               type="submit"
               disabled={isLoading || success}
-              className="w-full mt-6 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded-lg transition"
+              className="mt-6 w-full rounded-lg bg-blue-600 py-2 font-medium text-white transition hover:bg-blue-700"
             >
               {isLoading ? 'Authenticating...' : 'Sign In'}
             </Button>
           </form>
 
           {/* Footer */}
-          <div className="mt-6 pt-6 border-t border-slate-700">
-            <p className="text-xs text-slate-500 text-center">
+          <div className="mt-6 border-t border-slate-700 pt-6">
+            <p className="text-center text-xs text-slate-500">
               Restricted access • Authorized administrators only
             </p>
           </div>

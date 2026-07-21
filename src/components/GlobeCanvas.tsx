@@ -4,13 +4,13 @@ import { useEffect, useRef } from 'react'
 
 // [lat, lon, r, g, b, dotSize]
 const SPOTS: [number, number, number, number, number, number][] = [
-  [ 25,  121, 255,  77, 109, 5.5], // Taiwan      — red
-  [ 26,   50, 255, 190,  61, 4.5], // Middle East — gold
-  [ 37, -100, 168,  85, 247, 4.5], // USA/AI      — purple
-  [ 51,   10,   0, 210, 255, 3.5], // Europe      — cyan
-  [ 35,  139,   0, 210, 255, 3.5], // Japan       — cyan
-  [-23,  -46,   0, 210, 255, 3.0], // Brazil      — cyan
-  [ 55,   37, 255, 190,  61, 3.0], // Russia      — gold
+  [25, 121, 255, 77, 109, 5.5], // Taiwan      — red
+  [26, 50, 255, 190, 61, 4.5], // Middle East — gold
+  [37, -100, 168, 85, 247, 4.5], // USA/AI      — purple
+  [51, 10, 0, 210, 255, 3.5], // Europe      — cyan
+  [35, 139, 0, 210, 255, 3.5], // Japan       — cyan
+  [-23, -46, 0, 210, 255, 3.0], // Brazil      — cyan
+  [55, 37, 255, 190, 61, 3.0], // Russia      — gold
 ]
 const ARCS: [number, number][] = [[0, 2], [0, 3], [1, 3], [6, 3]]
 
@@ -26,12 +26,19 @@ let texCache: Uint8ClampedArray | null = null
 let texPromise: Promise<Uint8ClampedArray | null> | null = null
 
 function loadEarthTexture(): Promise<Uint8ClampedArray | null> {
-  if (texCache) return Promise.resolve(texCache)
-  if (texPromise) return texPromise
+  if (texCache) {
+    return Promise.resolve(texCache)
+  }
+  if (texPromise) {
+    return texPromise
+  }
   texPromise = new Promise((resolve) => {
     let i = 0
-    const tryNext = () => {
-      if (i >= EARTH_TEXTURE_SRCS.length) { resolve(null); return }
+    function tryNext() {
+      if (i >= EARTH_TEXTURE_SRCS.length) {
+        resolve(null)
+        return
+      }
       const src = EARTH_TEXTURE_SRCS[i++]
       const img = new Image()
       img.crossOrigin = 'anonymous'
@@ -45,7 +52,9 @@ function loadEarthTexture(): Promise<Uint8ClampedArray | null> {
           texCache = octx.getImageData(0, 0, TEX_W, TEX_H).data
           resolve(texCache)
         }
-        catch { tryNext() }
+        catch {
+          tryNext()
+        }
       }
       img.onerror = tryNext
       img.src = src
@@ -109,19 +118,33 @@ export default function GlobeCanvas({
 
   useEffect(() => {
     const canvas = canvasRef.current
-    if (!canvas) return
+    if (!canvas) {
+      return
+    }
     const ctx = canvas.getContext('2d')!
 
-    const W = size, H = size, cx = size / 2, cy = size / 2
+    const W = size
+    const H = size
+    const cx = size / 2
+    const cy = size / 2
     const baseR = size * 0.445
     const INV_2PI = 1 / (2 * Math.PI)
     const INV_PI = 1 / Math.PI
 
-    let sx = -0.82, sy = 0.18, sz = -0.54
-    { const l = Math.hypot(sx, sy, sz); sx /= l; sy /= l; sz /= l }
+    let sx = -0.82
+    let sy = 0.18
+    let sz = -0.54
+    {
+      const l = Math.hypot(sx, sy, sz)
+      sx /= l
+      sy /= l
+      sz /= l
+    }
 
     // Interactive state: zoom (scroll), tilt (vertical drag), rot (horizontal drag / auto-spin).
-    let zoom = 1, tilt = 0, R = baseR
+    let zoom = 1
+    let tilt = 0
+    let R = baseR
 
     // Per-pixel sphere projection — rebuilt whenever zoom or tilt changes.
     let pxOff: number[] = []
@@ -130,14 +153,20 @@ export default function GlobeCanvas({
     let limbArr: number[] = []
     let N = 0
     function buildProjection() {
-      pxOff = []; latArr = []; baseLon = []; limbArr = []
-      const ct = Math.cos(tilt), st = Math.sin(tilt)
+      pxOff = []
+      latArr = []
+      baseLon = []
+      limbArr = []
+      const ct = Math.cos(tilt)
+      const st = Math.sin(tilt)
       for (let py = 0; py < H; py++) {
         for (let px = 0; px < W; px++) {
           const nx = (px + 0.5 - cx) / R
           const ny = (py + 0.5 - cy) / R
           const d2 = nx * nx + ny * ny
-          if (d2 > 1) continue
+          if (d2 > 1) {
+            continue
+          }
           const nz = Math.sqrt(1 - d2)
           const yp = -ny
           // un-tilt the screen point back to sphere coordinates
@@ -157,9 +186,18 @@ export default function GlobeCanvas({
     const data = image.data
 
     let tex: Uint8ClampedArray | null = texCache
-    let rot = 0, phase = 0, raf = 0, alive = true
+    let rot = 0
+    let phase = 0
+    let raf = 0
+    let alive = true
 
-    if (!tex) void loadEarthTexture().then((t) => { if (alive) tex = t })
+    if (!tex) {
+      void loadEarthTexture().then((t) => {
+        if (alive) {
+          tex = t
+        }
+      })
+    }
 
     function projectGeo(latDeg: number, lonDeg: number) {
       const lat = (latDeg * Math.PI) / 180
@@ -168,7 +206,8 @@ export default function GlobeCanvas({
       const X = cosLat * Math.sin(theta)
       const Y = Math.sin(lat)
       const Z = cosLat * Math.cos(theta)
-      const ct = Math.cos(tilt), st = Math.sin(tilt)
+      const ct = Math.cos(tilt)
+      const st = Math.sin(tilt)
       return {
         x: cx + R * X,
         y: cy - R * (Y * ct - Z * st),
@@ -184,18 +223,28 @@ export default function GlobeCanvas({
         let u = (baseLon[i] + rot) * INV_2PI + 0.5
         u -= Math.floor(u)
         let tx = (u * TEX_W) | 0
-        if (tx >= TEX_W) tx = TEX_W - 1
+        if (tx >= TEX_W) {
+          tx = TEX_W - 1
+        }
         let v = 0.5 - lat * INV_PI
-        if (v < 0) v = 0
-        else if (v >= 1) v = 0.999999
+        if (v < 0) {
+          v = 0
+        }
+        else if (v >= 1) {
+          v = 0.999999
+        }
         const ty = (v * TEX_H) | 0
         const ti = (ty * TEX_W + tx) * 4
 
-        let r = tex![ti], g = tex![ti + 1], b = tex![ti + 2]
+        let r = tex![ti]
+        let g = tex![ti + 1]
+        let b = tex![ti + 2]
         const lum = (r + g + b) / 3
         if (lum < 28) {
           // dark land/ocean — deep navy night side
-          r = r * 0.45 + 3; g = g * 0.55 + 9; b = b * 0.7 + 26
+          r = r * 0.45 + 3
+          g = g * 0.55 + 9
+          b = b * 0.7 + 26
         }
         else {
           // city lights — boost & warm them so they pop like the reference
@@ -232,7 +281,9 @@ export default function GlobeCanvas({
         const la = (lat * Math.PI) / 180
         const ey = cy - R * Math.sin(la)
         const erx = R * Math.cos(la)
-        if (erx < 1) continue
+        if (erx < 1) {
+          continue
+        }
         ctx.beginPath()
         ctx.ellipse(cx, ey, erx, erx * 0.055, 0, 0, Math.PI * 2)
         ctx.strokeStyle = 'rgba(0,200,255,0.10)'
@@ -242,7 +293,9 @@ export default function GlobeCanvas({
       for (let lon = 0; lon < 180; lon += 15) {
         const lo = ((lon + rot) * Math.PI) / 180
         const erx = Math.abs(R * Math.sin(lo))
-        if (erx < 1) continue
+        if (erx < 1) {
+          continue
+        }
         ctx.beginPath()
         ctx.ellipse(cx, cy, erx, R, 0, 0, Math.PI * 2)
         ctx.strokeStyle = Math.cos(lo) >= 0 ? 'rgba(0,200,255,0.10)' : 'rgba(0,200,255,0.03)'
@@ -259,23 +312,36 @@ export default function GlobeCanvas({
       bloom.addColorStop(0, 'rgba(30,150,230,0.20)')
       bloom.addColorStop(0.5, 'rgba(0,120,210,0.10)')
       bloom.addColorStop(1, 'rgba(0,0,0,0)')
-      ctx.beginPath(); ctx.arc(cx, cy, R * 1.4, 0, Math.PI * 2); ctx.fillStyle = bloom; ctx.fill()
+      ctx.beginPath()
+      ctx.arc(cx, cy, R * 1.4, 0, Math.PI * 2)
+      ctx.fillStyle = bloom
+      ctx.fill()
 
       const ring = ctx.createRadialGradient(cx, cy, R * 0.7, cx, cy, R)
       ring.addColorStop(0, 'rgba(0,0,0,0)')
       ring.addColorStop(0.8, 'rgba(40,180,255,0.06)')
       ring.addColorStop(0.94, 'rgba(90,210,255,0.28)')
       ring.addColorStop(1, 'rgba(150,235,255,0.6)')
-      ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.fillStyle = ring; ctx.fill()
+      ctx.beginPath()
+      ctx.arc(cx, cy, R, 0, Math.PI * 2)
+      ctx.fillStyle = ring
+      ctx.fill()
 
       const dawn = ctx.createRadialGradient(
-        cx + sx * R * 0.9, cy - sy * R * 0.9, 0,
-        cx + sx * R * 0.9, cy - sy * R * 0.9, R * 0.95,
+        cx + sx * R * 0.9,
+        cy - sy * R * 0.9,
+        0,
+        cx + sx * R * 0.9,
+        cy - sy * R * 0.9,
+        R * 0.95,
       )
       dawn.addColorStop(0, 'rgba(150,225,255,0.30)')
       dawn.addColorStop(0.6, 'rgba(60,160,255,0.08)')
       dawn.addColorStop(1, 'rgba(0,0,0,0)')
-      ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.fillStyle = dawn; ctx.fill()
+      ctx.beginPath()
+      ctx.arc(cx, cy, R, 0, Math.PI * 2)
+      ctx.fillStyle = dawn
+      ctx.fill()
       ctx.restore()
     }
 
@@ -283,7 +349,9 @@ export default function GlobeCanvas({
     // look of the reference). Cheap: a handful of sine-perturbed latitude bands.
     function drawContours() {
       ctx.save()
-      ctx.beginPath(); ctx.arc(cx, cy, R - 0.5, 0, Math.PI * 2); ctx.clip()
+      ctx.beginPath()
+      ctx.arc(cx, cy, R - 0.5, 0, Math.PI * 2)
+      ctx.clip()
       ctx.globalCompositeOperation = 'lighter'
       const lines = 11
       for (let k = 0; k < lines; k++) {
@@ -296,9 +364,17 @@ export default function GlobeCanvas({
         for (let lon = -180; lon <= 180; lon += 4) {
           const lat = baseLat + amp * Math.sin((lon * Math.PI) / 180 * freq + off)
           const p = projectGeo(lat, lon)
-          if (p.z < 0.04) { started = false; continue }
-          if (!started) { ctx.moveTo(p.x, p.y); started = true }
-          else ctx.lineTo(p.x, p.y)
+          if (p.z < 0.04) {
+            started = false
+            continue
+          }
+          if (!started) {
+            ctx.moveTo(p.x, p.y)
+            started = true
+          }
+          else {
+            ctx.lineTo(p.x, p.y)
+          }
         }
         ctx.strokeStyle = `rgba(94,210,255,${0.045 + 0.03 * (k % 2)})`
         ctx.lineWidth = 0.6
@@ -312,7 +388,9 @@ export default function GlobeCanvas({
       const custom = hotspotsRef.current
       const lead = custom && custom.length ? [custom[0].lat, custom[0].lon] : [SPOTS[0][0], SPOTS[0][1]]
       const p = projectGeo(lead[0], lead[1])
-      if (p.z < 0.1) return
+      if (p.z < 0.1) {
+        return
+      }
       const v = Math.min(1, p.z)
       ctx.save()
       ctx.globalCompositeOperation = 'lighter'
@@ -320,14 +398,23 @@ export default function GlobeCanvas({
       halo.addColorStop(0, `rgba(190,238,255,${0.42 * v})`)
       halo.addColorStop(0.22, `rgba(110,195,255,${0.16 * v})`)
       halo.addColorStop(1, 'rgba(0,0,0,0)')
-      ctx.beginPath(); ctx.arc(p.x, p.y, R * 0.55, 0, Math.PI * 2); ctx.fillStyle = halo; ctx.fill()
+      ctx.beginPath()
+      ctx.arc(p.x, p.y, R * 0.55, 0, Math.PI * 2)
+      ctx.fillStyle = halo
+      ctx.fill()
       const core = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, R * 0.07)
       core.addColorStop(0, `rgba(255,255,255,${0.95 * v})`)
       core.addColorStop(1, 'rgba(255,255,255,0)')
-      ctx.beginPath(); ctx.arc(p.x, p.y, R * 0.07, 0, Math.PI * 2); ctx.fillStyle = core; ctx.fill()
+      ctx.beginPath()
+      ctx.arc(p.x, p.y, R * 0.07, 0, Math.PI * 2)
+      ctx.fillStyle = core
+      ctx.fill()
       const ringR = R * (0.12 + 0.03 * (0.5 + 0.5 * Math.sin(phase)))
-      ctx.beginPath(); ctx.arc(p.x, p.y, ringR, 0, Math.PI * 2)
-      ctx.strokeStyle = `rgba(180,232,255,${0.4 * v})`; ctx.lineWidth = 1; ctx.stroke()
+      ctx.beginPath()
+      ctx.arc(p.x, p.y, ringR, 0, Math.PI * 2)
+      ctx.strokeStyle = `rgba(180,232,255,${0.4 * v})`
+      ctx.lineWidth = 1
+      ctx.stroke()
       ctx.restore()
     }
 
@@ -347,67 +434,99 @@ export default function GlobeCanvas({
         ctx.save()
         ctx.globalCompositeOperation = 'lighter'
         for (const [ia, ib] of arcs) {
-          const a = spots[ia], b = spots[ib]
+          const a = spots[ia]
+          const b = spots[ib]
           // build the bowed (lifted) arc path once, reuse for glow + core passes
           const pts: { x: number, y: number }[] = []
           for (let t = 0; t <= 48; t++) {
             const f = t / 48
             const p = projectGeo(a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f)
-            if (p.z < -0.1) continue
+            if (p.z < -0.1) {
+              continue
+            }
             // push the midpoint outward from the globe center → arc bows off the surface
-            const dx = p.x - cx, dy = p.y - cy
+            const dx = p.x - cx
+            const dy = p.y - cy
             const dist = Math.hypot(dx, dy) || 1
             const lift = Math.sin(f * Math.PI) * R * 0.22
             pts.push({ x: p.x + (dx / dist) * lift, y: p.y + (dy / dist) * lift })
           }
-          if (pts.length < 2) continue
-          const trace = () => {
+          if (pts.length < 2) {
+            continue
+          }
+          function trace() {
             ctx.beginPath()
             ctx.moveTo(pts[0].x, pts[0].y)
-            for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y)
+            for (let i = 1; i < pts.length; i++) {
+              ctx.lineTo(pts[i].x, pts[i].y)
+            }
           }
           // soft glow
-          trace(); ctx.strokeStyle = 'rgba(0,210,255,0.10)'; ctx.lineWidth = 3; ctx.stroke()
+          trace()
+          ctx.strokeStyle = 'rgba(0,210,255,0.10)'
+          ctx.lineWidth = 3
+          ctx.stroke()
           // bright core
-          trace(); ctx.strokeStyle = 'rgba(120,235,255,0.55)'; ctx.lineWidth = 1; ctx.stroke()
+          trace()
+          ctx.strokeStyle = 'rgba(120,235,255,0.55)'
+          ctx.lineWidth = 1
+          ctx.stroke()
           // travelling pulse along the arc
           const head = pts[Math.floor((0.5 + 0.5 * Math.sin(phase * 0.9)) * (pts.length - 1))]
           const pg = ctx.createRadialGradient(head.x, head.y, 0, head.x, head.y, 4)
           pg.addColorStop(0, 'rgba(220,250,255,0.9)')
           pg.addColorStop(1, 'rgba(220,250,255,0)')
-          ctx.beginPath(); ctx.arc(head.x, head.y, 4, 0, Math.PI * 2); ctx.fillStyle = pg; ctx.fill()
+          ctx.beginPath()
+          ctx.arc(head.x, head.y, 4, 0, Math.PI * 2)
+          ctx.fillStyle = pg
+          ctx.fill()
         }
         ctx.restore()
       }
 
       positionsRef.current = []
-      if (!flags.current.showHotspots) return
+      if (!flags.current.showHotspots) {
+        return
+      }
       const scale = R / 98
       for (let i = 0; i < spots.length; i++) {
         const [lat, lon, r, g, b, baseSz] = spots[i]
         const sz2 = baseSz * scale
         const p = projectGeo(lat, lon)
         const vis = Math.max(0, p.z)
-        if (vis < 0.05) continue
+        if (vis < 0.05) {
+          continue
+        }
         // record front-facing position for tap hit-testing
-        if (vis > 0.12) positionsRef.current.push({ x: p.x, y: p.y, i })
+        if (vis > 0.12) {
+          positionsRef.current.push({ x: p.x, y: p.y, i })
+        }
         const pp = 0.5 + 0.5 * Math.sin(phase + i * 0.9)
 
         const gr = sz2 + 7 * pp * scale
         const glow = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, gr + 5)
         glow.addColorStop(0, `rgba(${r},${g},${b},${vis * 0.32})`)
         glow.addColorStop(1, `rgba(${r},${g},${b},0)`)
-        ctx.beginPath(); ctx.arc(p.x, p.y, gr + 5, 0, Math.PI * 2); ctx.fillStyle = glow; ctx.fill()
+        ctx.beginPath()
+        ctx.arc(p.x, p.y, gr + 5, 0, Math.PI * 2)
+        ctx.fillStyle = glow
+        ctx.fill()
 
-        ctx.beginPath(); ctx.arc(p.x, p.y, sz2 + 10 * pp * scale, 0, Math.PI * 2)
+        ctx.beginPath()
+        ctx.arc(p.x, p.y, sz2 + 10 * pp * scale, 0, Math.PI * 2)
         ctx.strokeStyle = `rgba(${r},${g},${b},${vis * (1 - pp) * 0.5})`
-        ctx.lineWidth = 0.9; ctx.stroke()
+        ctx.lineWidth = 0.9
+        ctx.stroke()
 
-        ctx.beginPath(); ctx.arc(p.x, p.y, sz2, 0, Math.PI * 2)
-        ctx.fillStyle = `rgba(${r},${g},${b},${vis})`; ctx.fill()
+        ctx.beginPath()
+        ctx.arc(p.x, p.y, sz2, 0, Math.PI * 2)
+        ctx.fillStyle = `rgba(${r},${g},${b},${vis})`
+        ctx.fill()
 
-        ctx.beginPath(); ctx.arc(p.x, p.y, sz2 * 0.36, 0, Math.PI * 2)
-        ctx.fillStyle = `rgba(255,255,255,${vis * 0.9})`; ctx.fill()
+        ctx.beginPath()
+        ctx.arc(p.x, p.y, sz2 * 0.36, 0, Math.PI * 2)
+        ctx.fillStyle = `rgba(255,255,255,${vis * 0.9})`
+        ctx.fill()
 
         // ── label / heading next to the hotspot ──
         const label = labels[i]
@@ -447,7 +566,11 @@ export default function GlobeCanvas({
 
     // ── Interaction: scroll to zoom, drag to rotate (horizontal) / tilt (vertical) ──
     const cv = canvas // non-null alias for the closures below
-    let autoRotate = true, dragging = false, moved = false, lastX = 0, lastY = 0
+    let autoRotate = true
+    let dragging = false
+    let moved = false
+    let lastX = 0
+    let lastY = 0
     let resumeTimer: ReturnType<typeof setTimeout> | undefined
 
     function toCanvas(clientX: number, clientY: number) {
@@ -465,22 +588,40 @@ export default function GlobeCanvas({
       buildProjection()
     }
     function onDown(e: PointerEvent) {
-      dragging = true; moved = false
-      if (interactive) { autoRotate = false }
-      const p = toCanvas(e.clientX, e.clientY); lastX = p.x; lastY = p.y
-      try { cv.setPointerCapture(e.pointerId) }
+      dragging = true
+      moved = false
+      if (interactive) {
+        autoRotate = false
+      }
+      const p = toCanvas(e.clientX, e.clientY)
+      lastX = p.x
+      lastY = p.y
+      try {
+        cv.setPointerCapture(e.pointerId)
+      }
       catch {}
     }
     function onMove(e: PointerEvent) {
-      if (!dragging) return
+      if (!dragging) {
+        return
+      }
       const p = toCanvas(e.clientX, e.clientY)
-      const dx = p.x - lastX, dy = p.y - lastY
-      lastX = p.x; lastY = p.y
-      if (Math.abs(dx) + Math.abs(dy) > 2) moved = true
-      if (!interactive) { return } // tap-only mode: don't rotate/tilt
+      const dx = p.x - lastX
+      const dy = p.y - lastY
+      lastX = p.x
+      lastY = p.y
+      if (Math.abs(dx) + Math.abs(dy) > 2) {
+        moved = true
+      }
+      if (!interactive) {
+        return
+      } // tap-only mode: don't rotate/tilt
       rot -= dx * 0.006
       const nt = Math.min(1.2, Math.max(-1.2, tilt + dy * 0.006))
-      if (nt !== tilt) { tilt = nt; buildProjection() }
+      if (nt !== tilt) {
+        tilt = nt
+        buildProjection()
+      }
     }
     function onUp(e: PointerEvent) {
       if (dragging && !moved) {
@@ -488,36 +629,55 @@ export default function GlobeCanvas({
         if (cb) {
           const p = toCanvas(e.clientX, e.clientY)
           const hitR2 = (W * 0.09) ** 2
-          let best = -1, bestD = hitR2
+          let best = -1
+          let bestD = hitR2
           for (const pos of positionsRef.current) {
             const d = (pos.x - p.x) ** 2 + (pos.y - p.y) ** 2
-            if (d < bestD) { bestD = d; best = pos.i }
+            if (d < bestD) {
+              bestD = d
+              best = pos.i
+            }
           }
-          if (best >= 0) cb(best)
+          if (best >= 0) {
+            cb(best)
+          }
         }
       }
       dragging = false
       if (interactive) {
         clearTimeout(resumeTimer)
-        resumeTimer = setTimeout(() => { autoRotate = true }, 2500)
+        resumeTimer = setTimeout(() => {
+          autoRotate = true
+        }, 2500)
       }
     }
 
-    if (interactive) { cv.addEventListener('wheel', onWheel, { passive: false }) }
+    if (interactive) {
+      cv.addEventListener('wheel', onWheel, { passive: false })
+    }
     cv.addEventListener('pointerdown', onDown)
     cv.addEventListener('pointermove', onMove)
     window.addEventListener('pointerup', onUp)
 
     function frame() {
       ctx.clearRect(0, 0, W, H)
-      if (tex) { drawEarthPixels(); ctx.putImageData(image, 0, 0) }
-      else { drawFallbackSphere() }
-      if (flags.current.showGrid) drawGrid()
+      if (tex) {
+        drawEarthPixels()
+        ctx.putImageData(image, 0, 0)
+      }
+      else {
+        drawFallbackSphere()
+      }
+      if (flags.current.showGrid) {
+        drawGrid()
+      }
       drawContours()
       drawAtmosphere()
       drawFocalGlow()
       drawArcsAndHotspots()
-      if (autoRotate && !dragging) rot += 0.0017
+      if (autoRotate && !dragging) {
+        rot += 0.0017
+      }
       phase += 0.032
       raf = requestAnimationFrame(frame)
     }

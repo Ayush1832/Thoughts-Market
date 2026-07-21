@@ -10,14 +10,16 @@ export async function POST(
 ) {
   try {
     const user = await UserRepository.getCurrentUser({ minimal: true })
-    if (!user)
+    if (!user) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
 
     const { id } = await params
     const { data, error } = await RoomsRepository.joinRoom(id, user.id)
 
-    if (error || !data)
+    if (error || !data) {
       return NextResponse.json({ error: error ?? DEFAULT_ERROR_MESSAGE }, { status: 400 })
+    }
 
     return NextResponse.json(data)
   }

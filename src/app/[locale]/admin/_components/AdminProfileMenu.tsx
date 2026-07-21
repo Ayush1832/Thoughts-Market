@@ -49,7 +49,7 @@ export default function AdminProfileMenu({ email, roleLabel }: { email: string, 
         >
           <div
             aria-hidden="true"
-            className="size-8 shrink-0 rounded-full bg-gradient-to-br from-purple-500 to-pink-500"
+            className="size-8 shrink-0 rounded-full bg-linear-to-br from-purple-500 to-pink-500"
           />
           <ChevronDownIcon className="size-4 transition-transform duration-150 group-data-[state=open]:rotate-180" />
         </Button>
@@ -58,7 +58,7 @@ export default function AdminProfileMenu({ email, roleLabel }: { email: string, 
         <div className="flex items-center gap-3 p-3">
           <div
             aria-hidden="true"
-            className="size-10 shrink-0 rounded-full bg-gradient-to-br from-purple-500 to-pink-500"
+            className="size-10 shrink-0 rounded-full bg-linear-to-br from-purple-500 to-pink-500"
           />
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-semibold text-foreground">{email}</p>

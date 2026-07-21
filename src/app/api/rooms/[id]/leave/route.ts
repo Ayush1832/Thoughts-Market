@@ -10,8 +10,9 @@ export async function POST(
 ) {
   try {
     const user = await UserRepository.getCurrentUser({ minimal: true })
-    if (!user)
+    if (!user) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
 
     const { id } = await params
     await RoomsRepository.leaveRoom(id, user.id)

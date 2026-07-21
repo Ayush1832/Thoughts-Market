@@ -56,11 +56,12 @@ export default function SettingsSidebar() {
                 `,
                 isActive
                   ? `
-                      bg-white/[0.06] hover:bg-white/[0.08]
-                      lg:before:absolute lg:before:left-0 lg:before:inset-y-2 lg:before:w-0.5
-                      lg:before:rounded-r-full lg:before:bg-[#7d6cff]
-                    `
-                  : 'hover:bg-white/[0.04]',
+                    bg-white/6
+                    hover:bg-white/8
+                    lg:before:absolute lg:before:inset-y-2 lg:before:left-0 lg:before:w-0.5 lg:before:rounded-r-full
+                    lg:before:bg-[#7d6cff]
+                  `
+                  : 'hover:bg-white/4',
               )}
               asChild
             >
@@ -77,7 +78,8 @@ export default function SettingsSidebar() {
           type="button"
           variant="ghost"
           className={`
-            group relative h-auto shrink-0 snap-start flex-col gap-1.5 px-3 py-2 text-foreground hover:bg-white/[0.04]
+            group relative h-auto shrink-0 snap-start flex-col gap-1.5 px-3 py-2 text-foreground
+            hover:bg-white/4
             lg:h-11 lg:min-w-0 lg:flex-row lg:justify-start lg:gap-2 lg:px-4 lg:py-2
           `}
         >

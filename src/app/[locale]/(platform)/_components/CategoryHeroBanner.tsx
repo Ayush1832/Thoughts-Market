@@ -105,13 +105,13 @@ export default function CategoryHeroBanner({
     <div className="mb-5 space-y-4">
       {/* Hero card */}
       <div className={cn(
-        'relative overflow-hidden rounded-2xl border border-border/30 bg-gradient-to-r p-6',
+        'relative overflow-hidden rounded-2xl border border-border/30 bg-linear-to-r p-6',
         'animate-fade-in transition-all duration-300 hover:border-border/50',
         meta.gradient,
       )}
       >
         {/* subtle noise texture overlay */}
-        <div className="pointer-events-none absolute inset-0 opacity-[0.03]" style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E\")" }} />
+        <div className="pointer-events-none absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 256 256\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noise\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.9\' numOctaves=\'4\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noise)\'/%3E%3C/svg%3E")' }} />
         <div className="flex flex-wrap items-center justify-between gap-6">
           {/* Left: icon + name + description */}
           <div className="flex items-center gap-4">

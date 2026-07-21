@@ -1,8 +1,7 @@
-import { isAdminAuthorized } from '@/lib/admin-auth-check'
 import { NextResponse } from 'next/server'
+import { isAdminAuthorized } from '@/lib/admin-auth-check'
 import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
 import { EventRepository } from '@/lib/db/queries/event'
-import { UserRepository } from '@/lib/db/queries/user'
 
 export async function GET(request: Request) {
   try {

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
+import type { PrivacySettingsInput } from '@/app/[locale]/(platform)/settings/_actions/update-privacy-settings'
 import { getExtracted, setRequestLocale } from 'next-intl/server'
 import { notFound } from 'next/navigation'
-import type { PrivacySettingsInput } from '@/app/[locale]/(platform)/settings/_actions/update-privacy-settings'
 import SettingsPrivacyContent from '@/app/[locale]/(platform)/settings/_components/SettingsPrivacyContent'
 import { UserRepository } from '@/lib/db/queries/user'
 

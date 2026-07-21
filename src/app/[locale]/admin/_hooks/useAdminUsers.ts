@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
-import { useCallback, useMemo, useState } from 'react'
 import { useParams } from 'next/navigation'
+import { useCallback, useMemo, useState } from 'react'
 import { routing } from '@/i18n/routing'
 
 interface AdminUserRow {
@@ -70,7 +70,7 @@ async function fetchAdminUsers(params: UseAdminUsersParams): Promise<AdminUsersR
     method: 'GET',
     credentials: 'same-origin',
     headers: {
-      'Accept': 'application/json',
+      Accept: 'application/json',
     },
   })
 

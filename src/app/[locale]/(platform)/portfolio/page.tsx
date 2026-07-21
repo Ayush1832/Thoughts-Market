@@ -32,10 +32,10 @@ export default async function PortfolioPage({ params }: PageProps<'/[locale]/por
     <>
       {/* Prototype-style header */}
       <div className="mb-6">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground/70">
+        <p className="text-[11px] font-semibold tracking-[0.2em] text-muted-foreground/70 uppercase">
           Portfolio
         </p>
-        <h1 className="font-display text-4xl leading-tight tracking-tight md:text-5xl">
+        <h1 className="font-display text-4xl/tight tracking-tight md:text-5xl">
           Your edge, in numbers
         </h1>
       </div>

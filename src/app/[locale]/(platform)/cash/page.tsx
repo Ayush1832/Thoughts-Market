@@ -32,7 +32,7 @@ export default async function CashPage({ params }: PageProps<'/[locale]/cash'>) 
         <p className="text-[11px] font-semibold tracking-[0.2em] text-muted-foreground/70 uppercase">
           Cash
         </p>
-        <h1 className="font-display text-4xl leading-tight tracking-tight md:text-5xl">
+        <h1 className="font-display text-4xl/tight tracking-tight md:text-5xl">
           Add funds to trade
         </h1>
       </div>

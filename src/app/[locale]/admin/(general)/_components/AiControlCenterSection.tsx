@@ -1,8 +1,8 @@
 'use client'
 
 import { useExtracted } from 'next-intl'
-import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
+import { Switch } from '@/components/ui/switch'
 import SettingsAccordionSection from './SettingsAccordionSection'
 
 interface AiControlCenterSectionProps {
@@ -32,7 +32,7 @@ function FeatureRow({ id, label, description, checked, disabled, onCheckedChange
   return (
     <div className="flex items-center justify-between gap-4 rounded-lg border border-border/60 bg-muted/10 px-4 py-3">
       <div className="grid gap-0.5">
-        <Label htmlFor={id} className="text-sm font-medium cursor-pointer">{label}</Label>
+        <Label htmlFor={id} className="cursor-pointer text-sm font-medium">{label}</Label>
         <p className="text-xs text-muted-foreground">{description}</p>
       </div>
       <Switch

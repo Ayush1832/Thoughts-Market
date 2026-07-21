@@ -6,7 +6,7 @@ import { hashPassword } from '@/lib/admin-auth'
 import { isAdminAuthorized } from '@/lib/admin-auth-check'
 import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
 import { RolesRepository } from '@/lib/db/queries/roles'
-import { ADMIN_ROLES, accounts, users } from '@/lib/db/schema/auth/tables'
+import { accounts, ADMIN_ROLES, users } from '@/lib/db/schema/auth/tables'
 import { db } from '@/lib/drizzle'
 
 export async function POST(request: NextRequest) {

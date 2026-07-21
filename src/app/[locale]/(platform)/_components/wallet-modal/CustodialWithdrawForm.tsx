@@ -3,13 +3,13 @@
 import type { FormEvent } from 'react'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
-import { isAddress } from 'viem'
-import { requestWithdrawalAction } from '@/app/[locale]/(platform)/_actions/custodial-withdrawal'
+import { getWithdrawalQuoteAction, requestWithdrawalAction } from '@/app/[locale]/(platform)/_actions/custodial-withdrawal'
 import { getMyBalancesAction } from '@/app/[locale]/(platform)/_actions/deposit-address'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/select'
+import { isValidAddressForNetwork } from '@/lib/address-validation'
 
 const NETWORK_LABELS: Record<string, string> = {
   polygon: 'Polygon',
@@ -19,11 +19,16 @@ const NETWORK_LABELS: Record<string, string> = {
   arbitrum: 'Arbitrum',
   base: 'Base',
   optimism: 'Optimism',
+  ronin: 'Ronin',
+  hyperliquid: 'Hyperliquid',
+  tron: 'TRON',
+  solana: 'Solana',
+  bitcoin: 'Bitcoin',
 }
 
 const COIN_NETWORKS: Record<string, readonly string[]> = {
-  USDC: ['polygon', 'ethereum', 'bsc', 'avalanche', 'arbitrum', 'base', 'optimism'],
-  USDT: ['polygon', 'ethereum', 'bsc', 'avalanche', 'arbitrum', 'optimism'],
+  USDC: ['polygon', 'ethereum', 'bsc', 'avalanche', 'arbitrum', 'base', 'optimism', 'solana'],
+  USDT: ['polygon', 'ethereum', 'bsc', 'avalanche', 'arbitrum', 'optimism', 'tron', 'solana'],
   POL: ['polygon'],
   ETH: ['ethereum', 'arbitrum', 'base', 'optimism'],
   BNB: ['bsc'],
@@ -33,9 +38,20 @@ const COIN_NETWORKS: Record<string, readonly string[]> = {
   SAND: ['ethereum'],
   IMX: ['ethereum'],
   RLB: ['ethereum'],
+  RON: ['ronin'],
+  HYPE: ['hyperliquid'],
+  TRX: ['tron'],
+  SOL: ['solana'],
+  BTC: ['bitcoin'],
 }
 
-const COINS = ['USDC', 'USDT', 'POL', 'ETH', 'BNB', 'AVAX', 'LINK', 'UNI', 'SAND', 'IMX', 'RLB'] as const
+const COINS = ['USDC', 'USDT', 'POL', 'ETH', 'BNB', 'AVAX', 'LINK', 'UNI', 'SAND', 'IMX', 'RLB', 'RON', 'HYPE', 'TRX', 'SOL', 'BTC'] as const
+
+interface Quote {
+  feeUsd: number
+  netUsd: number
+  coinAmount: string
+}
 
 function CustodialWithdrawForm({ onClose }: { onClose: () => void }) {
   const [balances, setBalances] = useState<Record<string, string>>({})
@@ -44,6 +60,8 @@ function CustodialWithdrawForm({ onClose }: { onClose: () => void }) {
   const [amount, setAmount] = useState('')
   const [toAddress, setToAddress] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [quote, setQuote] = useState<Quote | null>(null)
+  const [quoteError, setQuoteError] = useState('')
 
   useEffect(() => {
     let cancelled = false
@@ -64,29 +82,61 @@ function CustodialWithdrawForm({ onClose }: { onClose: () => void }) {
     }
   }, [])
 
+  const availableUsd = Number(balances.USDC ?? '0')
+  const networks = COIN_NETWORKS[coin] ?? []
+
+  useEffect(() => {
+    setQuote(null)
+    setQuoteError('')
+    const amountUsd = Number(amount)
+    if (!Number.isFinite(amountUsd) || amountUsd <= 0) {
+      return
+    }
+    let cancelled = false
+    const handle = setTimeout(() => {
+      getWithdrawalQuoteAction({ coin, destNetwork: network, amountUsd: amount })
+        .then((result) => {
+          if (cancelled) {
+            return
+          }
+          if (result.error || !result.data) {
+            setQuoteError(result.error ?? 'Could not price this withdrawal.')
+            return
+          }
+          setQuote({ feeUsd: result.data.feeUsd, netUsd: result.data.netUsd, coinAmount: result.data.coinAmount })
+        })
+        .catch(() => {
+          if (!cancelled) {
+            setQuoteError('Could not price this withdrawal.')
+          }
+        })
+    }, 450)
+    return () => {
+      cancelled = true
+      clearTimeout(handle)
+    }
+  }, [coin, network, amount])
+
   function handleCoinChange(value: string) {
     setCoin(value)
-    const networks = COIN_NETWORKS[value] ?? []
-    if (!networks.includes(network)) {
-      setNetwork(networks[0] ?? '')
+    const nextNetworks = COIN_NETWORKS[value] ?? []
+    if (!nextNetworks.includes(network)) {
+      setNetwork(nextNetworks[0] ?? '')
     }
   }
 
-  const available = Number(balances[coin] ?? '0')
-  const networks = COIN_NETWORKS[coin] ?? []
-
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (!isAddress(toAddress)) {
+    if (!isValidAddressForNetwork(network, toAddress)) {
       toast.error('Enter a valid destination address.')
       return
     }
-    const parsedAmount = Number(amount)
-    if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
+    const amountUsd = Number(amount)
+    if (!Number.isFinite(amountUsd) || amountUsd <= 0) {
       toast.error('Enter a valid amount.')
       return
     }
-    if (parsedAmount > available) {
+    if (amountUsd > availableUsd) {
       toast.error('Amount exceeds your balance.')
       return
     }
@@ -95,8 +145,8 @@ function CustodialWithdrawForm({ onClose }: { onClose: () => void }) {
     try {
       const result = await requestWithdrawalAction({
         coin,
-        amount,
         destNetwork: network,
+        amountUsd: amount,
         toAddress,
       })
       if (result.error) {
@@ -113,9 +163,40 @@ function CustodialWithdrawForm({ onClose }: { onClose: () => void }) {
 
   return (
     <form className="space-y-4" onSubmit={handleSubmit}>
+      <div className="space-y-2">
+        <Label htmlFor="custodial-withdraw-amount" className="text-foreground">Amount (USD)</Label>
+        <div className="relative">
+          <Input
+            id="custodial-withdraw-amount"
+            inputMode="decimal"
+            value={amount}
+            onChange={event => setAmount(event.target.value.replace(/[^0-9.]/g, ''))}
+            placeholder="0.00"
+            className="h-12 pr-16"
+            required
+          />
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="absolute inset-y-2 right-2 text-xs"
+            onClick={() => setAmount(String(availableUsd))}
+          >
+            Max
+          </Button>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Available:
+          {' '}
+          {availableUsd.toLocaleString('en-US', { maximumFractionDigits: 2 })}
+          {' '}
+          USDC
+        </p>
+      </div>
+
       <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2">
-          <Label className="text-foreground">Token</Label>
+          <Label className="text-foreground">Receive coin</Label>
           <Select value={coin} onValueChange={handleCoinChange}>
             <SelectTrigger className="h-12 w-full justify-between bg-card text-foreground">{coin}</SelectTrigger>
             <SelectContent position="popper" side="bottom" align="start" sideOffset={6}>
@@ -124,13 +205,6 @@ function CustodialWithdrawForm({ onClose }: { onClose: () => void }) {
               ))}
             </SelectContent>
           </Select>
-          <p className="text-xs text-muted-foreground">
-            Available:
-            {' '}
-            {available.toLocaleString('en-US', { maximumFractionDigits: 6 })}
-            {' '}
-            {coin}
-          </p>
         </div>
 
         <div className="space-y-2">
@@ -149,51 +223,41 @@ function CustodialWithdrawForm({ onClose }: { onClose: () => void }) {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="custodial-withdraw-amount" className="text-foreground">Amount</Label>
-        <div className="relative">
-          <Input
-            id="custodial-withdraw-amount"
-            inputMode="decimal"
-            value={amount}
-            onChange={event => setAmount(event.target.value.replace(/[^0-9.]/g, ''))}
-            placeholder="0.00"
-            className="h-12 pr-16"
-            required
-          />
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="absolute inset-y-2 right-2 text-xs"
-            onClick={() => setAmount(String(available))}
-          >
-            Max
-          </Button>
-        </div>
-      </div>
-
-      <div className="space-y-2">
         <Label htmlFor="custodial-withdraw-to" className="text-foreground">Recipient address</Label>
         <Input
           id="custodial-withdraw-to"
           value={toAddress}
           onChange={event => setToAddress(event.target.value)}
-          placeholder="0x..."
+          placeholder={
+            network === 'tron'
+              ? 'T...'
+              : network === 'solana'
+                ? 'Solana address'
+                : network === 'bitcoin' ? 'bc1...' : '0x...'
+          }
           className="h-12"
           required
         />
       </div>
 
-      <p className="text-center text-xs text-muted-foreground">
-        Sending
-        {' '}
-        {coin}
-        {' '}
-        on
-        {' '}
-        {NETWORK_LABELS[network] ?? network}
-        . Make sure the recipient address supports this network.
-      </p>
+      <div className="rounded-md border bg-muted/40 p-3 text-sm text-foreground">
+        {quoteError
+          ? <span className="text-destructive">{quoteError}</span>
+          : quote
+            ? (
+                <div className="space-y-1">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Fee</span>
+                    <span>{`$${quote.feeUsd.toLocaleString('en-US', { maximumFractionDigits: 2 })}`}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">You receive</span>
+                    <span>{`${quote.coinAmount} ${coin}`}</span>
+                  </div>
+                </div>
+              )
+            : <span className="text-muted-foreground">Enter an amount to see the fee and payout.</span>}
+      </div>
 
       <Button type="submit" className="h-12 w-full text-base" disabled={submitting}>
         {submitting ? 'Submitting…' : 'Withdraw'}

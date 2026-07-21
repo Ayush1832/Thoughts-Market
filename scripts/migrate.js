@@ -332,6 +332,66 @@ async function createSyncDepositSweepsCron(sql, siteUrl, cronSecret) {
   })
 }
 
+async function createSyncTronDepositsCron(sql, siteUrl, cronSecret) {
+  await createSyncCron(sql, {
+    jobName: 'sync-tron-deposits',
+    schedule: '* * * * *',
+    endpointPath: '/api/sync/tron-deposits',
+    siteUrl,
+    cronSecret,
+  })
+}
+
+async function createSyncTronSweepsCron(sql, siteUrl, cronSecret) {
+  await createSyncCron(sql, {
+    jobName: 'sync-tron-sweeps',
+    schedule: '*/5 * * * *',
+    endpointPath: '/api/sync/tron-sweeps',
+    siteUrl,
+    cronSecret,
+  })
+}
+
+async function createSyncSolanaDepositsCron(sql, siteUrl, cronSecret) {
+  await createSyncCron(sql, {
+    jobName: 'sync-solana-deposits',
+    schedule: '* * * * *',
+    endpointPath: '/api/sync/solana-deposits',
+    siteUrl,
+    cronSecret,
+  })
+}
+
+async function createSyncSolanaSweepsCron(sql, siteUrl, cronSecret) {
+  await createSyncCron(sql, {
+    jobName: 'sync-solana-sweeps',
+    schedule: '*/5 * * * *',
+    endpointPath: '/api/sync/solana-sweeps',
+    siteUrl,
+    cronSecret,
+  })
+}
+
+async function createSyncBitcoinDepositsCron(sql, siteUrl, cronSecret) {
+  await createSyncCron(sql, {
+    jobName: 'sync-bitcoin-deposits',
+    schedule: '*/2 * * * *',
+    endpointPath: '/api/sync/bitcoin-deposits',
+    siteUrl,
+    cronSecret,
+  })
+}
+
+async function createSyncBitcoinSweepsCron(sql, siteUrl, cronSecret) {
+  await createSyncCron(sql, {
+    jobName: 'sync-bitcoin-sweeps',
+    schedule: '*/10 * * * *',
+    endpointPath: '/api/sync/bitcoin-sweeps',
+    siteUrl,
+    cronSecret,
+  })
+}
+
 async function resolveCronExtensionCapabilities(sql) {
   const result = await sql`
     SELECT
@@ -348,22 +408,24 @@ async function resolveCronExtensionCapabilities(sql) {
 async function configureSupabaseScheduler(sql, siteUrl, cronSecret) {
   const { hasPgCron, hasPgNet } = await resolveCronExtensionCapabilities(sql)
 
+  // Supabase mode means the deposit/sweep/withdrawal cron jobs are meant to run
+  // via pg_cron — vercel.json has no fallback entries for them. Silently
+  // skipping here (the old behavior) let deploys succeed with deposits never
+  // detected and withdrawals never paid out, with nothing surfacing the gap.
+  // Failing db:push (and therefore the build) is the only reliable signal.
   if (!hasPgCron) {
-    console.log('Skipping scheduler setup because pg_cron is not installed in this database.')
-    return
+    throw new Error('Supabase mode is configured but pg_cron is not installed in this database. Enable the pg_cron extension (Database > Extensions in the Supabase dashboard) before deploying, or unset SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY to use an external scheduler instead.')
   }
 
   await createCleanCronDetailsCron(sql)
   await createCleanJobsCron(sql)
 
   if (!hasPgNet) {
-    console.log('Skipping sync endpoint cron setup because pg_net is not installed. Configure scheduler externally.')
-    return
+    throw new Error('Supabase mode is configured but pg_net is not installed in this database. Enable the pg_net extension (Database > Extensions in the Supabase dashboard) before deploying, or unset SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY to use an external scheduler instead.')
   }
 
   if (!cronSecret) {
-    console.log('Skipping sync endpoint cron setup because CRON_SECRET is missing. Configure scheduler externally or rerun db:push with CRON_SECRET.')
-    return
+    throw new Error('Supabase mode is configured but CRON_SECRET is not set. Set CRON_SECRET before deploying so the deposit/sweep/withdrawal sync endpoints can be scheduled.')
   }
 
   await createSyncEventsCron(sql, siteUrl, cronSecret)
@@ -374,6 +436,12 @@ async function configureSupabaseScheduler(sql, siteUrl, cronSecret) {
   await createSyncDepositsCron(sql, siteUrl, cronSecret)
   await createSyncWithdrawalsCron(sql, siteUrl, cronSecret)
   await createSyncDepositSweepsCron(sql, siteUrl, cronSecret)
+  await createSyncTronDepositsCron(sql, siteUrl, cronSecret)
+  await createSyncTronSweepsCron(sql, siteUrl, cronSecret)
+  await createSyncSolanaDepositsCron(sql, siteUrl, cronSecret)
+  await createSyncSolanaSweepsCron(sql, siteUrl, cronSecret)
+  await createSyncBitcoinDepositsCron(sql, siteUrl, cronSecret)
+  await createSyncBitcoinSweepsCron(sql, siteUrl, cronSecret)
 }
 
 function resolveMigrationConnectionString() {

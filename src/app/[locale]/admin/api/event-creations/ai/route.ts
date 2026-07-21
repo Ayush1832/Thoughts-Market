@@ -1,11 +1,10 @@
-import { isAdminAuthorized } from '@/lib/admin-auth-check'
 import type { OpenRouterMessage } from '@/lib/ai/openrouter'
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
+import { isAdminAuthorized } from '@/lib/admin-auth-check'
 import { loadOpenRouterProviderSettings } from '@/lib/ai/market-context-config'
 import { requestOpenRouterCompletion } from '@/lib/ai/openrouter'
 import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
-import { UserRepository } from '@/lib/db/queries/user'
 import { hasEventCreationDateTemplateVariable } from '@/lib/event-creation'
 
 const GAMMA_MARKETS_ENDPOINT = 'https://gamma-api.polymarket.com/markets?limit=200&offset=0&active=true&closed=false'

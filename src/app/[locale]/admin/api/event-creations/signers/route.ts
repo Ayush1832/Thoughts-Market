@@ -1,8 +1,7 @@
-import { isAdminAuthorized } from '@/lib/admin-auth-check'
 import { NextResponse } from 'next/server'
+import { isAdminAuthorized } from '@/lib/admin-auth-check'
 import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
 import { AllowedMarketCreatorRepository } from '@/lib/db/queries/allowed-market-creators'
-import { UserRepository } from '@/lib/db/queries/user'
 import { loadEventCreationSignersFromEnv } from '@/lib/event-creation-signers'
 
 function shortenAddress(address: string) {

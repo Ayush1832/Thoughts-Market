@@ -16,6 +16,7 @@ export * from './orders/tables'
 export * from './settings/tables'
 export * from './subgraph/tables'
 export * from './support/tables'
+export * from './treasury/tables'
 
 // relations
 export * from './affiliates/relations'

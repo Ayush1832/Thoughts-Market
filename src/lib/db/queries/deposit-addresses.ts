@@ -1,8 +1,24 @@
 import { and, eq, sql } from 'drizzle-orm'
+import { BITCOIN_NETWORK, deriveBitcoinAddress } from '@/lib/bitcoin'
 import { deposit_addresses } from '@/lib/db/schema/deposit-addresses/tables'
 import { assertValidDerivationIndex, deriveDepositAddress } from '@/lib/deposit-hd'
 import { db } from '@/lib/drizzle'
+import { deriveSolanaAddress, SOLANA_NETWORK } from '@/lib/solana'
+import { deriveTronAddress, TRON_NETWORK } from '@/lib/tron'
 import 'server-only'
+
+function deriveAddressForNetwork(network: string, index: number): string {
+  if (network === TRON_NETWORK) {
+    return deriveTronAddress(index)
+  }
+  if (network === SOLANA_NETWORK) {
+    return deriveSolanaAddress(index)
+  }
+  if (network === BITCOIN_NETWORK) {
+    return deriveBitcoinAddress(index)
+  }
+  return deriveDepositAddress(index)
+}
 
 export interface DepositAddressRecord {
   id: string
@@ -66,7 +82,7 @@ async function createDepositAddress(
   rotationIndex: number,
 ): Promise<DepositAddressRecord> {
   const derivationIndex = await nextDerivationIndex()
-  const address = deriveDepositAddress(derivationIndex)
+  const address = deriveAddressForNetwork(network, derivationIndex)
 
   const [row] = await db
     .insert(deposit_addresses)

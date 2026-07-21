@@ -29,6 +29,7 @@ export interface DetectedDeposit {
   coin: string
   network: string
   amount: string
+  usdcAmount: string
   address: string
   txHash: string
   logIndex: number
@@ -53,20 +54,25 @@ export async function recordAndCreditDeposit(deposit: DetectedDeposit): Promise<
 
     await creditTx(tx, {
       userId: deposit.userId,
-      currency: deposit.coin,
-      amount: deposit.amount,
+      currency: 'USDC',
+      amount: deposit.usdcAmount,
       type: 'deposit',
       reference: deposit.txHash,
+      metadata: {
+        coin: deposit.coin,
+        coinAmount: deposit.amount,
+        network: deposit.network,
+      },
     })
 
     await tx.insert(finance_transactions).values({
       user_id: deposit.userId,
       wallet_address: deposit.address,
       type: 'deposit',
-      amount: deposit.amount,
-      currency: deposit.coin,
+      amount: deposit.usdcAmount,
+      currency: 'USDC',
       status: 'completed',
-      method: 'Crypto Deposit',
+      method: `${deposit.coin} Deposit`,
       tx_hash: deposit.txHash,
     })
 

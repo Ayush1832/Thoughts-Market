@@ -1,4 +1,4 @@
-import { Inter, Instrument_Serif, JetBrains_Mono } from 'next/font/google'
+import { Instrument_Serif, Inter, JetBrains_Mono } from 'next/font/google'
 import localFont from 'next/font/local'
 
 // Kept for compatibility; no longer the primary sans.

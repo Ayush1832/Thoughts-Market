@@ -2,6 +2,7 @@ import { createPublicClient, formatUnits, http, parseAbiItem } from 'viem'
 import { listMonitoredDepositAddresses } from '@/lib/db/queries/deposit-addresses'
 import { getScanCursor, recordAndCreditDeposit, setScanCursor } from '@/lib/db/queries/deposit-events'
 import { getEnabledDepositChains } from '@/lib/deposit-chains'
+import { getUsdPrices, isStable } from '@/lib/pricing'
 import 'server-only'
 
 const TRANSFER_EVENT = parseAbiItem('event Transfer(address indexed from, address indexed to, uint256 value)')
@@ -12,12 +13,43 @@ export interface DepositDetectionResult {
   scannedTo: Record<string, number>
 }
 
+function toUsdcAmount(coinAmount: string, price: number): string | null {
+  const value = Number(coinAmount) * price
+  if (!Number.isFinite(value) || value <= 0) {
+    return null
+  }
+  const usdc = value.toFixed(6)
+  return Number(usdc) > 0 ? usdc : null
+}
+
 export async function runDepositDetection(): Promise<DepositDetectionResult> {
+  const chains = getEnabledDepositChains()
   const monitored = await listMonitoredDepositAddresses()
+
+  const coinSet = new Set<string>()
+  for (const chainConfig of chains) {
+    coinSet.add(chainConfig.native.coin)
+    for (const token of chainConfig.tokens) {
+      coinSet.add(token.coin)
+    }
+  }
+
+  let priceMap: Record<string, number> = {}
+  try {
+    priceMap = await getUsdPrices([...coinSet])
+  }
+  catch {
+    for (const coin of coinSet) {
+      if (isStable(coin)) {
+        priceMap[coin.toUpperCase()] = 1
+      }
+    }
+  }
+
   const scannedTo: Record<string, number> = {}
   let processed = 0
 
-  for (const chainConfig of getEnabledDepositChains()) {
+  for (const chainConfig of chains) {
     const addresses = monitored.filter(record => record.network === chainConfig.network)
     if (addresses.length === 0) {
       continue
@@ -31,6 +63,11 @@ export async function runDepositDetection(): Promise<DepositDetectionResult> {
     const safeBlock = currentBlock > chainConfig.confirmations ? currentBlock - chainConfig.confirmations : 0n
 
     for (const token of chainConfig.tokens) {
+      const price = priceMap[token.coin.toUpperCase()]
+      if (price === undefined) {
+        continue
+      }
+
       const key = `${chainConfig.network}:${token.address.toLowerCase()}`
       const cursor = await getScanCursor(key)
 
@@ -67,12 +104,19 @@ export async function runDepositDetection(): Promise<DepositDetectionResult> {
           continue
         }
 
+        const coinAmount = formatUnits(value, token.decimals)
+        const usdcAmount = toUsdcAmount(coinAmount, price)
+        if (usdcAmount === null) {
+          continue
+        }
+
         const credited = await recordAndCreditDeposit({
           userId: record.userId,
           depositAddressId: record.id,
           coin: token.coin,
           network: chainConfig.network,
-          amount: formatUnits(value, token.decimals),
+          amount: coinAmount,
+          usdcAmount,
           address: record.address,
           txHash: log.transactionHash,
           logIndex: log.logIndex,
@@ -86,6 +130,11 @@ export async function runDepositDetection(): Promise<DepositDetectionResult> {
 
       await setScanCursor(key, Number(toBlock))
       scannedTo[key] = Number(toBlock)
+    }
+
+    const nativePrice = priceMap[chainConfig.native.coin.toUpperCase()]
+    if (nativePrice === undefined) {
+      continue
     }
 
     const nativeKey = `${chainConfig.network}:native`
@@ -118,12 +167,19 @@ export async function runDepositDetection(): Promise<DepositDetectionResult> {
           continue
         }
 
+        const coinAmount = formatUnits(tx.value, chainConfig.native.decimals)
+        const usdcAmount = toUsdcAmount(coinAmount, nativePrice)
+        if (usdcAmount === null) {
+          continue
+        }
+
         const credited = await recordAndCreditDeposit({
           userId: record.userId,
           depositAddressId: record.id,
           coin: chainConfig.native.coin,
           network: chainConfig.network,
-          amount: formatUnits(tx.value, chainConfig.native.decimals),
+          amount: coinAmount,
+          usdcAmount,
           address: record.address,
           txHash: tx.hash,
           logIndex: NATIVE_LOG_INDEX,

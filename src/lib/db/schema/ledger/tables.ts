@@ -28,6 +28,8 @@ export const withdrawals = pgTable('withdrawals', {
   user_id: text().notNull().references(() => users.id, { onDelete: 'cascade' }),
   coin: text().notNull(),
   amount: numeric({ precision: 38, scale: 18 }).notNull(),
+  usd_amount: numeric({ precision: 38, scale: 18 }).notNull().default('0'),
+  fee_usd: numeric({ precision: 38, scale: 18 }).notNull().default('0'),
   dest_network: text().notNull().default('polygon'),
   dest_coin: text().notNull(),
   to_address: text().notNull(),

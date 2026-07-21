@@ -1,7 +1,11 @@
 import type { Address } from 'viem'
 import type { Chain } from 'viem/chains'
-import { arbitrum, avalanche, base, bsc, mainnet, optimism } from 'viem/chains'
+import { arbitrum, avalanche, base, bsc, hyperEvm, mainnet, optimism, ronin } from 'viem/chains'
+import { BITCOIN_NATIVE_COIN, BITCOIN_NETWORK, getCoinDecimalsOnBitcoin } from '@/lib/bitcoin'
 import { COLLATERAL_TOKEN_ADDRESS } from '@/lib/contracts'
+import { IS_TEST_MODE } from '@/lib/network'
+import { getCoinDecimalsOnSolana, SOLANA_COINS, SOLANA_NETWORK } from '@/lib/solana'
+import { getCoinDecimalsOnTron, TRON_COINS, TRON_NETWORK } from '@/lib/tron'
 import { defaultViemNetwork, defaultViemRpcUrl } from '@/lib/viem-network'
 import 'server-only'
 
@@ -66,10 +70,14 @@ const DEPOSIT_CHAIN_DEFS: DepositChainDef[] = [
     maxRange: 2000n,
     maxNativeBlocks: 200n,
     native: { coin: 'POL', decimals: 18, minSweep: 2n * 10n ** 18n },
-    tokens: [
-      { coin: 'USDC', address: COLLATERAL_TOKEN_ADDRESS, decimals: 6 },
-      { coin: 'USDT', address: POLYGON_USDT, decimals: 6 },
-    ],
+    // POLYGON_USDT is a mainnet-only address (no verified Amoy testnet USDT
+    // contract) — omitted in test mode rather than querying a wrong contract.
+    tokens: IS_TEST_MODE
+      ? [{ coin: 'USDC', address: COLLATERAL_TOKEN_ADDRESS, decimals: 6 }]
+      : [
+          { coin: 'USDC', address: COLLATERAL_TOKEN_ADDRESS, decimals: 6 },
+          { coin: 'USDT', address: POLYGON_USDT, decimals: 6 },
+        ],
   },
   {
     network: 'ethereum',
@@ -153,6 +161,31 @@ const DEPOSIT_CHAIN_DEFS: DepositChainDef[] = [
       { coin: 'USDT', address: OPTIMISM_USDT, decimals: 6 },
     ],
   },
+  {
+    // NOTE: native RON only. No stablecoin address is configured yet — the
+    // bridged USDC contract on Ronin needs to be verified before it is added,
+    // since a wrong token address would misdirect deposits.
+    network: 'ronin',
+    chain: ronin,
+    rpcUrl: () => process.env.DEPOSIT_RPC_RONIN?.trim(),
+    confirmations: 12n,
+    maxRange: 2000n,
+    maxNativeBlocks: 300n,
+    native: { coin: 'RON', decimals: 18, minSweep: 5n * 10n ** 18n },
+    tokens: [],
+  },
+  {
+    // NOTE: native HYPE only. No stablecoin address is configured yet — the
+    // USDC contract on HyperEVM needs to be verified before it is added.
+    network: 'hyperliquid',
+    chain: hyperEvm,
+    rpcUrl: () => process.env.DEPOSIT_RPC_HYPERLIQUID?.trim(),
+    confirmations: 12n,
+    maxRange: 2000n,
+    maxNativeBlocks: 600n,
+    native: { coin: 'HYPE', decimals: 18, minSweep: 10n ** 18n },
+    tokens: [],
+  },
 ]
 
 export function getEnabledDepositChains(): DepositChain[] {
@@ -181,6 +214,15 @@ export function getDepositChain(network: string): DepositChain | undefined {
 }
 
 export function getNetworkCoins(network: string): string[] {
+  if (network === TRON_NETWORK) {
+    return [...TRON_COINS]
+  }
+  if (network === SOLANA_NETWORK) {
+    return [...SOLANA_COINS]
+  }
+  if (network === BITCOIN_NETWORK) {
+    return [BITCOIN_NATIVE_COIN]
+  }
   const def = DEPOSIT_CHAIN_DEFS.find(item => item.network === network)
   if (!def) {
     return []
@@ -188,8 +230,28 @@ export function getNetworkCoins(network: string): string[] {
   return [def.native.coin, ...def.tokens.map(token => token.coin)]
 }
 
+export function getCoinDecimalsOnNetwork(network: string, coin: string): number | undefined {
+  if (network === TRON_NETWORK) {
+    return getCoinDecimalsOnTron(coin)
+  }
+  if (network === SOLANA_NETWORK) {
+    return getCoinDecimalsOnSolana(coin)
+  }
+  if (network === BITCOIN_NETWORK) {
+    return getCoinDecimalsOnBitcoin(coin)
+  }
+  const def = DEPOSIT_CHAIN_DEFS.find(item => item.network === network)
+  if (!def) {
+    return undefined
+  }
+  if (def.native.coin === coin) {
+    return def.native.decimals
+  }
+  return def.tokens.find(token => token.coin === coin)?.decimals
+}
+
 export function isCoinSupportedOnNetwork(network: string, coin: string): boolean {
   return getNetworkCoins(network).includes(coin)
 }
 
-export const SUPPORTED_DEPOSIT_NETWORKS = DEPOSIT_CHAIN_DEFS.map(def => def.network)
+export const SUPPORTED_DEPOSIT_NETWORKS = [...DEPOSIT_CHAIN_DEFS.map(def => def.network), TRON_NETWORK, SOLANA_NETWORK, BITCOIN_NETWORK]

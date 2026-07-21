@@ -10,10 +10,12 @@ import {
   timestamp,
 } from 'drizzle-orm/pg-core'
 import { users } from '@/lib/db/schema/auth/tables'
+import { withdrawals } from '@/lib/db/schema/ledger/tables'
 
 export const finance_transactions = pgTable('finance_transactions', {
   id: text().primaryKey().default(sql`generate_ulid()`),
   user_id: text().references(() => users.id, { onDelete: 'set null' }),
+  withdrawal_id: text().references(() => withdrawals.id, { onDelete: 'set null' }),
   wallet_address: text().notNull().default(''),
   type: text().notNull(),
   amount: numeric({ precision: 20, scale: 6 }).notNull().default('0'),

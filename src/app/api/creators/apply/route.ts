@@ -1,12 +1,12 @@
 import type { NextRequest } from 'next/server'
-import { NextResponse } from 'next/server'
 import { eq, sql } from 'drizzle-orm'
+import { NextResponse } from 'next/server'
+import { WAGER_REQUIREMENT_USD } from '@/app/api/creators/status/route'
 import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
 import { CreatorApplicationsRepository } from '@/lib/db/queries/creators'
-import { orders } from '@/lib/db/schema/orders/tables'
 import { UserRepository } from '@/lib/db/queries/user'
+import { orders } from '@/lib/db/schema/orders/tables'
 import { db } from '@/lib/drizzle'
-import { WAGER_REQUIREMENT_USD } from '@/app/api/creators/status/route'
 
 const USDC_DECIMALS = 1_000_000
 

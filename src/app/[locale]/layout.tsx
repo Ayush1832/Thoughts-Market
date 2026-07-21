@@ -132,16 +132,18 @@ export default async function LocaleLayout({ params, children }: LayoutProps<'/[
         <SiteIdentityProvider site={runtimeTheme.site}>
           <NextIntlClientProvider locale={locale}>
             <AppProviders>
-              {hasGlobalAnnouncement ? (
-                <Suspense fallback={null}>
-                  <GlobalAnnouncementBanner
-                    locale={locale}
-                    message={globalAnnouncement.message}
-                    linkUrl={globalAnnouncement.linkUrl}
-                    disabledOn={globalAnnouncement.disabledOn}
-                  />
-                </Suspense>
-              ) : null}
+              {hasGlobalAnnouncement
+                ? (
+                    <Suspense fallback={null}>
+                      <GlobalAnnouncementBanner
+                        locale={locale}
+                        message={globalAnnouncement.message}
+                        linkUrl={globalAnnouncement.linkUrl}
+                        disabledOn={globalAnnouncement.disabledOn}
+                      />
+                    </Suspense>
+                  )
+                : null}
               {IS_TEST_MODE && <TestModeBannerDeferred />}
               <PwaInstallStateSync />
               {children}

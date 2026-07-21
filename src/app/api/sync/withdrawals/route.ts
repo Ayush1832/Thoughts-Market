@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { isCronAuthorized } from '@/lib/auth-cron'
+import { sendOpsAlert } from '@/lib/ops-alert'
 import { runWithdrawalProcessing } from '@/lib/withdrawal-processor'
 
 export const maxDuration = 300
@@ -15,6 +16,7 @@ async function handleRequest(request: Request) {
   }
   catch (error) {
     console.error('withdrawal-processing failed', error)
+    await sendOpsAlert('withdrawal-processing', error)
     return NextResponse.json(
       { success: false, error: error instanceof Error ? error.message : 'Failed.' },
       { status: 500 },

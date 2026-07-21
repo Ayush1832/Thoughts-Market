@@ -1,9 +1,9 @@
-import { NextResponse } from 'next/server'
 import { desc, eq, sql } from 'drizzle-orm'
+import { NextResponse } from 'next/server'
 import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
+import { UserRepository } from '@/lib/db/queries/user'
 import { creator_applications } from '@/lib/db/schema/creators/tables'
 import { orders } from '@/lib/db/schema/orders/tables'
-import { UserRepository } from '@/lib/db/queries/user'
 import { db } from '@/lib/drizzle'
 
 export const WAGER_REQUIREMENT_USD = 1_000

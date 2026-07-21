@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { isCronAuthorized } from '@/lib/auth-cron'
-import { runDepositDetection } from '@/lib/deposit-detection'
 import { sendOpsAlert } from '@/lib/ops-alert'
+import { runSolanaSweep } from '@/lib/solana-sweeper'
 
 export const maxDuration = 300
 
@@ -11,12 +11,12 @@ async function handleRequest(request: Request) {
   }
 
   try {
-    const result = await runDepositDetection()
+    const result = await runSolanaSweep()
     return NextResponse.json({ success: true, ...result })
   }
   catch (error) {
-    console.error('deposit-detection failed', error)
-    await sendOpsAlert('deposit-detection', error)
+    console.error('solana-sweep failed', error)
+    await sendOpsAlert('solana-sweep', error)
     return NextResponse.json(
       { success: false, error: error instanceof Error ? error.message : 'Failed.' },
       { status: 500 },

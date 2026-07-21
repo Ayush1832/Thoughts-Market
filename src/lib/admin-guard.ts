@@ -1,5 +1,5 @@
-import type { AdminRole } from '@/lib/db/schema/auth/tables'
 import type { AllowedSections } from '@/lib/admin-permissions'
+import type { AdminRole } from '@/lib/db/schema/auth/tables'
 import { cookies } from 'next/headers'
 import { notFound } from 'next/navigation'
 import { ADMIN_SESSION_COOKIE, verifyAdminSession } from '@/lib/admin-auth'

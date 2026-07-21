@@ -1,4 +1,4 @@
-import { verifyAdminSession, getAdminEmail } from '@/lib/admin-session'
+import { getAdminEmail, verifyAdminSession } from '@/lib/admin-session'
 
 export async function GET() {
   try {

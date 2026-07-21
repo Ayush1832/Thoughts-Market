@@ -323,7 +323,10 @@ export default function CreatorApplicationForm({ onSubmit }: { onSubmit: () => v
                 </li>
               ))}
             </ul>
-            <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-tm-border bg-tm-elevated/50 p-4">
+            <label className="
+              flex cursor-pointer items-start gap-3 rounded-xl border border-tm-border bg-tm-elevated/50 p-4
+            "
+            >
               <input
                 type="checkbox"
                 checked={acknowledgedEligibility}
@@ -517,7 +520,10 @@ export default function CreatorApplicationForm({ onSubmit }: { onSubmit: () => v
               <TextField label="Date" type="date" value={form.signatureDate} onChange={v => update('signatureDate', v)} />
             </div>
 
-            <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-tm-border bg-tm-elevated/50 p-4">
+            <label className="
+              flex cursor-pointer items-start gap-3 rounded-xl border border-tm-border bg-tm-elevated/50 p-4
+            "
+            >
               <input
                 type="checkbox"
                 checked={agreed}
@@ -567,7 +573,8 @@ export default function CreatorApplicationForm({ onSubmit }: { onSubmit: () => v
                     flex flex-1 items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-semibold
                     text-white shadow-lg shadow-primary/25 transition-all duration-200
                     hover:-translate-y-px hover:shadow-xl hover:shadow-primary/35
-                    disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0
+                    disabled:cursor-not-allowed disabled:opacity-40
+                    disabled:hover:translate-y-0
                   "
                 >
                   {submitting
@@ -589,7 +596,8 @@ export default function CreatorApplicationForm({ onSubmit }: { onSubmit: () => v
                     flex-1 rounded-xl bg-primary py-3 text-sm font-semibold text-white shadow-lg shadow-primary/25
                     transition-all duration-200
                     hover:-translate-y-px hover:shadow-xl hover:shadow-primary/35
-                    disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0
+                    disabled:cursor-not-allowed disabled:opacity-40
+                    disabled:hover:translate-y-0
                   "
                 >
                   Continue →

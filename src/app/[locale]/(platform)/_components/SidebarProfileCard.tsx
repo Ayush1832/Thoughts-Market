@@ -124,7 +124,7 @@ export default function SidebarProfileCard() {
         <AppLink
           href="/portfolio"
           className="
-            rounded-xl bg-[linear-gradient(135deg,#7d6cff,#54e3ff)] py-2 text-center text-xs font-semibold text-white
+            rounded-xl bg-[linear-gradient(135deg,#0d9488,#54e3ff)] py-2 text-center text-xs font-semibold text-white
             transition
             hover:brightness-110
           "

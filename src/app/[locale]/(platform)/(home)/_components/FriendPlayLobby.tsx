@@ -157,28 +157,41 @@ export default function FriendPlayLobby({ onClose }: { onClose?: () => void }) {
     }
   }, [selectedRoom])
 
-  useEffect(() => { void fetchRooms() }, [fetchRooms])
+  useEffect(() => {
+    void fetchRooms()
+  }, [fetchRooms])
 
   // ── Fetch room details when selected, then poll so players join/leave/kick
   //    updates show up live ──────────────────────────────────────────────────
   useEffect(() => {
     const roomId = selectedRoom?.id
-    if (!roomId) { return }
+    if (!roomId) {
+      return
+    }
     let active = true
-    const load = () => {
+    function load() {
       fetch(`/api/rooms/${roomId}`, { cache: 'no-store' })
         .then(r => (r.ok ? r.json() : null))
-        .then((d) => { if (active && d) { setRoomDetails(d) } })
+        .then((d) => {
+          if (active && d) {
+            setRoomDetails(d)
+          }
+        })
         .catch(() => {})
     }
     load()
     const interval = setInterval(load, 5000)
-    return () => { active = false; clearInterval(interval) }
+    return () => {
+      active = false
+      clearInterval(interval)
+    }
   }, [selectedRoom?.id])
 
   // ── Create room ─────────────────────────────────────────────────────────────
-  const handleCreate = async () => {
-    if (!newRoomName.trim()) { return }
+  async function handleCreate() {
+    if (!newRoomName.trim()) {
+      return
+    }
     setCreating(true)
     setJoinError('')
     try {
@@ -208,12 +221,16 @@ export default function FriendPlayLobby({ onClose }: { onClose?: () => void }) {
     catch {
       setJoinError('Network error. Please try again.')
     }
-    finally { setCreating(false) }
+    finally {
+      setCreating(false)
+    }
   }
 
   // ── Join by code ─────────────────────────────────────────────────────────────
-  const handleJoinByCode = async () => {
-    if (!joinCode.trim()) { return }
+  async function handleJoinByCode() {
+    if (!joinCode.trim()) {
+      return
+    }
     setJoining(true)
     setJoinError('')
     try {
@@ -232,13 +249,19 @@ export default function FriendPlayLobby({ onClose }: { onClose?: () => void }) {
         setJoinError(data.error ?? 'Could not join room')
       }
     }
-    catch { setJoinError('Network error') }
-    finally { setJoining(false) }
+    catch {
+      setJoinError('Network error')
+    }
+    finally {
+      setJoining(false)
+    }
   }
 
   // ── Leave room ───────────────────────────────────────────────────────────────
-  const handleLeave = async () => {
-    if (!selectedRoom) { return }
+  async function handleLeave() {
+    if (!selectedRoom) {
+      return
+    }
     await fetch(`/api/rooms/${selectedRoom.id}/leave`, { method: 'POST' })
     setSelectedRoom(null)
     setRoomDetails(null)
@@ -246,8 +269,10 @@ export default function FriendPlayLobby({ onClose }: { onClose?: () => void }) {
   }
 
   // ── Host: remove a player ────────────────────────────────────────────────────
-  const handleKick = async (userId: string) => {
-    if (!selectedRoom) { return }
+  async function handleKick(userId: string) {
+    if (!selectedRoom) {
+      return
+    }
     setActionError('')
     try {
       const res = await fetch(`/api/rooms/${selectedRoom.id}/kick`, {
@@ -261,10 +286,14 @@ export default function FriendPlayLobby({ onClose }: { onClose?: () => void }) {
         return
       }
       const refreshed = await fetch(`/api/rooms/${selectedRoom.id}`, { cache: 'no-store' }).then(r => (r.ok ? r.json() : null)).catch(() => null)
-      if (refreshed) { setRoomDetails(refreshed) }
+      if (refreshed) {
+        setRoomDetails(refreshed)
+      }
       await fetchRooms()
     }
-    catch { setActionError('Network error') }
+    catch {
+      setActionError('Network error')
+    }
   }
 
   // Refresh the player's isolated P2P play-money balance.
@@ -272,25 +301,36 @@ export default function FriendPlayLobby({ onClose }: { onClose?: () => void }) {
     const data = await fetch('/api/rooms/wallet', { cache: 'no-store' })
       .then(r => (r.ok ? r.json() : null))
       .catch(() => null)
-    if (data && typeof data.balance === 'number') { setP2pBalance(data.balance) }
+    if (data && typeof data.balance === 'number') {
+      setP2pBalance(data.balance)
+    }
   }, [])
 
   useEffect(() => {
     void refreshBalance()
   }, [refreshBalance])
 
-  const refreshRoom = async () => {
-    if (!selectedRoom) { return }
+  async function refreshRoom() {
+    if (!selectedRoom) {
+      return
+    }
     const refreshed = await fetch(`/api/rooms/${selectedRoom.id}`, { cache: 'no-store' }).then(r => (r.ok ? r.json() : null)).catch(() => null)
-    if (refreshed) { setRoomDetails(refreshed) }
+    if (refreshed) {
+      setRoomDetails(refreshed)
+    }
     await Promise.all([fetchRooms(), refreshBalance()])
   }
 
   // ── Place a Yes/No bet ───────────────────────────────────────────────────────
-  const handleBet = async (choice: 'yes' | 'no') => {
-    if (!selectedRoom) { return }
+  async function handleBet(choice: 'yes' | 'no') {
+    if (!selectedRoom) {
+      return
+    }
     const amount = Number(betAmount)
-    if (!Number.isFinite(amount) || amount <= 0) { setActionError('Enter a valid amount'); return }
+    if (!Number.isFinite(amount) || amount <= 0) {
+      setActionError('Enter a valid amount')
+      return
+    }
     setBetting(true)
     setActionError('')
     try {
@@ -300,16 +340,25 @@ export default function FriendPlayLobby({ onClose }: { onClose?: () => void }) {
         body: JSON.stringify({ choice, amount }),
       })
       const data = await res.json().catch(() => null)
-      if (!res.ok) { setActionError(data?.error ?? 'Could not place bet'); return }
+      if (!res.ok) {
+        setActionError(data?.error ?? 'Could not place bet')
+        return
+      }
       await refreshRoom()
     }
-    catch { setActionError('Network error') }
-    finally { setBetting(false) }
+    catch {
+      setActionError('Network error')
+    }
+    finally {
+      setBetting(false)
+    }
   }
 
   // ── Host: resolve the market ─────────────────────────────────────────────────
-  const handleResolve = async (outcome: 'yes' | 'no') => {
-    if (!selectedRoom) { return }
+  async function handleResolve(outcome: 'yes' | 'no') {
+    if (!selectedRoom) {
+      return
+    }
     setResolving(true)
     setActionError('')
     try {
@@ -319,18 +368,29 @@ export default function FriendPlayLobby({ onClose }: { onClose?: () => void }) {
         body: JSON.stringify({ outcome }),
       })
       const data = await res.json().catch(() => null)
-      if (!res.ok) { setActionError(data?.error ?? 'Could not resolve'); return }
-      if (data?.data) { setSelectedRoom(data.data) }
+      if (!res.ok) {
+        setActionError(data?.error ?? 'Could not resolve')
+        return
+      }
+      if (data?.data) {
+        setSelectedRoom(data.data)
+      }
       await refreshRoom()
     }
-    catch { setActionError('Network error') }
-    finally { setResolving(false) }
+    catch {
+      setActionError('Network error')
+    }
+    finally {
+      setResolving(false)
+    }
   }
 
   // ── Chat send ────────────────────────────────────────────────────────────────
-  const handleSend = () => {
+  function handleSend() {
     const text = chatInput.trim()
-    if (!text) { return }
+    if (!text) {
+      return
+    }
     setMessages(prev => [...prev, {
       id: Date.now().toString(),
       user: 'You',
@@ -562,7 +622,10 @@ export default function FriendPlayLobby({ onClose }: { onClose?: () => void }) {
                               {' '}
                               {myPosition.outcome_choice.toUpperCase()}
                               {' — '}
-                              <span className={Number(myPosition.pnl ?? 0) >= 0 ? 'font-semibold text-green-400' : 'font-semibold text-red-400'}>
+                              <span className={Number(myPosition.pnl ?? 0) >= 0
+                                ? 'font-semibold text-green-400'
+                                : `font-semibold text-red-400`}
+                              >
                                 {Number(myPosition.pnl ?? 0) >= 0 ? '+' : ''}
                                 $
                                 {Number(myPosition.pnl ?? 0).toFixed(2)}
@@ -600,7 +663,12 @@ export default function FriendPlayLobby({ onClose }: { onClose?: () => void }) {
                               type="button"
                               onClick={() => handleBet('yes')}
                               disabled={betting}
-                              className="flex items-center justify-center gap-1.5 rounded-xl border border-green-500/40 bg-green-500/10 py-2.5 text-sm font-semibold text-green-400 transition hover:bg-green-500/20 disabled:opacity-50"
+                              className="
+                                flex items-center justify-center gap-1.5 rounded-xl border border-green-500/40
+                                bg-green-500/10 py-2.5 text-sm font-semibold text-green-400 transition
+                                hover:bg-green-500/20
+                                disabled:opacity-50
+                              "
                             >
                               ↑ YES
                               {' '}
@@ -613,7 +681,12 @@ export default function FriendPlayLobby({ onClose }: { onClose?: () => void }) {
                               type="button"
                               onClick={() => handleBet('no')}
                               disabled={betting}
-                              className="flex items-center justify-center gap-1.5 rounded-xl border border-red-500/40 bg-red-500/10 py-2.5 text-sm font-semibold text-red-400 transition hover:bg-red-500/20 disabled:opacity-50"
+                              className="
+                                flex items-center justify-center gap-1.5 rounded-xl border border-red-500/40
+                                bg-red-500/10 py-2.5 text-sm font-semibold text-red-400 transition
+                                hover:bg-red-500/20
+                                disabled:opacity-50
+                              "
                             >
                               ↓ NO
                               {' '}
@@ -821,8 +894,22 @@ export default function FriendPlayLobby({ onClose }: { onClose?: () => void }) {
                                     pool.
                                   </p>
                                   <div className="flex gap-2">
-                                    <Button onClick={() => handleResolve('yes')} disabled={resolving} size="sm" className="h-8 flex-1 bg-green-600 text-xs text-white hover:bg-green-700">Resolve YES</Button>
-                                    <Button onClick={() => handleResolve('no')} disabled={resolving} size="sm" className="h-8 flex-1 bg-red-600 text-xs text-white hover:bg-red-700">Resolve NO</Button>
+                                    <Button
+                                      onClick={() => handleResolve('yes')}
+                                      disabled={resolving}
+                                      size="sm"
+                                      className="h-8 flex-1 bg-green-600 text-xs text-white hover:bg-green-700"
+                                    >
+                                      Resolve YES
+                                    </Button>
+                                    <Button
+                                      onClick={() => handleResolve('no')}
+                                      disabled={resolving}
+                                      size="sm"
+                                      className="h-8 flex-1 bg-red-600 text-xs text-white hover:bg-red-700"
+                                    >
+                                      Resolve NO
+                                    </Button>
                                   </div>
                                 </>
                               )

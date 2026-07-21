@@ -55,11 +55,10 @@ export default function EventOrderPanelSubmitButton({
             ? 'hover:brightness-95'
             // Prism iridescent confirm gradient + glow (default panel)
             : `
-                border border-white/10 text-white
-                bg-[linear-gradient(135deg,#7d6cff,#54e3ff)]
-                shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_12px_30px_-12px_rgba(125,108,255,0.65)]
-                hover:brightness-110
-              `,
+              border border-white/10 bg-[linear-gradient(135deg,#7d6cff,#54e3ff)] text-white
+              shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_12px_30px_-12px_rgba(125,108,255,0.65)]
+              hover:brightness-110
+            `,
           selectedAccent?.buttonClassName,
         )}
         style={selectedAccent?.buttonStyle}

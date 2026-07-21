@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useLocale } from 'next-intl'
 import { BrainIcon, ChevronDownIcon, ChevronUpIcon, RefreshCwIcon } from 'lucide-react'
+import { useLocale } from 'next-intl'
+import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
@@ -23,10 +23,10 @@ interface InsightItemProps {
 function InsightItem({ label, value, accent }: InsightItemProps) {
   return (
     <div className="grid gap-1">
-      <p className={cn('text-xs font-semibold uppercase tracking-wide', accent ?? 'text-muted-foreground')}>
+      <p className={cn('text-xs font-semibold tracking-wide uppercase', accent ?? 'text-muted-foreground')}>
         {label}
       </p>
-      <p className="text-sm text-foreground/90 leading-relaxed">{value}</p>
+      <p className="text-sm/relaxed text-foreground/90">{value}</p>
     </div>
   )
 }
@@ -47,7 +47,9 @@ export default function AiInsightsPanel({ eventId }: AiInsightsPanelProps) {
     async function loadCached() {
       try {
         const res = await fetch(`/api/ai/insights?eventId=${encodeURIComponent(eventId)}&locale=${locale}`)
-        if (!res.ok) return
+        if (!res.ok) {
+          return
+        }
         const json = await res.json() as { data: AiInsights | null }
         if (json.data) {
           setInsights(json.data)
@@ -107,10 +109,18 @@ export default function AiInsightsPanel({ eventId }: AiInsightsPanelProps) {
               size="sm"
               variant="outline"
               disabled={isLoading}
-              onClick={e => { e.stopPropagation(); handleGenerate() }}
+              onClick={(e) => {
+                e.stopPropagation()
+                handleGenerate()
+              }}
             >
               {isLoading
-                ? <><RefreshCwIcon className="mr-1.5 size-3 animate-spin" />Generating...</>
+                ? (
+                    <>
+                      <RefreshCwIcon className="mr-1.5 size-3 animate-spin" />
+                      Generating...
+                    </>
+                  )
                 : 'Generate'}
             </Button>
           )}
@@ -121,12 +131,19 @@ export default function AiInsightsPanel({ eventId }: AiInsightsPanelProps) {
                 size="sm"
                 variant="ghost"
                 disabled={isLoading}
-                onClick={e => { e.stopPropagation(); handleGenerate() }}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleGenerate()
+                }}
                 title="Refresh insights"
               >
                 <RefreshCwIcon className={cn('size-3', isLoading && 'animate-spin')} />
               </Button>
-              {isExpanded ? <ChevronUpIcon className="size-4 text-muted-foreground" /> : <ChevronDownIcon className="size-4 text-muted-foreground" />}
+              {isExpanded
+                ? <ChevronUpIcon className="size-4 text-muted-foreground" />
+                : (
+                    <ChevronDownIcon className="size-4 text-muted-foreground" />
+                  )}
             </>
           )}
         </div>
@@ -137,7 +154,7 @@ export default function AiInsightsPanel({ eventId }: AiInsightsPanelProps) {
       )}
 
       {isGenerated && isExpanded && insights && (
-        <div className="grid gap-4 border-t px-4 py-4">
+        <div className="grid gap-4 border-t p-4">
           <InsightItem label="Market Summary" value={insights.summary} />
           <InsightItem label="Probability Explained" value={insights.probability_explanation} />
           <InsightItem label="Risk Warning" value={insights.risk_warning} accent="text-amber-500 dark:text-amber-400" />

@@ -1,5 +1,6 @@
 'use client'
 
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   BarChart3Icon,
   CheckCircle2Icon,
@@ -19,10 +20,9 @@ import {
   ZapIcon,
 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
 import AppLink from '@/components/AppLink'
-import CreatorApplicationForm from './CreatorApplicationForm'
 import { cn } from '@/lib/utils'
+import CreatorApplicationForm from './CreatorApplicationForm'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type CreatorTier = 'NEWCOMER' | 'RISING' | 'PRO' | 'ELITE'
@@ -56,213 +56,7 @@ interface Creator {
   isFollowing?: boolean
 }
 
-interface CreatorMarket {
-  id: string
-  creator: Creator
-  title: string
-  category: string
-  yesProb: number
-  volume: string
-  liquidity: string
-  traders: number
-  tags: string[]
-  isTrending?: boolean
-  isNew?: boolean
-}
-
 // ─── Static Data ──────────────────────────────────────────────────────────────
-const FEATURED_CREATORS: Creator[] = [
-  {
-    id: 'c1',
-    username: 'vee.eth',
-    displayName: 'vee.eth',
-    avatarGradient: 'from-violet-600 to-purple-400',
-    avatarEmoji: '🔮',
-    tier: 'ELITE',
-    followers: 12840,
-    trustScore: 92,
-    accuracy: 78,
-    volume: '$48.3K',
-    niche: 'Crypto',
-    bio: 'DeFi analyst & on-chain sleuth',
-    isFollowing: true,
-  },
-  {
-    id: 'c2',
-    username: 'cryptosage',
-    displayName: 'CryptoSage',
-    avatarGradient: 'from-blue-600 to-cyan-400',
-    avatarEmoji: '⚡',
-    tier: 'PRO',
-    followers: 8240,
-    trustScore: 87,
-    accuracy: 71,
-    volume: '$32.1K',
-    niche: 'Crypto',
-    bio: 'BTC maximalist, macro watcher',
-  },
-  {
-    id: 'c3',
-    username: 'sportstradez',
-    displayName: 'SportsTradez',
-    avatarGradient: 'from-green-600 to-emerald-400',
-    avatarEmoji: '🏆',
-    tier: 'PRO',
-    followers: 6180,
-    trustScore: 84,
-    accuracy: 69,
-    volume: '$27.5K',
-    niche: 'Sports',
-    bio: 'NFL & NBA prediction specialist',
-  },
-  {
-    id: 'c4',
-    username: 'polimind',
-    displayName: 'PoliMind',
-    avatarGradient: 'from-red-500 to-rose-400',
-    avatarEmoji: '🎯',
-    tier: 'ELITE',
-    followers: 19420,
-    trustScore: 95,
-    accuracy: 82,
-    volume: '$91.2K',
-    niche: 'Politics',
-    bio: 'Political analyst, ex-DC staffer',
-  },
-]
-
-const RISING_CREATORS: Creator[] = [
-  {
-    id: 'c5',
-    username: 'techwhiz',
-    displayName: 'TechWhiz',
-    avatarGradient: 'from-sky-500 to-indigo-400',
-    avatarEmoji: '🤖',
-    tier: 'RISING',
-    followers: 1240,
-    trustScore: 76,
-    accuracy: 64,
-    volume: '$8.4K',
-    niche: 'Technology',
-    bio: 'AI & tech sector predictions',
-  },
-  {
-    id: 'c6',
-    username: 'macromonk',
-    displayName: 'MacroMonk',
-    avatarGradient: 'from-amber-500 to-orange-400',
-    avatarEmoji: '📊',
-    tier: 'RISING',
-    followers: 980,
-    trustScore: 72,
-    accuracy: 61,
-    volume: '$5.2K',
-    niche: 'Finance',
-    bio: 'Macro economics & Fed watcher',
-  },
-  {
-    id: 'c7',
-    username: 'streamking',
-    displayName: 'StreamKing',
-    avatarGradient: 'from-pink-500 to-rose-400',
-    avatarEmoji: '🎮',
-    tier: 'RISING',
-    followers: 2140,
-    trustScore: 78,
-    accuracy: 66,
-    volume: '$12.1K',
-    niche: 'Gaming',
-    bio: 'Gaming & esports market maker',
-  },
-  {
-    id: 'c8',
-    username: 'lifestylezz',
-    displayName: 'Lifestylezz',
-    avatarGradient: 'from-fuchsia-500 to-pink-400',
-    avatarEmoji: '✨',
-    tier: 'NEWCOMER',
-    followers: 640,
-    trustScore: 68,
-    accuracy: 58,
-    volume: '$2.8K',
-    niche: 'Lifestyle',
-    bio: 'Influencer market predictions',
-  },
-]
-
-const MOCK_MARKETS: CreatorMarket[] = [
-  {
-    id: 'm1',
-    creator: FEATURED_CREATORS[0]!,
-    title: 'Will ETH surpass $5,000 before Q2 2025?',
-    category: 'Crypto',
-    yesProb: 67,
-    volume: '$12.4K',
-    liquidity: '$3.2K',
-    traders: 284,
-    tags: ['ETH', 'DeFi'],
-    isTrending: true,
-  },
-  {
-    id: 'm2',
-    creator: FEATURED_CREATORS[3]!,
-    title: 'Will the Fed cut rates in June 2025?',
-    category: 'Macro',
-    yesProb: 43,
-    volume: '$28.1K',
-    liquidity: '$8.4K',
-    traders: 512,
-    tags: ['Fed', 'Rates'],
-  },
-  {
-    id: 'm3',
-    creator: RISING_CREATORS[0]!,
-    title: 'Will Apple release AR glasses by end of 2025?',
-    category: 'Technology',
-    yesProb: 31,
-    volume: '$5.8K',
-    liquidity: '$1.4K',
-    traders: 147,
-    tags: ['Apple', 'AR'],
-    isNew: true,
-  },
-  {
-    id: 'm4',
-    creator: FEATURED_CREATORS[1]!,
-    title: 'BTC to reach new ATH above $120K this bull run?',
-    category: 'Crypto',
-    yesProb: 58,
-    volume: '$18.9K',
-    liquidity: '$5.1K',
-    traders: 389,
-    tags: ['BTC', 'ATH'],
-    isTrending: true,
-  },
-  {
-    id: 'm5',
-    creator: FEATURED_CREATORS[2]!,
-    title: 'Chiefs to win Super Bowl LX?',
-    category: 'Sports',
-    yesProb: 22,
-    volume: '$9.3K',
-    liquidity: '$2.8K',
-    traders: 203,
-    tags: ['NFL', 'Chiefs'],
-  },
-  {
-    id: 'm6',
-    creator: RISING_CREATORS[1]!,
-    title: 'US recession declared by end of 2025?',
-    category: 'Macro',
-    yesProb: 38,
-    volume: '$7.2K',
-    liquidity: '$2.1K',
-    traders: 168,
-    tags: ['GDP', 'Recession'],
-    isNew: true,
-  },
-]
-
 const AI_SUGGESTIONS = [
   {
     id: 's1',
@@ -290,18 +84,6 @@ const AI_SUGGESTIONS = [
   },
 ]
 
-const NICHE_FILTERS = [
-  { label: 'All niches', count: '2.4K' },
-  { label: 'Instagram', count: '184' },
-  { label: 'YouTubers', count: '312' },
-  { label: 'Streamers', count: '156' },
-  { label: 'Lifestyle', count: '240' },
-  { label: 'Technology', count: '198' },
-  { label: 'Gaming', count: '276' },
-  { label: 'Finance', count: '142' },
-  { label: 'Sports', count: '318' },
-]
-
 // Sort options backed by real data (follower count / creation date).
 const MARKET_FILTERS = ['Trending', 'New', 'Most followed']
 const CATEGORIES = ['Crypto', 'Sports', 'Politics', 'Stocks', 'Macro', 'Entertainment', 'Climate']
@@ -316,7 +98,6 @@ const PRESTIGE_BADGES = [
   { id: 'b5', emoji: '💎', label: '$50K Volume', desc: '$50,000+ lifetime volume', earned: false, colorClass: 'border-tm-border bg-tm-elevated/40 text-tm-secondary/40' },
   { id: 'b6', emoji: '👑', label: 'Elite Tier', desc: 'Reach Elite creator tier', earned: false, colorClass: 'border-tm-border bg-tm-elevated/40 text-tm-secondary/40' },
 ]
-
 
 const WAGER_REQUIREMENT_USD = 1_000
 
@@ -345,22 +126,6 @@ function tierLabel(tier: CreatorTier): string {
     return '📈 RISING'
   }
   return 'NEWCOMER'
-}
-
-function categoryColor(cat: string): string {
-  if (cat === 'Crypto') {
-    return 'bg-amber-500/15 text-amber-400'
-  }
-  if (cat === 'Sports') {
-    return 'bg-green-500/15 text-green-400'
-  }
-  if (cat === 'Politics') {
-    return 'bg-red-500/15 text-red-400'
-  }
-  if (cat === 'Macro') {
-    return 'bg-purple-500/15 text-purple-400'
-  }
-  return 'bg-blue-500/15 text-blue-400'
 }
 
 // ─── Small shared components ──────────────────────────────────────────────────
@@ -488,124 +253,6 @@ function SpotlightCard({ creator, onToggleFollow }: { creator: Creator, onToggle
   )
 }
 
-// ─── User Mode: Market card ───────────────────────────────────────────────────
-function MarketCard({ market }: { market: CreatorMarket }) {
-  return (
-    <div className="
-      flex flex-col gap-3 rounded-2xl border border-tm-border bg-tm-surface p-4 transition-all duration-200
-      hover:-translate-y-1 hover:border-[#4f8ef7]/40 hover:shadow-lg hover:shadow-[#4f8ef7]/10
-    "
-    >
-      <div className="flex items-center gap-2">
-        <CreatorAvatar creator={market.creator} size="sm" />
-        <div className="min-w-0 flex-1">
-          <div className="truncate text-xs font-semibold text-tm-primary">{market.creator.displayName}</div>
-          <div className="text-2xs text-tm-secondary">
-            @
-            {market.creator.username}
-          </div>
-        </div>
-        <span className={cn('rounded-lg px-2 py-0.5 text-2xs font-bold tracking-wide uppercase', categoryColor(market.category))}>
-          {market.category}
-        </span>
-      </div>
-
-      <p className="text-sm/snug font-semibold text-tm-primary">{market.title}</p>
-
-      <div className="flex flex-wrap gap-1">
-        {market.tags.map(tag => (
-          <span key={tag} className="rounded-full bg-tm-elevated px-2 py-0.5 text-2xs text-tm-secondary">
-            #
-            {tag}
-          </span>
-        ))}
-        {market.isTrending && (
-          <span className="rounded-full bg-orange-500/15 px-2 py-0.5 text-2xs font-semibold text-orange-400">
-            🔥 Trending
-          </span>
-        )}
-        {market.isNew && (
-          <span className="rounded-full bg-blue-500/15 px-2 py-0.5 text-2xs font-semibold text-blue-400">
-            ✨ New
-          </span>
-        )}
-      </div>
-
-      <div className="space-y-1.5">
-        <div className="flex justify-between text-xs font-semibold">
-          <span className="text-yes-foreground">
-            YES
-            {' '}
-            {market.yesProb}
-            %
-          </span>
-          <span className="text-no-foreground">
-            NO
-            {' '}
-            {100 - market.yesProb}
-            %
-          </span>
-        </div>
-        <div className="relative h-2 overflow-hidden rounded-full bg-no/20">
-          <div className="h-full rounded-full bg-yes transition-all" style={{ width: `${market.yesProb}%` }} />
-        </div>
-      </div>
-
-      <div className="flex justify-between text-[11px] text-tm-secondary">
-        <span>
-          Vol:
-          {' '}
-          <span className="font-semibold text-tm-primary">{market.volume}</span>
-        </span>
-        <span>
-          Liq:
-          {' '}
-          <span className="font-semibold text-tm-primary">{market.liquidity}</span>
-        </span>
-        <span>
-          <span className="font-semibold text-tm-primary">{market.traders}</span>
-          {' '}
-          traders
-        </span>
-      </div>
-
-      <div className="flex gap-2">
-        <button
-          type="button"
-          className="
-            flex-1 rounded-xl bg-yes/15 py-2 text-xs font-bold text-yes-foreground transition-all
-            hover:-translate-y-px hover:bg-yes/25 hover:shadow-md hover:shadow-yes/20
-          "
-        >
-          Trade YES
-        </button>
-        <button
-          type="button"
-          className="
-            flex-1 rounded-xl bg-no/15 py-2 text-xs font-bold text-no-foreground transition-all
-            hover:-translate-y-px hover:bg-no/25 hover:shadow-md hover:shadow-no/20
-          "
-        >
-          NO
-          {' '}
-          {100 - market.yesProb}
-          %
-        </button>
-        <button
-          type="button"
-          className="
-            flex items-center justify-center rounded-xl border border-tm-border bg-tm-elevated px-3 text-sm font-bold
-            text-tm-secondary transition-all
-            hover:bg-primary/10 hover:text-primary
-          "
-        >
-          +
-        </button>
-      </div>
-    </div>
-  )
-}
-
 // ─── User Mode: Spotlight row ─────────────────────────────────────────────────
 function SpotlightRow({
   label,
@@ -709,7 +356,7 @@ function mapApiCreator(row: ApiCreator): Creator {
 function useDebouncedValue<T>(value: T, delay = 300): T {
   const [debounced, setDebounced] = useState(value)
   useEffect(() => {
-    const timeout = setTimeout(() => setDebounced(value), delay)
+    const timeout = setTimeout(setDebounced, delay, value)
     return () => clearTimeout(timeout)
   }, [value, delay])
   return debounced
@@ -791,7 +438,9 @@ function UserModeView({ onSwitchToCreator }: { onSwitchToCreator: () => void }) 
         }
       })
       .catch(() => {})
-    return () => { active = false }
+    return () => {
+      active = false
+    }
   }, [])
 
   function handleToggleFollow(id: string) {
@@ -1043,7 +692,11 @@ function WageringGate({ totalWageredUsd }: { totalWageredUsd: number }) {
 
   return (
     <div className="mx-auto max-w-lg py-8">
-      <div className="relative overflow-hidden rounded-3xl border border-amber-500/30 bg-linear-to-br from-amber-500/10 via-orange-500/5 to-transparent p-8">
+      <div className="
+        relative overflow-hidden rounded-3xl border border-amber-500/30 bg-linear-to-br from-amber-500/10
+        via-orange-500/5 to-transparent p-8
+      "
+      >
         <div className="absolute -top-12 -right-12 size-40 rounded-full bg-amber-500/10 blur-3xl" />
         <div className="relative space-y-6 text-center">
           <div className="mx-auto flex size-20 items-center justify-center rounded-3xl bg-amber-500/15 text-4xl">
@@ -1134,7 +787,11 @@ function WageringGate({ totalWageredUsd }: { totalWageredUsd: number }) {
 function PendingScreen({ displayName, username }: { displayName: string | null, username: string | null }) {
   return (
     <div className="mx-auto max-w-lg py-8">
-      <div className="relative overflow-hidden rounded-3xl border border-blue-500/30 bg-linear-to-br from-blue-500/10 via-indigo-500/5 to-transparent p-8">
+      <div className="
+        relative overflow-hidden rounded-3xl border border-blue-500/30 bg-linear-to-br from-blue-500/10 via-indigo-500/5
+        to-transparent p-8
+      "
+      >
         <div className="absolute -top-12 -right-12 size-40 rounded-full bg-blue-500/10 blur-3xl" />
         <div className="relative space-y-6 text-center">
           <div className="relative mx-auto flex size-20 items-center justify-center rounded-3xl bg-blue-500/15 text-4xl">
@@ -1169,7 +826,7 @@ function PendingScreen({ displayName, username }: { displayName: string | null, 
                   s.done
                     ? 'bg-emerald-500/20 text-emerald-400'
                     : s.active
-                      ? 'bg-blue-500/20 text-blue-400 animate-pulse'
+                      ? 'animate-pulse bg-blue-500/20 text-blue-400'
                       : 'bg-tm-elevated text-tm-secondary/40',
                 )}
                 >
@@ -1201,7 +858,11 @@ function RejectedScreen({
 }) {
   return (
     <div className="mx-auto max-w-lg py-8">
-      <div className="relative overflow-hidden rounded-3xl border border-red-500/30 bg-linear-to-br from-red-500/10 via-rose-500/5 to-transparent p-8">
+      <div className="
+        relative overflow-hidden rounded-3xl border border-red-500/30 bg-linear-to-br from-red-500/10 via-rose-500/5
+        to-transparent p-8
+      "
+      >
         <div className="absolute -top-12 -right-12 size-40 rounded-full bg-red-500/10 blur-3xl" />
         <div className="relative space-y-6 text-center">
           <div className="mx-auto flex size-20 items-center justify-center rounded-3xl bg-red-500/15">
@@ -1235,272 +896,6 @@ function RejectedScreen({
           </button>
         </div>
       </div>
-    </div>
-  )
-}
-
-// ─── Creator Mode: Application Form ──────────────────────────────────────────
-const NICHE_OPTIONS = ['Crypto', 'Sports', 'Politics', 'Finance', 'Technology', 'Entertainment', 'Gaming', 'Lifestyle', 'Other']
-
-function ApplicationForm({ onSubmit }: { onSubmit: () => void }) {
-  const [form, setForm] = useState({ displayName: '', username: '', niche: '', social: '', reason: '' })
-  const [agreed, setAgreed] = useState(false)
-  const [submitting, setSubmitting] = useState(false)
-  const [step, setStep] = useState(1)
-  const [error, setError] = useState('')
-
-  async function handleSubmit(e: React.SyntheticEvent<HTMLFormElement>) {
-    e.preventDefault()
-    if (!agreed) {
-      return
-    }
-    setSubmitting(true)
-    setError('')
-    try {
-      const res = await fetch('/api/creators/apply', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          displayName: form.displayName.trim(),
-          username: form.username.trim(),
-          niche: form.niche,
-          socialLink: form.social.trim() || undefined,
-          reason: form.reason.trim(),
-        }),
-      })
-      if (!res.ok) {
-        const { error: errMsg } = await res.json() as { error: string }
-        setError(errMsg ?? 'Submission failed. Please try again.')
-        setSubmitting(false)
-        return
-      }
-      onSubmit()
-    }
-    catch {
-      setError('Network error. Please try again.')
-      setSubmitting(false)
-    }
-  }
-
-  const canProceed = form.displayName.trim().length >= 2 && form.username.trim().length >= 3 && form.niche
-
-  return (
-    <div className="mx-auto max-w-lg">
-      {/* Header */}
-      <div className="mb-8 space-y-2 text-center">
-        <div className="mx-auto flex size-16 items-center justify-center rounded-2xl bg-primary/15 text-3xl">
-          ✨
-        </div>
-        <h2 className="text-2xl font-bold text-tm-primary">Apply to become a Creator</h2>
-        <p className="text-sm text-tm-secondary">
-          Fill in the details below to create your creator profile and start publishing prediction markets.
-        </p>
-        {/* Progress dots */}
-        <div className="flex justify-center gap-2 pt-2">
-          {[1, 2].map(s => (
-            <div
-              key={s}
-              className={cn(
-                'h-1.5 rounded-full transition-all duration-300',
-                step >= s ? 'w-8 bg-primary' : 'w-4 bg-tm-border',
-              )}
-            />
-          ))}
-        </div>
-      </div>
-
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {step === 1 && (
-          <div className="space-y-4">
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold tracking-wide text-tm-secondary uppercase">
-                Display Name *
-              </label>
-              <input
-                type="text"
-                placeholder="e.g. CryptoSage"
-                value={form.displayName}
-                onChange={e => setForm(p => ({ ...p, displayName: e.target.value }))}
-                className="
-                  w-full rounded-xl border border-tm-border bg-tm-surface px-4 py-3 text-sm text-tm-primary
-                  transition-colors
-                  placeholder:text-tm-secondary/40
-                  focus:border-primary/50 focus:ring-2 focus:ring-primary/15 focus:outline-none
-                "
-                required
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold tracking-wide text-tm-secondary uppercase">
-                Username / Handle *
-              </label>
-              <div className="relative">
-                <span className="absolute top-1/2 left-4 -translate-y-1/2 text-sm font-medium text-tm-secondary/60">@</span>
-                <input
-                  type="text"
-                  placeholder="yourhandle"
-                  value={form.username}
-                  onChange={e => setForm(p => ({ ...p, username: e.target.value.toLowerCase().replace(/[^a-z0-9._]/g, '') }))}
-                  className="
-                    w-full rounded-xl border border-tm-border bg-tm-surface py-3 pr-4 pl-8 text-sm text-tm-primary
-                    transition-colors
-                    placeholder:text-tm-secondary/40
-                    focus:border-primary/50 focus:ring-2 focus:ring-primary/15 focus:outline-none
-                  "
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold tracking-wide text-tm-secondary uppercase">
-                Primary Niche *
-              </label>
-              <div className="flex flex-wrap gap-2">
-                {NICHE_OPTIONS.map(n => (
-                  <button
-                    key={n}
-                    type="button"
-                    onClick={() => setForm(p => ({ ...p, niche: n }))}
-                    className={cn(
-                      'rounded-full border px-3 py-1.5 text-xs font-medium transition-all duration-200',
-                      form.niche === n
-                        ? 'border-primary/40 bg-primary/15 text-primary'
-                        : 'border-tm-border bg-tm-surface text-tm-secondary hover:bg-tm-elevated hover:text-tm-primary',
-                    )}
-                  >
-                    {n}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <button
-              type="button"
-              disabled={!canProceed}
-              onClick={() => setStep(2)}
-              className="
-                w-full rounded-xl bg-primary py-3 text-sm font-semibold text-white shadow-lg shadow-primary/25
-                transition-all duration-200
-                hover:-translate-y-px hover:shadow-xl hover:shadow-primary/35
-                disabled:cursor-not-allowed disabled:opacity-40
-                disabled:hover:translate-y-0
-              "
-            >
-              Continue →
-            </button>
-          </div>
-        )}
-
-        {step === 2 && (
-          <div className="space-y-4">
-            {/* Wagering requirement badge */}
-            <div className="flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-2.5">
-              <CheckCircle2Icon className="size-4 shrink-0 text-emerald-400" />
-              <span className="text-xs font-semibold text-emerald-400">
-                $10,000 wagering requirement met ✓
-              </span>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold tracking-wide text-tm-secondary uppercase">
-                Social media / portfolio link
-              </label>
-              <input
-                type="url"
-                placeholder="https://twitter.com/yourhandle"
-                value={form.social}
-                onChange={e => setForm(p => ({ ...p, social: e.target.value }))}
-                className="
-                  w-full rounded-xl border border-tm-border bg-tm-surface px-4 py-3 text-sm text-tm-primary
-                  transition-colors
-                  placeholder:text-tm-secondary/40
-                  focus:border-primary/50 focus:ring-2 focus:ring-primary/15 focus:outline-none
-                "
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold tracking-wide text-tm-secondary uppercase">
-                Why do you want to become a creator? *
-              </label>
-              <textarea
-                placeholder="Tell us about your expertise, what markets you'd create, and how you'd engage your audience..."
-                value={form.reason}
-                onChange={e => setForm(p => ({ ...p, reason: e.target.value }))}
-                rows={4}
-                className="
-                  w-full resize-none rounded-xl border border-tm-border bg-tm-surface px-4 py-3 text-sm text-tm-primary
-                  transition-colors
-                  placeholder:text-tm-secondary/40
-                  focus:border-primary/50 focus:ring-2 focus:ring-primary/15 focus:outline-none
-                "
-                required
-              />
-            </div>
-
-            {/* Terms */}
-            <label className="
-              flex cursor-pointer items-start gap-3 rounded-xl border border-tm-border bg-tm-elevated/50 p-4
-            "
-            >
-              <input
-                type="checkbox"
-                checked={agreed}
-                onChange={e => setAgreed(e.target.checked)}
-                className="mt-0.5 accent-primary"
-              />
-              <span className="text-xs/relaxed text-tm-secondary">
-                I agree to the
-                {' '}
-                <span className="text-primary">Creator Terms of Service</span>
-                {' '}
-                and understand that I am responsible for the accuracy and resolution of all markets I create.
-              </span>
-            </label>
-
-            {error && (
-              <p className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-2.5 text-sm text-red-400">
-                {error}
-              </p>
-            )}
-
-            <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={() => setStep(1)}
-                className="
-                  rounded-xl border border-tm-border bg-tm-surface px-5 py-3 text-sm font-semibold text-tm-secondary
-                  hover:bg-tm-elevated hover:text-tm-primary
-                "
-              >
-                ← Back
-              </button>
-              <button
-                type="submit"
-                disabled={!agreed || !form.reason.trim() || submitting}
-                className="
-                  flex flex-1 items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-semibold
-                  text-white shadow-lg shadow-primary/25 transition-all duration-200
-                  hover:-translate-y-px hover:shadow-xl hover:shadow-primary/35
-                  disabled:cursor-not-allowed disabled:opacity-40
-                  disabled:hover:translate-y-0
-                "
-              >
-                {submitting
-                  ? (
-                      <>
-                        <span className="size-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                        Submitting application...
-                      </>
-                    )
-                  : '🚀 Submit Application'}
-              </button>
-            </div>
-          </div>
-        )}
-      </form>
     </div>
   )
 }
@@ -1556,7 +951,11 @@ function CreatorDashboard({
                 <h2 className="text-xl font-bold text-tm-primary">{displayName || 'Creator'}</h2>
                 <TierBadge tier="PRO" />
                 {isVerified && (
-                  <span className="flex items-center gap-1 rounded-full border border-blue-500/40 bg-blue-500/15 px-2 py-0.5 text-2xs font-bold text-blue-400">
+                  <span className="
+                    flex items-center gap-1 rounded-full border border-blue-500/40 bg-blue-500/15 px-2 py-0.5 text-2xs
+                    font-bold text-blue-400
+                  "
+                  >
                     <ShieldCheckIcon className="size-2.5" />
                     Verified
                   </span>
@@ -1720,9 +1119,7 @@ function CreatorDashboard({
                 <div
                   key={b.id}
                   className={cn(
-                    `
-                      relative flex flex-col items-center gap-2 rounded-2xl border p-4 text-center opacity-40
-                    `,
+                    `relative flex flex-col items-center gap-2 rounded-2xl border p-4 text-center opacity-40`,
                     'border-tm-border bg-tm-elevated/40 text-tm-secondary/40',
                   )}
                 >

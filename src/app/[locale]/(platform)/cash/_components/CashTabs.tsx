@@ -2,8 +2,8 @@
 
 import { useExtracted } from 'next-intl'
 import { useEffect, useMemo, useState } from 'react'
-import { useTabIndicatorPosition } from '@/hooks/useTabIndicatorPosition'
 import { useMoneyFormatter } from '@/hooks/useMoneyFormatter'
+import { useTabIndicatorPosition } from '@/hooks/useTabIndicatorPosition'
 import { cn } from '@/lib/utils'
 
 type TabType = 'all' | 'deposit' | 'withdrawal'
@@ -70,7 +70,9 @@ export default function CashTabs() {
           setIsLoading(false)
         }
       })
-    return () => { active = false }
+    return () => {
+      active = false
+    }
   }, [])
 
   const visible = useMemo(() => {
@@ -121,7 +123,7 @@ export default function CashTabs() {
         />
       </div>
 
-      <div className="px-4 py-4 sm:px-6">
+      <div className="p-4 sm:px-6">
         {isLoading
           ? (
               <p className="py-10 text-center text-sm text-muted-foreground">{t('Loading…')}</p>
@@ -135,10 +137,10 @@ export default function CashTabs() {
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="text-left text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-                        <th className="pb-3 pr-4 font-semibold">{t('Date')}</th>
-                        <th className="pb-3 pr-4 font-semibold">{t('Type')}</th>
-                        <th className="pb-3 pr-4 font-semibold">{t('Method')}</th>
-                        <th className="pb-3 pr-4 text-right font-semibold">{t('Amount')}</th>
+                        <th className="pr-4 pb-3 font-semibold">{t('Date')}</th>
+                        <th className="pr-4 pb-3 font-semibold">{t('Type')}</th>
+                        <th className="pr-4 pb-3 font-semibold">{t('Method')}</th>
+                        <th className="pr-4 pb-3 text-right font-semibold">{t('Amount')}</th>
                         <th className="pb-3 text-right font-semibold">{t('Status')}</th>
                       </tr>
                     </thead>

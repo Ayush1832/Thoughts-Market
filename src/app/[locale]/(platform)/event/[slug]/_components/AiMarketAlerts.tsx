@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import { AlertTriangleIcon, XIcon } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { cn } from '@/lib/utils'
 
 interface AiAlert {
@@ -22,8 +22,12 @@ const ALERT_TYPE_LABELS: Record<string, string> = {
 }
 
 function severityStyles(severity: AiAlert['severity']) {
-  if (severity === 'high') return 'border-red-500/40 bg-red-500/5 text-red-600 dark:text-red-400'
-  if (severity === 'medium') return 'border-amber-500/40 bg-amber-500/5 text-amber-600 dark:text-amber-400'
+  if (severity === 'high') {
+    return 'border-red-500/40 bg-red-500/5 text-red-600 dark:text-red-400'
+  }
+  if (severity === 'medium') {
+    return 'border-amber-500/40 bg-amber-500/5 text-amber-600 dark:text-amber-400'
+  }
   return 'border-blue-500/30 bg-blue-500/5 text-blue-600 dark:text-blue-400'
 }
 
@@ -62,7 +66,9 @@ export default function AiMarketAlerts({ eventId }: AiMarketAlertsProps) {
   }, [eventId])
 
   const visible = alerts.filter(a => !dismissed.has(a.id))
-  if (visible.length === 0) return null
+  if (visible.length === 0) {
+    return null
+  }
 
   return (
     <div className="grid gap-2">
@@ -76,7 +82,10 @@ export default function AiMarketAlerts({ eventId }: AiMarketAlertsProps) {
             <div className="grid gap-0.5">
               <div className="flex items-center gap-2">
                 <span className="text-xs font-semibold">{alert.title}</span>
-                <span className="rounded px-1 py-0.5 text-[10px] font-medium uppercase tracking-wide opacity-70 bg-current/10">
+                <span className="
+                  rounded-sm bg-current/10 px-1 py-0.5 text-2xs font-medium tracking-wide uppercase opacity-70
+                "
+                >
                   {ALERT_TYPE_LABELS[alert.alert_type] ?? alert.alert_type}
                 </span>
               </div>

@@ -92,7 +92,9 @@ export default function LeftSidebar() {
   const isBookmarked = searchParams.get('bookmarked') === 'true'
   const sortParam = searchParams.get('sort')
   const strippedPath = stripLocalePrefix(pathname)
-  const isCommunityActive = (href: string) => strippedPath === href || strippedPath.startsWith(`${href}/`)
+  function isCommunityActive(href: string) {
+    return strippedPath === href || strippedPath.startsWith(`${href}/`)
+  }
   const [collapsed, setCollapsed] = useState(() => {
     if (typeof window === 'undefined') {
       return false
@@ -250,7 +252,9 @@ export default function LeftSidebar() {
                   href={c.href}
                   className={cn(
                     'group relative flex items-center justify-center rounded-xl py-2 transition-all duration-200',
-                    active ? 'bg-tm-elevated text-[#4f8ef7]' : 'text-tm-secondary hover:bg-tm-elevated hover:text-tm-primary',
+                    active
+                      ? 'bg-tm-elevated text-[#4f8ef7]'
+                      : `text-tm-secondary hover:bg-tm-elevated hover:text-tm-primary`,
                   )}
                 >
                   <HashIcon className="size-3.5" />

@@ -1,8 +1,8 @@
 'use client'
 
 import type { Market } from '@/types'
-import { useEffect, useState } from 'react'
 import { ShieldIcon } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { cn } from '@/lib/utils'
 
 interface AiRiskScore {
@@ -16,8 +16,12 @@ interface AiRiskScore {
 }
 
 function scoreColor(score: number) {
-  if (score >= 70) return 'text-emerald-500'
-  if (score >= 40) return 'text-amber-500'
+  if (score >= 70) {
+    return 'text-emerald-500'
+  }
+  if (score >= 40) {
+    return 'text-amber-500'
+  }
   return 'text-red-500'
 }
 
@@ -30,7 +34,11 @@ function ScoreBar({ label, score }: { label: string, score: number }) {
       </div>
       <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
         <div
-          className={cn('h-full rounded-full transition-all', score >= 70 ? 'bg-emerald-500' : score >= 40 ? 'bg-amber-500' : 'bg-red-500')}
+          className={cn('h-full rounded-full transition-all', score >= 70
+            ? 'bg-emerald-500'
+            : score >= 40
+              ? `bg-amber-500`
+              : `bg-red-500`)}
           style={{ width: `${score}%` }}
         />
       </div>
@@ -89,7 +97,9 @@ export default function AiRiskScorePanel({ market, eventId }: AiRiskScorePanelPr
     load()
   }, [market.condition_id, eventId])
 
-  if (isLoading || !score) return null
+  if (isLoading || !score) {
+    return null
+  }
 
   return (
     <div className="rounded-xl border bg-background">
@@ -112,7 +122,7 @@ export default function AiRiskScorePanel({ market, eventId }: AiRiskScorePanelPr
       </button>
 
       {isExpanded && (
-        <div className="grid gap-3 border-t px-4 py-4">
+        <div className="grid gap-3 border-t p-4">
           <ScoreBar label="Manipulation Resistance" score={score.manipulation_risk} />
           <ScoreBar label="Resolution Clarity" score={score.resolution_clarity} />
           <ScoreBar label="Liquidity Quality" score={score.liquidity_quality} />

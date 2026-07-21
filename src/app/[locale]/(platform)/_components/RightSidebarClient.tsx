@@ -25,7 +25,7 @@ function useAutoCollapse() {
     }
   }, [shouldCollapse, manualOverride])
 
-  const toggle = () => {
+  function toggle() {
     setManualOverride(true)
     setCollapsed(prev => !prev)
   }
@@ -45,8 +45,8 @@ export default function RightSidebarClient({ children }: RightSidebarClientProps
     <aside
       className={cn(
         `
-          relative sticky top-14 hidden h-[calc(100vh-3.5rem)] shrink-0 flex-col border-l border-border/50 bg-card
-          transition-all duration-300
+          sticky top-14 hidden h-[calc(100vh-3.5rem)] shrink-0 flex-col border-l border-border/50 bg-card transition-all
+          duration-300
         `,
         'xl:flex',
         collapsed ? 'w-10' : 'w-80 2xl:w-96',
@@ -57,7 +57,7 @@ export default function RightSidebarClient({ children }: RightSidebarClientProps
         type="button"
         onClick={toggle}
         className={cn(
-          'absolute right-1 top-1 z-20 flex size-6 items-center justify-center rounded-lg transition-colors',
+          'absolute top-1 right-1 z-20 flex size-6 items-center justify-center rounded-lg transition-colors',
           'text-muted-foreground hover:bg-muted hover:text-foreground',
         )}
         aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}

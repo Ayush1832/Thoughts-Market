@@ -54,7 +54,7 @@ function StatPill({ label, value, sub, color }: { label: string, value: string, 
   return (
     <div className="text-center">
       <p className="text-[9px] font-semibold tracking-[1.4px] text-white/35 uppercase">{label}</p>
-      <p className="mt-0.5 flex items-baseline justify-center gap-1 text-xl font-bold leading-none" style={{ color: color ?? '#fff' }}>
+      <p className="mt-0.5 flex items-baseline justify-center gap-1 text-xl leading-none font-bold" style={{ color: color ?? '#fff' }}>
         {value}
         {sub && <span className="text-[11px] font-medium text-white/40">{sub}</span>}
       </p>
@@ -69,10 +69,14 @@ export default function AtlasClient() {
   return (
     <div className="min-h-screen text-white">
       {/* ── Top bar ── */}
-      <div className="flex flex-wrap items-center gap-4 border-b border-white/10 px-4 py-4 lg:px-6">
+      <div className="flex flex-wrap items-center gap-4 border-b border-white/10 p-4 lg:px-6">
         <AppLink
           href="/"
-          className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-white/70 transition-colors hover:bg-white/10 hover:text-white"
+          className="
+            flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium
+            text-white/70 transition-colors
+            hover:bg-white/10 hover:text-white
+          "
         >
           <ArrowLeftIcon className="size-3.5" />
           Home
@@ -95,13 +99,20 @@ export default function AtlasClient() {
         {/* ── Left: categories + layers ── */}
         <aside className="space-y-6">
           <div>
-            <p className="mb-2 text-[10px] font-semibold tracking-[1.6px] text-white/35 uppercase">Categories · {CATEGORIES.length}</p>
+            <p className="mb-2 text-2xs font-semibold tracking-[1.6px] text-white/35 uppercase">
+              Categories ·
+              {CATEGORIES.length}
+            </p>
             <div className="space-y-1.5">
               {CATEGORIES.map(c => (
                 <AppLink
                   key={c.id}
                   href={c.href as Route}
-                  className="flex items-center justify-between rounded-lg border border-white/8 bg-white/[0.03] px-3 py-2 transition-colors hover:bg-white/[0.06]"
+                  className="
+                    flex items-center justify-between rounded-lg border border-white/8 bg-white/3 px-3 py-2
+                    transition-colors
+                    hover:bg-white/6
+                  "
                 >
                   <div className="flex items-center gap-2.5">
                     <span className="size-2 rounded-full" style={{ background: c.color, boxShadow: `0 0 7px ${c.color}` }} />
@@ -114,18 +125,28 @@ export default function AtlasClient() {
           </div>
 
           <div>
-            <p className="mb-2 text-[10px] font-semibold tracking-[1.6px] text-white/35 uppercase">Globe Layers</p>
+            <p className="mb-2 text-2xs font-semibold tracking-[1.6px] text-white/35 uppercase">Globe Layers</p>
             <div className="space-y-1">
               {([['heatmap', 'Heatmap'], ['hotspots', 'Hotspots'], ['flow', 'Flow lines'], ['grid', 'Grid']] as const).map(([key, label]) => (
                 <button
                   key={key}
                   type="button"
                   onClick={() => setLayers(l => ({ ...l, [key]: !l[key] }))}
-                  className="flex w-full items-center justify-between rounded-lg px-2 py-1.5 text-[13px] text-white/75 transition-colors hover:bg-white/5"
+                  className="
+                    flex w-full items-center justify-between rounded-lg px-2 py-1.5 text-[13px] text-white/75
+                    transition-colors
+                    hover:bg-white/5
+                  "
                 >
                   <span>{label}</span>
-                  <span className={cn('relative h-5 w-9 rounded-full transition-colors', layers[key] ? 'bg-[#00d4ff]' : 'bg-white/15')}>
-                    <span className={cn('absolute top-0.5 size-4 rounded-full bg-white transition-all', layers[key] ? 'left-[18px]' : 'left-0.5')} />
+                  <span className={cn('relative h-5 w-9 rounded-full transition-colors', layers[key]
+                    ? 'bg-[#00d4ff]'
+                    : `bg-white/15`)}
+                  >
+                    <span className={cn('absolute top-0.5 size-4 rounded-full bg-white transition-all', layers[key]
+                      ? `left-[18px]`
+                      : `left-0.5`)}
+                    />
                   </span>
                 </button>
               ))}
@@ -157,7 +178,11 @@ export default function AtlasClient() {
               <span className="size-2 animate-pulse rounded-full bg-[#22c55e] shadow-[0_0_8px_#22c55e]" />
               <h2 className="text-sm font-bold tracking-wide">INTELLIGENCE FEED</h2>
             </div>
-            <span className="text-[11px] text-white/35">{CATEGORIES.length} categories</span>
+            <span className="text-[11px] text-white/35">
+              {CATEGORIES.length}
+              {' '}
+              categories
+            </span>
           </div>
 
           <div className="max-h-[70vh] space-y-2 overflow-y-auto pr-1">
@@ -165,17 +190,28 @@ export default function AtlasClient() {
               <AppLink
                 key={c.id}
                 href={c.href as Route}
-                className="group block rounded-xl border border-white/8 border-l-2 bg-white/[0.03] p-3 transition-colors hover:bg-white/[0.06]"
+                className="
+                  group block rounded-xl border border-l-2 border-white/8 bg-white/3 p-3 transition-colors
+                  hover:bg-white/6
+                "
                 style={{ borderLeftColor: c.color }}
               >
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold tracking-[1.2px] uppercase" style={{ color: c.color }}>
+                  <span className="text-2xs font-bold tracking-[1.2px] uppercase" style={{ color: c.color }}>
                     {c.label}
                   </span>
                   <span className="text-[11px] text-white/30">{c.region}</span>
                 </div>
-                <p className="mt-1 flex items-center justify-between text-[13.5px] leading-snug font-semibold text-white/90 group-hover:text-white">
-                  Explore {c.label} markets
+                <p className="
+                  mt-1 flex items-center justify-between text-[13.5px] leading-snug font-semibold text-white/90
+                  group-hover:text-white
+                "
+                >
+                  Explore
+                  {' '}
+                  {c.label}
+                  {' '}
+                  markets
                   <ChevronRightIcon className="size-4 opacity-0 transition-opacity group-hover:opacity-60" />
                 </p>
               </AppLink>

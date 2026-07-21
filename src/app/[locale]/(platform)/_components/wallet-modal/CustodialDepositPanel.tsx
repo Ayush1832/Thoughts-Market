@@ -15,6 +15,11 @@ const NETWORKS = [
   { value: 'arbitrum', label: 'Arbitrum' },
   { value: 'base', label: 'Base' },
   { value: 'optimism', label: 'Optimism' },
+  { value: 'ronin', label: 'Ronin' },
+  { value: 'hyperliquid', label: 'Hyperliquid' },
+  { value: 'tron', label: 'TRON' },
+  { value: 'solana', label: 'Solana' },
+  { value: 'bitcoin', label: 'Bitcoin' },
 ] as const
 type Network = (typeof NETWORKS)[number]['value']
 
@@ -26,6 +31,11 @@ const NETWORK_TOKENS: Record<Network, readonly string[]> = {
   arbitrum: ['ETH', 'USDC', 'USDT'],
   base: ['ETH', 'USDC'],
   optimism: ['ETH', 'USDC', 'USDT'],
+  ronin: ['RON'],
+  hyperliquid: ['HYPE'],
+  bitcoin: ['BTC'],
+  tron: ['TRX', 'USDT'],
+  solana: ['SOL', 'USDC', 'USDT'],
 }
 
 function networkLabel(value: Network): string {

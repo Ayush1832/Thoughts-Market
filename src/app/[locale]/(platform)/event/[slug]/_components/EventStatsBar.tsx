@@ -11,13 +11,19 @@ interface EventStatsBarProps {
 }
 
 function formatVolume(n: number): string {
-  if (n >= 1_000_000) { return `$${(n / 1_000_000).toFixed(1)}M` }
-  if (n >= 1_000) { return `$${(n / 1_000).toFixed(0)}K` }
+  if (n >= 1_000_000) {
+    return `$${(n / 1_000_000).toFixed(1)}M`
+  }
+  if (n >= 1_000) {
+    return `$${(n / 1_000).toFixed(0)}K`
+  }
   return `$${n.toFixed(0)}`
 }
 
 function formatDate(iso: string | null): string {
-  if (!iso) { return '—' }
+  if (!iso) {
+    return '—'
+  }
   return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
@@ -25,10 +31,10 @@ function StatCard({ label, value, accent, index = 0 }: { label: string, value: s
   return (
     <div
       className={cn(
-        'group animate-tm-pop relative min-w-0 flex-1 overflow-hidden rounded-2xl border px-4 py-3',
+        'group relative min-w-0 flex-1 animate-tm-pop overflow-hidden rounded-2xl border px-4 py-3',
         'transition-all duration-300 hover:-translate-y-0.5',
         accent
-          ? 'border-[#4f8ef7]/30 bg-[#4f8ef7]/[0.06] hover:border-[#4f8ef7]/60 hover:shadow-lg hover:shadow-[#4f8ef7]/15'
+          ? `border-[#4f8ef7]/30 bg-[#4f8ef7]/6 hover:border-[#4f8ef7]/60 hover:shadow-lg hover:shadow-[#4f8ef7]/15`
           : 'border-tm-border bg-tm-surface hover:border-[#4f8ef7]/40 hover:shadow-lg hover:shadow-[#4f8ef7]/10',
       )}
       style={{ animationDelay: `${index * 70}ms` }}
@@ -37,7 +43,7 @@ function StatCard({ label, value, accent, index = 0 }: { label: string, value: s
       <span className="tm-sheen" aria-hidden />
       <p className="text-2xs font-semibold tracking-widest text-tm-secondary/70 uppercase">{label}</p>
       <p className={cn(
-        'tabnum mt-1 truncate text-lg font-bold transition-colors',
+        'mt-1 truncate text-lg font-bold tabular-nums transition-colors',
         accent ? 'text-[#4f8ef7] group-hover:text-[#00d4ff]' : 'text-tm-primary',
       )}
       >

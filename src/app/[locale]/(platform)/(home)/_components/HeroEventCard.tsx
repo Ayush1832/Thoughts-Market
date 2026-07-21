@@ -13,23 +13,28 @@ interface HeroEventCardProps {
 }
 
 function formatVolume(n: number): string {
-  if (n >= 1_000_000)
+  if (n >= 1_000_000) {
     return `$${(n / 1_000_000).toFixed(1)}M`
-  if (n >= 1_000)
+  }
+  if (n >= 1_000) {
     return `$${(n / 1_000).toFixed(0)}K`
+  }
   return `$${n.toFixed(0)}`
 }
 
 function formatCloses(endDate: string | null): string {
-  if (!endDate)
+  if (!endDate) {
     return '—'
+  }
   const diff = new Date(endDate).getTime() - Date.now()
-  if (diff <= 0)
+  if (diff <= 0) {
     return 'Closed'
+  }
   const days = Math.floor(diff / 86_400_000)
   const hours = Math.floor((diff % 86_400_000) / 3_600_000)
-  if (days > 0)
+  if (days > 0) {
     return `${days}d · ${hours}h`
+  }
   return `${hours}h`
 }
 
@@ -54,11 +59,11 @@ export default function HeroEventCard({ event }: HeroEventCardProps) {
     <div className="animate-slide-up">
       <div
         className={cn(
-          'relative overflow-hidden rounded-3xl border border-white/[0.08]',
-          'bg-white/[0.04] backdrop-blur-2xl',
+          'relative overflow-hidden rounded-3xl border border-white/8',
+          'bg-white/4 backdrop-blur-2xl',
           'shadow-[0_1px_0_rgba(255,255,255,0.1)_inset,0_30px_80px_-24px_rgba(0,0,0,0.7)]',
           'transition-all duration-300',
-          'hover:border-[#7d6cff]/40 hover:-translate-y-0.5',
+          'hover:-translate-y-0.5 hover:border-[#7d6cff]/40',
         )}
       >
         {/* Iridescent nebula glow background */}
@@ -84,9 +89,8 @@ export default function HeroEventCard({ event }: HeroEventCardProps) {
               )}
               <div className="flex items-center gap-2">
                 <span className="
-                  flex items-center gap-1.5 rounded-full border border-[#00d4ff]/30
-                  bg-[#00d4ff]/10 px-2.5 py-1 text-xs font-semibold text-[#00d4ff]
-                  shadow-[0_0_10px_rgba(0,212,255,0.15)]
+                  flex items-center gap-1.5 rounded-full border border-[#00d4ff]/30 bg-[#00d4ff]/10 px-2.5 py-1 text-xs
+                  font-semibold text-[#00d4ff] shadow-[0_0_10px_rgba(0,212,255,0.15)]
                 "
                 >
                   <span className="size-1.5 animate-pulse rounded-full bg-[#00d4ff]" />
@@ -143,7 +147,7 @@ export default function HeroEventCard({ event }: HeroEventCardProps) {
                 % DOWN
               </span>
             </div>
-            <div className="h-2.5 w-full overflow-hidden rounded-full bg-white/[0.06]">
+            <div className="h-2.5 w-full overflow-hidden rounded-full bg-white/6">
               <div
                 className="h-full rounded-full transition-[width] duration-700"
                 style={{ width: `${upChance}%`, background: 'linear-gradient(90deg, #5ee5ff, #54e3ff)' }}
@@ -158,7 +162,7 @@ export default function HeroEventCard({ event }: HeroEventCardProps) {
               onMouseEnter={() => handleMouseEnter('up')}
               onMouseLeave={handleMouseLeave}
               className={cn(
-                'tabnum flex items-center justify-between rounded-2xl px-5 py-3.5 text-base font-semibold',
+                'flex items-center justify-between rounded-2xl px-5 py-3.5 text-base font-semibold tabular-nums',
                 'border border-[#5ee5ff]/35 text-[#5ee5ff]',
                 'bg-[linear-gradient(180deg,rgba(94,229,255,0.22),rgba(94,229,255,0.08))]',
                 'shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_8px_24px_-10px_rgba(94,229,255,0.35)]',
@@ -166,15 +170,21 @@ export default function HeroEventCard({ event }: HeroEventCardProps) {
                 hovering === 'up' ? '-translate-y-px' : 'active:translate-y-0',
               )}
             >
-              <span className="flex items-center gap-2 text-sm">↑ PREDICT {yesLabel.toUpperCase()}</span>
-              <span className="text-lg font-bold">{upChance}¢</span>
+              <span className="flex items-center gap-2 text-sm">
+                ↑ PREDICT
+                {yesLabel.toUpperCase()}
+              </span>
+              <span className="text-lg font-bold">
+                {upChance}
+                ¢
+              </span>
             </button>
             <button
               type="button"
               onMouseEnter={() => handleMouseEnter('down')}
               onMouseLeave={handleMouseLeave}
               className={cn(
-                'tabnum flex items-center justify-between rounded-2xl px-5 py-3.5 text-base font-semibold',
+                'flex items-center justify-between rounded-2xl px-5 py-3.5 text-base font-semibold tabular-nums',
                 'border border-[#ff6b8a]/35 text-[#ff6b8a]',
                 'bg-[linear-gradient(180deg,rgba(255,107,138,0.22),rgba(255,107,138,0.08))]',
                 'shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_8px_24px_-10px_rgba(255,107,138,0.35)]',
@@ -182,8 +192,14 @@ export default function HeroEventCard({ event }: HeroEventCardProps) {
                 hovering === 'down' ? '-translate-y-px' : 'active:translate-y-0',
               )}
             >
-              <span className="flex items-center gap-2 text-sm">↓ PREDICT {noLabel.toUpperCase()}</span>
-              <span className="text-lg font-bold">{downChance}¢</span>
+              <span className="flex items-center gap-2 text-sm">
+                ↓ PREDICT
+                {noLabel.toUpperCase()}
+              </span>
+              <span className="text-lg font-bold">
+                {downChance}
+                ¢
+              </span>
             </button>
           </div>
         </div>

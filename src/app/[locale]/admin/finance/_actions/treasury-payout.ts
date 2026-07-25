@@ -5,6 +5,7 @@ import { canAccessSection } from '@/lib/admin-permissions'
 import { createTreasuryPayoutRecord, listRecentTreasuryPayouts, markTreasuryPayout } from '@/lib/db/queries/treasury'
 import { UserRepository } from '@/lib/db/queries/user'
 import { isCoinSupportedOnNetwork, SUPPORTED_DEPOSIT_NETWORKS } from '@/lib/deposit-chains'
+import { getClientTronAddress, saveClientTronAddress } from '@/lib/payout-settings'
 import { getTreasuryBalances, isTreasuryPayoutConfigured, runTreasuryConsolidation, runTreasuryPayout } from '@/lib/treasury-payout'
 
 export interface TreasuryBalancesResult {
@@ -22,11 +23,12 @@ export async function getTreasuryBalancesAction(): Promise<TreasuryBalancesResul
     return { error: 'Unauthorized.', data: null }
   }
 
+  const clientTronAddress = await getClientTronAddress()
   const configured = isTreasuryPayoutConfigured()
   if (!configured) {
     return {
       error: null,
-      data: { configured: false, clientTronAddress: null, balances: [] },
+      data: { configured: false, clientTronAddress, balances: [] },
     }
   }
 
@@ -36,7 +38,7 @@ export async function getTreasuryBalancesAction(): Promise<TreasuryBalancesResul
       error: null,
       data: {
         configured: true,
-        clientTronAddress: process.env.CLIENT_TRON_ADDRESS?.trim() ?? null,
+        clientTronAddress,
         balances: balances
           .filter(entry => Number(entry.formatted) > 0)
           .map(entry => ({ network: entry.network, coin: entry.coin, formatted: entry.formatted })),
@@ -47,6 +49,25 @@ export async function getTreasuryBalancesAction(): Promise<TreasuryBalancesResul
     console.error('Failed to load treasury balances', error)
     return { error: 'Failed to load treasury balances.', data: null }
   }
+}
+
+export interface UpdateClientTronAddressResult {
+  error: string | null
+  data: { clientTronAddress: string } | null
+}
+
+export async function updateClientTronAddressAction(address: string): Promise<UpdateClientTronAddressResult> {
+  const allowed = await getAdminAccess()
+  if (!canAccessSection(allowed, 'finance')) {
+    return { error: 'Unauthorized.', data: null }
+  }
+
+  const { error } = await saveClientTronAddress(address)
+  if (error) {
+    return { error, data: null }
+  }
+
+  return { error: null, data: { clientTronAddress: address.trim() } }
 }
 
 export interface TriggerTreasuryPayoutResult {
@@ -75,8 +96,12 @@ export async function triggerTreasuryPayoutAction(input: {
     return { error: 'Treasury payout is not configured.', data: null }
   }
 
+  const clientTronAddress = await getClientTronAddress()
+  if (!clientTronAddress) {
+    return { error: 'Set the client payout address before running a payout.', data: null }
+  }
+
   const admin = await UserRepository.getCurrentUser({ disableCookieCache: true, minimal: true })
-  const clientTronAddress = process.env.CLIENT_TRON_ADDRESS!.trim()
 
   const recordId = await createTreasuryPayoutRecord({
     fromNetwork: input.network,
@@ -87,7 +112,7 @@ export async function triggerTreasuryPayoutAction(input: {
   })
 
   try {
-    const result = await runTreasuryPayout(input.network, input.coin, input.amount)
+    const result = await runTreasuryPayout(input.network, input.coin, input.amount, clientTronAddress)
     await markTreasuryPayout(recordId, 'completed', { txHash: result.txHash })
     return { error: null, data: { txHash: result.txHash } }
   }
@@ -117,11 +142,15 @@ export async function runTreasuryConsolidationAction(): Promise<RunTreasuryConso
     return { error: 'Treasury payout is not configured.', data: null }
   }
 
+  const clientTronAddress = await getClientTronAddress()
+  if (!clientTronAddress) {
+    return { error: 'Set the client payout address before running a payout.', data: null }
+  }
+
   const admin = await UserRepository.getCurrentUser({ disableCookieCache: true, minimal: true })
-  const clientTronAddress = process.env.CLIENT_TRON_ADDRESS!.trim()
 
   try {
-    const result = await runTreasuryConsolidation()
+    const result = await runTreasuryConsolidation(clientTronAddress)
 
     for (const item of result.succeeded) {
       const recordId = await createTreasuryPayoutRecord({

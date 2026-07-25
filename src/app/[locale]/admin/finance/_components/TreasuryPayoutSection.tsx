@@ -7,6 +7,7 @@ import {
   getTreasuryBalancesAction,
   runTreasuryConsolidationAction,
   triggerTreasuryPayoutAction,
+  updateClientTronAddressAction,
 } from '@/app/[locale]/admin/finance/_actions/treasury-payout'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -41,6 +42,8 @@ export default function TreasuryPayoutSection() {
   const [amount, setAmount] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [consolidating, setConsolidating] = useState(false)
+  const [addressInput, setAddressInput] = useState('')
+  const [savingAddress, setSavingAddress] = useState(false)
 
   function loadData() {
     Promise.all([getTreasuryBalancesAction(), getRecentTreasuryPayoutsAction()])
@@ -48,6 +51,7 @@ export default function TreasuryPayoutSection() {
         if (balanceResult.data) {
           setConfigured(balanceResult.data.configured)
           setClientTronAddress(balanceResult.data.clientTronAddress)
+          setAddressInput(prev => prev || balanceResult.data!.clientTronAddress || '')
           setBalances(balanceResult.data.balances)
           if (balanceResult.data.balances.length > 0) {
             setNetwork(prev => prev || balanceResult.data!.balances[0]!.network)
@@ -81,6 +85,22 @@ export default function TreasuryPayoutSection() {
     }
     finally {
       setSubmitting(false)
+    }
+  }
+
+  async function handleSaveAddress() {
+    setSavingAddress(true)
+    try {
+      const result = await updateClientTronAddressAction(addressInput)
+      if (result.error) {
+        toast.error(result.error)
+        return
+      }
+      setClientTronAddress(result.data!.clientTronAddress)
+      toast.success('Client payout address saved')
+    }
+    finally {
+      setSavingAddress(false)
     }
   }
 
@@ -118,21 +138,55 @@ export default function TreasuryPayoutSection() {
     )
   }
 
-  if (!configured) {
+  const addressCard = (
+    <Card>
+      <CardHeader>
+        <CardTitle>Client Payout Address</CardTitle>
+        <CardDescription>
+          The Tron (TRC-20) wallet address that receives treasury payouts. Only the client can provide their real address.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="flex flex-col gap-4 md:flex-row md:items-end">
+          <div className="flex-1 space-y-2">
+            <Label htmlFor="client-tron-address">Tron address</Label>
+            <Input
+              id="client-tron-address"
+              value={addressInput}
+              onChange={event => setAddressInput(event.target.value.trim())}
+              placeholder="T..."
+              className="h-11 font-mono"
+            />
+          </div>
+          <Button onClick={handleSaveAddress} disabled={savingAddress} className="h-11">
+            {savingAddress ? 'Saving…' : 'Save Address'}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  )
+
+  if (!configured || !clientTronAddress) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Pay Out to Client</CardTitle>
-          <CardDescription>
-            Not configured. Set TREASURY_PRIVATE_KEY and CLIENT_TRON_ADDRESS to enable payouts.
-          </CardDescription>
-        </CardHeader>
-      </Card>
+      <div className="space-y-6">
+        {addressCard}
+        <Card>
+          <CardHeader>
+            <CardTitle>Pay Out to Client</CardTitle>
+            <CardDescription>
+              {!configured
+                ? 'Not configured. Set TREASURY_PRIVATE_KEY to enable payouts.'
+                : 'Set and save the client payout address above to enable payouts.'}
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      </div>
     )
   }
 
   return (
     <div className="space-y-6">
+      {addressCard}
       <Card>
         <CardHeader className="flex flex-row items-start justify-between gap-4">
           <div>

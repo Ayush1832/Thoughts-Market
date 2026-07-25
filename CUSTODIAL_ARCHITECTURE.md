@@ -497,8 +497,10 @@ derivation functions (WIF → address, base58 secret → pubkey, hex private key
   balance. Faucet links were given to the user; a real end-to-end run (fund →
   deposit → detect → sweep → withdraw) hasn't happened.
 - `TREASURY_PRIVATE_KEY` (must match the existing `DEPOSIT_TREASURY_ADDRESS`)
-  and `CLIENT_TRON_ADDRESS` remain unset — this repo has no way to generate
-  either (the first must match a wallet the business already controls, the
-  second is the client's own receiving address), so EVM treasury payout and
-  the Bitcoin/Solana/Tron bridge-payout paths added in §11 are still
-  completely unexercised end-to-end.
+  remains unset — this repo has no way to generate it, since it must match a
+  wallet the business already controls. The client's receiving address is no
+  longer an env var; it's set from the admin panel (Finance > Treasury >
+  Client Payout Address) and is also still unset, since only the client can
+  provide it. So EVM treasury payout and the Bitcoin/Solana/Tron
+  bridge-payout paths added in §11 are still completely unexercised
+  end-to-end.

@@ -224,7 +224,7 @@ The application is configured entirely through environment variables (no secrets
 | Tron | `TRON_RPC_URL`, `TRONGRID_API_KEY`, `TRON_TREASURY_ADDRESS`, `TRON_GAS_PRIVATE_KEY`, `TRON_HOT_WALLET_PRIVATE_KEY` |
 | Solana | `SOLANA_RPC_URL`, `SOLANA_TREASURY_ADDRESS`, `SOLANA_GAS_PRIVATE_KEY`, `SOLANA_HOT_WALLET_PRIVATE_KEY` |
 | Bitcoin | `BITCOIN_API_BASE` (optional), `BITCOIN_TREASURY_ADDRESS`, `BITCOIN_HOT_WALLET_PRIVATE_KEY` |
-| Client payout | `TREASURY_PRIVATE_KEY`, `CLIENT_TRON_ADDRESS` |
+| Client payout | `TREASURY_PRIVATE_KEY` (destination address set in admin panel: Finance > Treasury > Client Payout Address) |
 | Pricing | `PRICE_API_KEY` (optional — CoinGecko) |
 | Operations | `CRON_SECRET`, `SENTRY_DSN` / `SENTRY_ORG` / `SENTRY_PROJECT` |
 

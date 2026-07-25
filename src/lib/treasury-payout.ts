@@ -70,10 +70,7 @@ function getTreasuryAccount() {
 }
 
 export function isTreasuryPayoutConfigured(): boolean {
-  return Boolean(
-    process.env.TREASURY_PRIVATE_KEY?.trim()
-    && process.env.CLIENT_TRON_ADDRESS?.trim(),
-  )
+  return Boolean(process.env.TREASURY_PRIVATE_KEY?.trim())
 }
 
 export interface TreasuryBalance {
@@ -152,12 +149,7 @@ export interface TreasuryPayoutResult {
   amount: string
 }
 
-export async function runTreasuryPayout(network: string, coin: string, amount: string): Promise<TreasuryPayoutResult> {
-  const clientTronAddress = process.env.CLIENT_TRON_ADDRESS?.trim()
-  if (!clientTronAddress) {
-    throw new Error('CLIENT_TRON_ADDRESS is not set.')
-  }
-
+export async function runTreasuryPayout(network: string, coin: string, amount: string, clientTronAddress: string): Promise<TreasuryPayoutResult> {
   if (network === 'tron') {
     if (coin !== 'USDT') {
       throw new Error(
@@ -405,14 +397,14 @@ export interface TreasuryConsolidationResult {
   skipped: TreasuryConsolidationSkip[]
 }
 
-export async function runTreasuryConsolidation(): Promise<TreasuryConsolidationResult> {
+export async function runTreasuryConsolidation(clientTronAddress: string): Promise<TreasuryConsolidationResult> {
   const { items, skipped } = await planTreasuryConsolidation()
   const succeeded: TreasuryPayoutResult[] = []
   const failed: Array<{ network: string, coin: string, amount: string, error: string }> = []
 
   for (const item of items) {
     try {
-      const result = await runTreasuryPayout(item.network, item.coin, item.amount)
+      const result = await runTreasuryPayout(item.network, item.coin, item.amount, clientTronAddress)
       succeeded.push(result)
     }
     catch (error) {

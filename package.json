@@ -59,7 +59,7 @@
     "canvas-confetti": "1.9.4",
     "class-variance-authority": "0.7.1",
     "clsx": "2.1.1",
-    "date-fns": "4.1.0",
+    "date-fns": "4.4.0",
     "drizzle-orm": "0.45.2",
     "ecpair": "^3.0.1",
     "ed25519-hd-key": "^2.0.0",

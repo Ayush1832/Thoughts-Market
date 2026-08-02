@@ -25,8 +25,11 @@ export async function POST(request: Request) {
     const balances = await getWalletBalances(body.walletAddress)
     return NextResponse.json({ balances })
   }
-  catch (error) {
-    const message = error instanceof Error ? error.message : 'Failed to fetch LI.FI balances.'
-    return NextResponse.json({ error: message }, { status: 500 })
+  catch {
+    // LI.FI's /wallets/{address}/balances indexer endpoint has been permanently
+    // deprecated upstream (returns 410 for every wallet). Degrade to an empty
+    // balances map rather than surfacing a 500 until this is redesigned around
+    // a curated token allowlist + getTokenBalances RPC calls.
+    return NextResponse.json({ balances: {} })
   }
 }

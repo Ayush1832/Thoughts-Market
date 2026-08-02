@@ -1,5 +1,6 @@
 'use server'
 
+import type { EnabledDepositNetwork } from '@/lib/deposit-chains'
 import { z } from 'zod'
 import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
 import {
@@ -8,7 +9,12 @@ import {
 } from '@/lib/db/queries/deposit-addresses'
 import { listBalances } from '@/lib/db/queries/ledger'
 import { UserRepository } from '@/lib/db/queries/user'
-import { isCoinSupportedOnNetwork, SUPPORTED_DEPOSIT_NETWORKS } from '@/lib/deposit-chains'
+import {
+
+  getEnabledDepositNetworksWithCoins,
+  isCoinSupportedOnNetwork,
+  SUPPORTED_DEPOSIT_NETWORKS,
+} from '@/lib/deposit-chains'
 import { isDepositHdConfigured } from '@/lib/deposit-hd'
 
 const DepositAddressInputSchema = z.object({
@@ -36,6 +42,13 @@ const FEATURE_DISABLED_MESSAGE = 'Deposit addresses are not available yet. Pleas
 async function resolveCurrentUserId(): Promise<string | null> {
   const user = await UserRepository.getCurrentUser({ disableCookieCache: true, minimal: true })
   return user?.id ?? null
+}
+
+export async function getSupportedDepositOptionsAction(): Promise<EnabledDepositNetwork[]> {
+  if (!isDepositHdConfigured()) {
+    return []
+  }
+  return getEnabledDepositNetworksWithCoins()
 }
 
 export async function getDepositAddressAction(

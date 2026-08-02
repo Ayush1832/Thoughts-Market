@@ -5,11 +5,16 @@ import { listMonitoredDepositAddresses } from '@/lib/db/queries/deposit-addresse
 import { getEnabledDepositChains } from '@/lib/deposit-chains'
 import { deriveDepositAccount } from '@/lib/deposit-hd'
 import { sendOpsAlert } from '@/lib/ops-alert'
+import { withRpcRetry } from '@/lib/rpc-retry'
 import 'server-only'
 
 const SWEEP_GAS_LIMIT = 120000n
 const NATIVE_GAS_LIMIT = 21000n
 const MAX_SWEEPS_PER_RUN = 25
+// 4x (was 3x) — free public RPCs (now backing 8 of 12 chains) return gas
+// price snapshots that lag real-time basefee more than paid infra does, so a
+// tighter buffer risks the actual sweep tx landing with insufficient balance.
+const GAS_SAFETY_MULTIPLIER = 4n
 
 export interface SweepResult {
   disabled: boolean
@@ -57,25 +62,25 @@ export async function runDepositSweep(): Promise<SweepResult> {
 
       for (const token of chainConfig.tokens) {
         try {
-          const balance = await publicClient.readContract({
+          const balance = await withRpcRetry(() => publicClient.readContract({
             address: token.address,
             abi: erc20Abi,
             functionName: 'balanceOf',
             args: [depositAddress],
-          })
+          }))
           if (balance < minSweepUnits(token.decimals)) {
             continue
           }
 
-          const gasPrice = await publicClient.getGasPrice()
-          const requiredGas = gasPrice * SWEEP_GAS_LIMIT * 3n
-          const nativeBalance = await publicClient.getBalance({ address: depositAddress })
+          const gasPrice = await withRpcRetry(() => publicClient.getGasPrice())
+          const requiredGas = gasPrice * SWEEP_GAS_LIMIT * GAS_SAFETY_MULTIPLIER
+          const nativeBalance = await withRpcRetry(() => publicClient.getBalance({ address: depositAddress }))
           if (nativeBalance < requiredGas) {
             const topUpHash = await gasWallet.sendTransaction({
               to: depositAddress,
               value: requiredGas - nativeBalance,
             })
-            assertTransactionSuccess(await publicClient.waitForTransactionReceipt({ hash: topUpHash }))
+            assertTransactionSuccess(await withRpcRetry(() => publicClient.waitForTransactionReceipt({ hash: topUpHash })))
           }
 
           const wallet = createWalletClient({
@@ -90,7 +95,7 @@ export async function runDepositSweep(): Promise<SweepResult> {
             args: [treasury as `0x${string}`, balance],
             gas: SWEEP_GAS_LIMIT,
           })
-          assertTransactionSuccess(await publicClient.waitForTransactionReceipt({ hash: sweepHash }))
+          assertTransactionSuccess(await withRpcRetry(() => publicClient.waitForTransactionReceipt({ hash: sweepHash })))
 
           swept += 1
           if (swept >= MAX_SWEEPS_PER_RUN) {
@@ -106,10 +111,10 @@ export async function runDepositSweep(): Promise<SweepResult> {
       }
 
       try {
-        const nativeBalance = await publicClient.getBalance({ address: depositAddress })
+        const nativeBalance = await withRpcRetry(() => publicClient.getBalance({ address: depositAddress }))
         if (nativeBalance >= chainConfig.native.minSweep) {
-          const gasPrice = await publicClient.getGasPrice()
-          const gasReserve = gasPrice * NATIVE_GAS_LIMIT * 3n
+          const gasPrice = await withRpcRetry(() => publicClient.getGasPrice())
+          const gasReserve = gasPrice * NATIVE_GAS_LIMIT * GAS_SAFETY_MULTIPLIER
           const value = nativeBalance - gasReserve
           if (value > 0n) {
             const wallet = createWalletClient({
@@ -122,7 +127,7 @@ export async function runDepositSweep(): Promise<SweepResult> {
               value,
               gas: NATIVE_GAS_LIMIT,
             })
-            assertTransactionSuccess(await publicClient.waitForTransactionReceipt({ hash: nativeHash }))
+            assertTransactionSuccess(await withRpcRetry(() => publicClient.waitForTransactionReceipt({ hash: nativeHash })))
 
             swept += 1
             if (swept >= MAX_SWEEPS_PER_RUN) {

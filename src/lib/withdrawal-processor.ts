@@ -12,6 +12,7 @@ import { getDepositChain } from '@/lib/deposit-chains'
 import { db } from '@/lib/drizzle'
 import { ensureLiFiServerConfig } from '@/lib/lifi'
 import { sendOpsAlert } from '@/lib/ops-alert'
+import { withRpcRetry } from '@/lib/rpc-retry'
 import { getMintForCoin, SOLANA_LIFI_CHAIN_ID, SOLANA_NATIVE_COIN, SOLANA_NATIVE_DECIMALS, SOLANA_NATIVE_LIFI_ADDRESS, SOLANA_NETWORK, SOLANA_TOKEN_DECIMALS } from '@/lib/solana'
 import { getSolanaHotBalance, sendSolanaPayout, solanaAmountToRaw } from '@/lib/solana-withdrawal'
 import { TRON_LIFI_CHAIN_ID, TRON_NATIVE_COIN, TRON_NATIVE_DECIMALS, TRON_NETWORK, TRON_USDT_CONTRACT, TRON_USDT_DECIMALS } from '@/lib/tron'
@@ -32,7 +33,9 @@ class UncertainPayoutError extends Error {
 
 const MAX_WITHDRAWALS_PER_RUN = 20
 const NATIVE_GAS_LIMIT = 21000n
-const NATIVE_GAS_SAFETY = 3n
+// 4x (was 3x) — free public RPCs (now backing 8 of 12 chains) return gas
+// price snapshots that lag real-time basefee more than paid infra does.
+const NATIVE_GAS_SAFETY = 4n
 const SOLANA_FEE_RESERVE_LAMPORTS = 10_000n
 const TRON_NATIVE_FEE_RESERVE_SUN = 1_000_000n
 const BITCOIN_FEE_RESERVE_SATS = 10_000n
@@ -68,7 +71,10 @@ async function waitForReceiptOrUncertain(
 ): Promise<void> {
   let receipt: TransactionReceipt
   try {
-    receipt = await publicClient.waitForTransactionReceipt({ hash })
+    // A transient RPC hiccup here must not get flagged as an uncertain payout
+    // needing manual review — retry the (idempotent, side-effect-free) lookup
+    // before giving up.
+    receipt = await withRpcRetry(() => publicClient.waitForTransactionReceipt({ hash }))
   }
   catch (error) {
     throw new UncertainPayoutError(`Could not confirm transaction ${hash}: receipt lookup failed.`, error)
@@ -246,9 +252,9 @@ export async function runWithdrawalProcessing(): Promise<WithdrawalProcessingRes
         const neededAmount = parseUnits(withdrawal.amount, decimals)
 
         if (isNative) {
-          const gasPrice = await publicClient.getGasPrice()
+          const gasPrice = await withRpcRetry(() => publicClient.getGasPrice())
           const gasReserve = gasPrice * NATIVE_GAS_LIMIT * NATIVE_GAS_SAFETY
-          const balance = await publicClient.getBalance({ address: account.address })
+          const balance = await withRpcRetry(() => publicClient.getBalance({ address: account.address }))
 
           if (balance >= neededAmount + gasReserve) {
             txHash = await wallet.sendTransaction({ to: recipient, value: neededAmount })
@@ -262,12 +268,12 @@ export async function runWithdrawalProcessing(): Promise<WithdrawalProcessingRes
           }
         }
         else {
-          const balance = await publicClient.readContract({
+          const balance = await withRpcRetry(() => publicClient.readContract({
             address: token!.address,
             abi: erc20Abi,
             functionName: 'balanceOf',
             args: [account.address],
-          })
+          }))
 
           if (balance >= neededAmount) {
             txHash = await wallet.writeContract({

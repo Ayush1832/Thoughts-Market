@@ -4,7 +4,7 @@ import type { FormEvent } from 'react'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { getWithdrawalQuoteAction, requestWithdrawalAction } from '@/app/[locale]/(platform)/_actions/custodial-withdrawal'
-import { getMyBalancesAction } from '@/app/[locale]/(platform)/_actions/deposit-address'
+import { getMyBalancesAction, getSupportedDepositOptionsAction } from '@/app/[locale]/(platform)/_actions/deposit-address'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -26,37 +26,28 @@ const NETWORK_LABELS: Record<string, string> = {
   bitcoin: 'Bitcoin',
 }
 
-const COIN_NETWORKS: Record<string, readonly string[]> = {
-  USDC: ['polygon', 'ethereum', 'bsc', 'avalanche', 'arbitrum', 'base', 'optimism', 'solana'],
-  USDT: ['polygon', 'ethereum', 'bsc', 'avalanche', 'arbitrum', 'optimism', 'tron', 'solana'],
-  POL: ['polygon'],
-  ETH: ['ethereum', 'arbitrum', 'base', 'optimism'],
-  BNB: ['bsc'],
-  AVAX: ['avalanche'],
-  LINK: ['ethereum'],
-  UNI: ['ethereum'],
-  SAND: ['ethereum'],
-  IMX: ['ethereum'],
-  RLB: ['ethereum'],
-  RON: ['ronin'],
-  HYPE: ['hyperliquid'],
-  TRX: ['tron'],
-  SOL: ['solana'],
-  BTC: ['bitcoin'],
-}
-
-const COINS = ['USDC', 'USDT', 'POL', 'ETH', 'BNB', 'AVAX', 'LINK', 'UNI', 'SAND', 'IMX', 'RLB', 'RON', 'HYPE', 'TRX', 'SOL', 'BTC'] as const
-
 interface Quote {
   feeUsd: number
   netUsd: number
   coinAmount: string
 }
 
+function buildCoinNetworks(options: { network: string, coins: string[] }[]) {
+  const coinNetworks: Record<string, string[]> = {}
+  for (const option of options) {
+    for (const coin of option.coins) {
+      coinNetworks[coin] ??= []
+      coinNetworks[coin].push(option.network)
+    }
+  }
+  return coinNetworks
+}
+
 function CustodialWithdrawForm({ onClose }: { onClose: () => void }) {
   const [balances, setBalances] = useState<Record<string, string>>({})
-  const [coin, setCoin] = useState<string>('USDC')
-  const [network, setNetwork] = useState<string>('polygon')
+  const [coinNetworks, setCoinNetworks] = useState<Record<string, string[]>>({})
+  const [coin, setCoin] = useState<string>('')
+  const [network, setNetwork] = useState<string>('')
   const [amount, setAmount] = useState('')
   const [toAddress, setToAddress] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -82,8 +73,30 @@ function CustodialWithdrawForm({ onClose }: { onClose: () => void }) {
     }
   }, [])
 
+  useEffect(() => {
+    let cancelled = false
+    getSupportedDepositOptionsAction()
+      .then((options) => {
+        if (cancelled) {
+          return
+        }
+        const nextCoinNetworks = buildCoinNetworks(options)
+        setCoinNetworks(nextCoinNetworks)
+        const preferredCoin = nextCoinNetworks.USDC ? 'USDC' : Object.keys(nextCoinNetworks)[0]
+        if (preferredCoin) {
+          setCoin(preferredCoin)
+          setNetwork(nextCoinNetworks[preferredCoin]?.[0] ?? '')
+        }
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
   const availableUsd = Number(balances.USDC ?? '0')
-  const networks = COIN_NETWORKS[coin] ?? []
+  const coins = Object.keys(coinNetworks)
+  const networks = coinNetworks[coin] ?? []
 
   useEffect(() => {
     setQuote(null)
@@ -119,7 +132,7 @@ function CustodialWithdrawForm({ onClose }: { onClose: () => void }) {
 
   function handleCoinChange(value: string) {
     setCoin(value)
-    const nextNetworks = COIN_NETWORKS[value] ?? []
+    const nextNetworks = coinNetworks[value] ?? []
     if (!nextNetworks.includes(network)) {
       setNetwork(nextNetworks[0] ?? '')
     }
@@ -200,7 +213,7 @@ function CustodialWithdrawForm({ onClose }: { onClose: () => void }) {
           <Select value={coin} onValueChange={handleCoinChange}>
             <SelectTrigger className="h-12 w-full justify-between bg-card text-foreground">{coin}</SelectTrigger>
             <SelectContent position="popper" side="bottom" align="start" sideOffset={6}>
-              {COINS.map(option => (
+              {coins.map(option => (
                 <SelectItem key={option} value={option}>{option}</SelectItem>
               ))}
             </SelectContent>

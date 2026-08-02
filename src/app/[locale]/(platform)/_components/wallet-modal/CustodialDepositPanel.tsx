@@ -2,49 +2,38 @@
 
 import { useEffect, useState } from 'react'
 import QRCode from 'react-qr-code'
-import { getDepositAddressAction, refreshDepositAddressAction } from '@/app/[locale]/(platform)/_actions/deposit-address'
+import {
+  getDepositAddressAction,
+  getSupportedDepositOptionsAction,
+  refreshDepositAddressAction,
+} from '@/app/[locale]/(platform)/_actions/deposit-address'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/select'
 
-const NETWORKS = [
-  { value: 'polygon', label: 'Polygon' },
-  { value: 'ethereum', label: 'Ethereum' },
-  { value: 'bsc', label: 'BNB Smart Chain' },
-  { value: 'avalanche', label: 'Avalanche' },
-  { value: 'arbitrum', label: 'Arbitrum' },
-  { value: 'base', label: 'Base' },
-  { value: 'optimism', label: 'Optimism' },
-  { value: 'ronin', label: 'Ronin' },
-  { value: 'hyperliquid', label: 'Hyperliquid' },
-  { value: 'tron', label: 'TRON' },
-  { value: 'solana', label: 'Solana' },
-  { value: 'bitcoin', label: 'Bitcoin' },
-] as const
-type Network = (typeof NETWORKS)[number]['value']
-
-const NETWORK_TOKENS: Record<Network, readonly string[]> = {
-  polygon: ['POL', 'USDC', 'USDT'],
-  ethereum: ['ETH', 'USDC', 'USDT', 'LINK', 'UNI', 'SAND', 'IMX', 'RLB'],
-  bsc: ['BNB', 'USDC', 'USDT'],
-  avalanche: ['AVAX', 'USDC', 'USDT'],
-  arbitrum: ['ETH', 'USDC', 'USDT'],
-  base: ['ETH', 'USDC'],
-  optimism: ['ETH', 'USDC', 'USDT'],
-  ronin: ['RON'],
-  hyperliquid: ['HYPE'],
-  bitcoin: ['BTC'],
-  tron: ['TRX', 'USDT'],
-  solana: ['SOL', 'USDC', 'USDT'],
+const NETWORK_LABELS: Record<string, string> = {
+  polygon: 'Polygon',
+  ethereum: 'Ethereum',
+  bsc: 'BNB Smart Chain',
+  avalanche: 'Avalanche',
+  arbitrum: 'Arbitrum',
+  base: 'Base',
+  optimism: 'Optimism',
+  ronin: 'Ronin',
+  hyperliquid: 'Hyperliquid',
+  tron: 'TRON',
+  solana: 'Solana',
+  bitcoin: 'Bitcoin',
 }
 
-function networkLabel(value: Network): string {
-  return NETWORKS.find(option => option.value === value)?.label ?? value
+function networkLabel(value: string): string {
+  return NETWORK_LABELS[value] ?? value
 }
 
 function CustodialDepositPanel() {
-  const [network, setNetwork] = useState<Network>('polygon')
-  const [coin, setCoin] = useState<string>(NETWORK_TOKENS.polygon[0] ?? 'USDC')
+  const [options, setOptions] = useState<{ network: string, coins: string[] }[] | null>(null)
+  const [network, setNetwork] = useState<string>('')
+  const [coin, setCoin] = useState<string>('')
   const [address, setAddress] = useState<string | null>(null)
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading')
   const [error, setError] = useState('')
@@ -52,12 +41,41 @@ function CustodialDepositPanel() {
   const [refreshing, setRefreshing] = useState(false)
 
   function handleNetworkChange(value: string) {
-    const next = value as Network
-    setNetwork(next)
-    if (!NETWORK_TOKENS[next].includes(coin)) {
-      setCoin(NETWORK_TOKENS[next][0] ?? '')
+    setNetwork(value)
+    const tokens = options?.find(option => option.network === value)?.coins ?? []
+    if (!tokens.includes(coin)) {
+      setCoin(tokens[0] ?? '')
     }
   }
+
+  useEffect(() => {
+    let cancelled = false
+    getSupportedDepositOptionsAction()
+      .then((result) => {
+        if (cancelled) {
+          return
+        }
+        setOptions(result)
+        const firstNetwork = result[0]
+        if (firstNetwork) {
+          setNetwork(firstNetwork.network)
+          setCoin(firstNetwork.coins[0] ?? '')
+        }
+        else {
+          setStatus('error')
+          setError('Deposits are not available right now.')
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setStatus('error')
+          setError('Deposits are not available right now.')
+        }
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   useEffect(() => {
     if (!network || !coin) {
@@ -125,6 +143,16 @@ function CustodialDepositPanel() {
     }
   }
 
+  if (!options) {
+    return <p className="text-center text-sm text-muted-foreground">Loading…</p>
+  }
+
+  if (options.length === 0) {
+    return <p className="text-center text-sm text-muted-foreground">Deposits are not available right now.</p>
+  }
+
+  const availableCoins = options.find(option => option.network === network)?.coins ?? []
+
   return (
     <div className="space-y-4">
       <div className="grid gap-4 md:grid-cols-2">
@@ -133,8 +161,8 @@ function CustodialDepositPanel() {
           <Select value={network} onValueChange={handleNetworkChange}>
             <SelectTrigger className="h-12 w-full justify-between bg-card text-foreground">{networkLabel(network)}</SelectTrigger>
             <SelectContent position="popper" side="bottom" align="start" sideOffset={6}>
-              {NETWORKS.map(option => (
-                <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+              {options.map(option => (
+                <SelectItem key={option.network} value={option.network}>{networkLabel(option.network)}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -145,7 +173,7 @@ function CustodialDepositPanel() {
           <Select value={coin} onValueChange={setCoin}>
             <SelectTrigger className="h-12 w-full justify-between bg-card text-foreground">{coin}</SelectTrigger>
             <SelectContent position="popper" side="bottom" align="start" sideOffset={6}>
-              {NETWORK_TOKENS[network].map(option => (
+              {availableCoins.map(option => (
                 <SelectItem key={option} value={option}>{option}</SelectItem>
               ))}
             </SelectContent>

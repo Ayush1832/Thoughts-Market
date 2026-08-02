@@ -15,7 +15,6 @@ const SPOTS: [number, number, number, number, number, number][] = [
 const ARCS: [number, number][] = [[0, 2], [0, 3], [1, 3], [6, 3]]
 
 const EARTH_TEXTURE_SRCS = [
-  '/earth.jpg',
   'https://unpkg.com/three-globe/example/img/earth-night.jpg',
 ]
 const TEX_W = 1024

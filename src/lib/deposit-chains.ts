@@ -1,11 +1,11 @@
 import type { Address } from 'viem'
 import type { Chain } from 'viem/chains'
 import { arbitrum, avalanche, base, bsc, hyperEvm, mainnet, optimism, ronin } from 'viem/chains'
-import { BITCOIN_NATIVE_COIN, BITCOIN_NETWORK, getCoinDecimalsOnBitcoin } from '@/lib/bitcoin'
+import { BITCOIN_NATIVE_COIN, BITCOIN_NETWORK, getCoinDecimalsOnBitcoin, isBitcoinConfigured } from '@/lib/bitcoin'
 import { COLLATERAL_TOKEN_ADDRESS } from '@/lib/contracts'
 import { IS_TEST_MODE } from '@/lib/network'
-import { getCoinDecimalsOnSolana, SOLANA_COINS, SOLANA_NETWORK } from '@/lib/solana'
-import { getCoinDecimalsOnTron, TRON_COINS, TRON_NETWORK } from '@/lib/tron'
+import { getCoinDecimalsOnSolana, isSolanaConfigured, SOLANA_COINS, SOLANA_NETWORK } from '@/lib/solana'
+import { getCoinDecimalsOnTron, isTronConfigured, TRON_COINS, TRON_NETWORK } from '@/lib/tron'
 import { defaultViemNetwork, defaultViemRpcUrl } from '@/lib/viem-network'
 import 'server-only'
 
@@ -255,3 +255,27 @@ export function isCoinSupportedOnNetwork(network: string, coin: string): boolean
 }
 
 export const SUPPORTED_DEPOSIT_NETWORKS = [...DEPOSIT_CHAIN_DEFS.map(def => def.network), TRON_NETWORK, SOLANA_NETWORK, BITCOIN_NETWORK]
+
+export interface EnabledDepositNetwork {
+  network: string
+  coins: string[]
+}
+
+export function getEnabledDepositNetworksWithCoins(): EnabledDepositNetwork[] {
+  const networks: EnabledDepositNetwork[] = getEnabledDepositChains().map(chain => ({
+    network: chain.network,
+    coins: [chain.native.coin, ...chain.tokens.map(token => token.coin)],
+  }))
+
+  if (isTronConfigured()) {
+    networks.push({ network: TRON_NETWORK, coins: [...TRON_COINS] })
+  }
+  if (isSolanaConfigured()) {
+    networks.push({ network: SOLANA_NETWORK, coins: [...SOLANA_COINS] })
+  }
+  if (isBitcoinConfigured()) {
+    networks.push({ network: BITCOIN_NETWORK, coins: [BITCOIN_NATIVE_COIN] })
+  }
+
+  return networks
+}

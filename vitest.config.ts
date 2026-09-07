@@ -8,10 +8,11 @@ export default defineConfig({
     setupFiles: ['./vitest.setup.ts'],
     include: ['tests/unit/*.test.{ts,tsx}'],
     testTimeout: 15000,
-    // Capped below the machine's core count: running one worker per core
-    // starves each jsdom + drizzle test environment of CPU, causing
-    // sporadic worker-startup and query timeouts across unrelated files.
-    maxWorkers: 4,
+    // Running test files in parallel starves each jsdom + drizzle test
+    // environment of CPU on this machine, causing sporadic worker-startup
+    // and query timeouts in different, unrelated files on every run.
+    // Serial execution is slower but deterministic.
+    fileParallelism: false,
     alias: {
       '@': path.resolve(__dirname, './src'),
       'server-only': path.resolve(__dirname, './tests/empty-module.ts'),

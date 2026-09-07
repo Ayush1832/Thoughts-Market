@@ -81,20 +81,30 @@ describe('appKitProvider SSR guard', () => {
     vi.unstubAllGlobals()
   })
 
+  // Higher timeout: vi.resetModules() forces a full cold re-import of
+  // AppKitProvider's heavy dependency graph (appkit-siwe, wagmi, better-auth)
+  // on every test in this file, which is slow and variable under CPU load.
   it('does not initialize AppKit during SSR import', async () => {
     const globalAny = globalThis as any
     const originalWindow = globalAny.window
     globalAny.window = undefined
 
     try {
-      await import('@/providers/AppKitProvider')
+      // Race against a bounded timeout so `window` is always restored
+      // promptly in `finally` below — an unbounded hang here (seen under
+      // heavy CPU contention) would otherwise leak window === undefined
+      // into the next test and cause unrelated, hard-to-diagnose failures.
+      await Promise.race([
+        import('@/providers/AppKitProvider'),
+        new Promise((_resolve, reject) => setTimeout(() => reject(new Error('AppKitProvider import timed out')), 30000)),
+      ])
 
       expect(mocks.createAppKit).not.toHaveBeenCalled()
     }
     finally {
       globalAny.window = originalWindow
     }
-  })
+  }, 45000)
 
   it('initializes AppKit in the browser and synchronizes theme', async () => {
     const appKitInstance = {
@@ -148,7 +158,7 @@ describe('appKitProvider SSR guard', () => {
     )
 
     expect(mocks.createAppKit).toHaveBeenCalledTimes(1)
-  })
+  }, 45000)
 
   it('keeps defaults when AppKit initialization fails', async () => {
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
@@ -185,5 +195,5 @@ describe('appKitProvider SSR guard', () => {
     finally {
       warnSpy.mockRestore()
     }
-  })
+  }, 45000)
 })

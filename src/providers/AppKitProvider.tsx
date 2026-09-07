@@ -98,14 +98,12 @@ function initializeAppKitSingleton(
       siweConfig: createSIWEConfig({
         signOutOnAccountChange: true,
         getMessageParams: async () => {
-          const params = {
+          return {
             domain: new URL(process.env.SITE_URL!).host,
             uri: typeof window !== 'undefined' ? window.location.origin : '',
             chains: [defaultNetwork.id],
             statement: 'Please sign with your account',
           }
-          console.log('SIWE getMessageParams:', params)
-          return params
         },
         createMessage: ({ address, ...args }: SIWECreateMessageArgs) => formatMessage(args, address),
         getNonce: async () => generateRandomString(32),

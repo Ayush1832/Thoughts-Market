@@ -10,6 +10,7 @@ import EventIconImage, { isEventMarketIconUrl } from '@/components/EventIconImag
 import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { useCurrentTimestamp } from '@/hooks/useCurrentTimestamp'
+import { authClient } from '@/lib/auth-client'
 import { getAvatarPlaceholderStyle } from '@/lib/avatar'
 import { cn } from '@/lib/utils'
 import {
@@ -20,6 +21,9 @@ import {
   useNotificationsLoading,
   useUnreadNotificationCount,
 } from '@/stores/useNotifications'
+import { useUser } from '@/stores/useUser'
+
+const { useSession } = authClient
 
 function getNotificationTimeLabel(notification: Notification, currentTimestamp: number | null) {
   if (notification.time_ago) {
@@ -94,10 +98,19 @@ function isLocalMergeNotification(notification: Notification) {
 
 function useLoadNotificationsOnMount() {
   const setNotifications = useNotifications(state => state.setNotifications)
+  const { data: session } = useSession()
+  const user = useUser()
+  // Wallet-connect can render this component before the server-side SIWE
+  // session cookie is set. Wait for a real session/user before hitting
+  // /api/notifications, otherwise it 401s during that gap.
+  const isSessionReady = Boolean(session?.user) || Boolean(user)
 
   useEffect(function loadNotificationsOnMount() {
+    if (!isSessionReady) {
+      return
+    }
     void setNotifications()
-  }, [setNotifications])
+  }, [isSessionReady, setNotifications])
 }
 
 export default function HeaderNotifications() {

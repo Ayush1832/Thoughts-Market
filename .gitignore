@@ -7,6 +7,9 @@
 .cursor
 .codex
 .agents
+agent
+.claude
+skills-lock.json
 openspec
 AGENTS.md
 

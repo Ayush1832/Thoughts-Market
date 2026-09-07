@@ -94,9 +94,9 @@ describe('storage compatibility', () => {
     )
   })
 
-  it('returns empty string for relative assets when no provider is configured', async () => {
+  it('falls back to a local path for relative assets when no provider is configured', async () => {
     const { getPublicAssetUrl } = await loadStorageModule()
-    expect(getPublicAssetUrl('users/avatar.jpg')).toBe('')
+    expect(getPublicAssetUrl('users/avatar.jpg')).toBe('/users/avatar.jpg')
     expect(getPublicAssetUrl(null)).toBe('')
   })
 

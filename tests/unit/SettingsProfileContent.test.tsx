@@ -46,6 +46,14 @@ vi.mock('wagmi', () => ({
   }),
 }))
 
+vi.mock('@reown/appkit/react', () => ({
+  useAppKitAccount: () => ({ isConnected: true }),
+}))
+
+vi.mock('@/hooks/useAppKit', () => ({
+  useAppKit: () => ({ open: vi.fn(), close: vi.fn(), isReady: true }),
+}))
+
 vi.mock('@/app/[locale]/(platform)/settings/_actions/update-profile', () => ({
   updateUserAction: (formData: FormData) => mocks.updateUserAction(formData),
 }))
@@ -117,6 +125,8 @@ describe('SettingsProfileContent', () => {
   })
 
   it('does not persist a community avatar_url on username-only saves', async () => {
+    mocks.updateUserAction.mockResolvedValueOnce({ username: 'newname' })
+
     const user = userEvent.setup()
     render(<SettingsProfileContent user={createUser()} />)
 

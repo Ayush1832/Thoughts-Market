@@ -24,8 +24,6 @@ import { uploadPublicAsset } from '@/lib/storage'
 import { normalizeTermsOfServicePdfPath, TERMS_OF_SERVICE_PDF_PATH_KEY } from '@/lib/terms-of-service'
 import { validateThemeSiteSettingsInput } from '@/lib/theme-settings'
 
-const MAX_LOGO_FILE_SIZE = 2 * 1024 * 1024
-const ACCEPTED_LOGO_TYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/svg+xml']
 const MAX_PWA_ICON_FILE_SIZE = 2 * 1024 * 1024
 const ACCEPTED_PWA_ICON_TYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/svg+xml']
 const MAX_TERMS_OF_SERVICE_PDF_FILE_SIZE = 2 * 1024 * 1024
@@ -44,40 +42,6 @@ function buildThemeAssetPath(prefix: string) {
 function buildTermsOfServicePdfPath() {
   const random = Math.random().toString(36).slice(2, 8)
   return `legal/terms-of-service-${Date.now()}-${random}.pdf`
-}
-
-async function processThemeLogoFile(file: File) {
-  if (!ACCEPTED_LOGO_TYPES.includes(file.type)) {
-    return { mode: null, path: null, svg: null, error: 'Logo must be PNG, JPG, WebP, or SVG.' }
-  }
-
-  if (file.size > MAX_LOGO_FILE_SIZE) {
-    return { mode: null, path: null, svg: null, error: 'Logo image must be 2MB or smaller.' }
-  }
-
-  if (file.type === 'image/svg+xml') {
-    const svg = await file.text()
-    return { mode: 'svg' as const, path: null, svg, error: null }
-  }
-
-  const buffer = Buffer.from(await file.arrayBuffer())
-  const output = await sharp(buffer)
-    .resize(512, 512, { fit: 'inside', withoutEnlargement: true })
-    .png({ quality: 90 })
-    .toBuffer()
-
-  const filePath = buildThemeAssetPath('site-logo')
-
-  const { error } = await uploadPublicAsset(filePath, output, {
-    contentType: 'image/png',
-    cacheControl: '31536000',
-  })
-
-  if (error) {
-    return { mode: null, path: null, svg: null, error: DEFAULT_ERROR_MESSAGE }
-  }
-
-  return { mode: 'image' as const, path: filePath, svg: null, error: null }
 }
 
 async function processPwaIconFile(file: File, size: number, label: string) {
@@ -142,6 +106,9 @@ function revalidateGeneralSettingsPaths() {
   revalidatePath('/[locale]/admin', 'page')
   revalidatePath('/[locale]/admin/theme', 'page')
   revalidatePath('/[locale]/admin/market-context', 'page')
+  // The public terms-of-service page renders the uploaded PDF directly, so
+  // it must be busted too or visitors keep seeing a stale/removed link.
+  revalidatePath('/[locale]/tos', 'page')
   revalidateTag(cacheTags.settings, 'max')
 }
 

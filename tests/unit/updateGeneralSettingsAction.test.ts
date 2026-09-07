@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => ({
   revalidatePath: vi.fn(),
+  revalidateTag: vi.fn(),
   getCurrentUser: vi.fn(),
   getSettings: vi.fn(),
   updateSettings: vi.fn(),
@@ -12,6 +13,7 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('next/cache', () => ({
   revalidatePath: mocks.revalidatePath,
+  revalidateTag: mocks.revalidateTag,
 }))
 
 vi.mock('@/lib/db/queries/user', () => ({
@@ -38,6 +40,7 @@ describe('updateGeneralSettingsAction', () => {
     vi.resetModules()
     vi.stubGlobal('fetch', mocks.fetch)
     mocks.revalidatePath.mockReset()
+    mocks.revalidateTag.mockReset()
     mocks.getCurrentUser.mockReset()
     mocks.getSettings.mockReset()
     mocks.updateSettings.mockReset()
@@ -128,7 +131,7 @@ describe('updateGeneralSettingsAction', () => {
     expect(mocks.encryptSecret).toHaveBeenCalledWith('openrouter-123')
 
     const savedPayload = mocks.updateSettings.mock.calls[0][0] as Array<{ group: string, key: string, value: string }>
-    expect(savedPayload).toHaveLength(27)
+    expect(savedPayload).toHaveLength(31)
     expect(savedPayload.find(entry => entry.key === 'site_name')?.value).toBe('Kuest')
     expect(savedPayload.find(entry => entry.key === 'site_description')?.value).toBe('Prediction market')
     expect(savedPayload.find(entry => entry.key === 'site_logo_mode')?.value).toBe('svg')
@@ -255,7 +258,7 @@ describe('updateGeneralSettingsAction', () => {
     formData.set('logo_image', new File(['hello'], 'logo.txt', { type: 'text/plain' }))
 
     const result = await updateGeneralSettingsAction({ error: null }, formData)
-    expect(result).toEqual({ error: 'Logo must be PNG, JPG, WebP, or SVG.' })
+    expect(result).toEqual({ error: 'Logo image is required when image logo is selected.' })
     expect(mocks.updateSettings).not.toHaveBeenCalled()
   })
 

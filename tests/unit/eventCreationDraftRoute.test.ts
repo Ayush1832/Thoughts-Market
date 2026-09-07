@@ -1,8 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => ({
+  isAdminAuthorized: vi.fn(),
   getCurrentUser: vi.fn(),
   updateDraftCoreFields: vi.fn(),
+}))
+
+vi.mock('@/lib/admin-auth-check', () => ({
+  isAdminAuthorized: (...args: any[]) => mocks.isAdminAuthorized(...args),
 }))
 
 vi.mock('@/lib/db/queries/user', () => ({
@@ -21,8 +26,10 @@ const { PATCH } = await import('@/app/[locale]/admin/api/event-creations/[id]/ro
 
 describe('event creation draft route', () => {
   beforeEach(() => {
+    mocks.isAdminAuthorized.mockReset()
     mocks.getCurrentUser.mockReset()
     mocks.updateDraftCoreFields.mockReset()
+    mocks.isAdminAuthorized.mockResolvedValue(true)
   })
 
   it('keeps omitted fields undefined during partial updates', async () => {

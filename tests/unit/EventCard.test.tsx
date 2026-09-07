@@ -45,6 +45,7 @@ vi.mock('@/lib/event-new-badge', () => ({
 }))
 
 vi.mock('@/lib/home-events', () => ({
+  isEventResolvedLike: () => false,
   isHomeEventResolvedLike: () => false,
 }))
 

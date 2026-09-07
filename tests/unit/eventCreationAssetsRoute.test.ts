@@ -1,10 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => ({
+  isAdminAuthorized: vi.fn(),
   getCurrentUser: vi.fn(),
   getDraftByIdForUser: vi.fn(),
   updateDraftCoreFields: vi.fn(),
   uploadPublicAsset: vi.fn(),
+}))
+
+vi.mock('@/lib/admin-auth-check', () => ({
+  isAdminAuthorized: (...args: any[]) => mocks.isAdminAuthorized(...args),
 }))
 
 vi.mock('@/lib/db/queries/user', () => ({
@@ -29,10 +34,12 @@ const { POST } = await import('@/app/[locale]/admin/api/event-creations/[id]/ass
 
 describe('event creation assets route', () => {
   beforeEach(() => {
+    mocks.isAdminAuthorized.mockReset()
     mocks.getCurrentUser.mockReset()
     mocks.getDraftByIdForUser.mockReset()
     mocks.updateDraftCoreFields.mockReset()
     mocks.uploadPublicAsset.mockReset()
+    mocks.isAdminAuthorized.mockResolvedValue(true)
   })
 
   it('rejects invalid option image targets before uploading', async () => {

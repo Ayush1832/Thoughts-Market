@@ -1,7 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => ({
+  isAdminAuthorized: vi.fn(),
   getCurrentUser: vi.fn(),
+}))
+
+vi.mock('@/lib/admin-auth-check', () => ({
+  isAdminAuthorized: (...args: any[]) => mocks.isAdminAuthorized(...args),
 }))
 
 vi.mock('@/lib/db/queries/user', () => ({
@@ -25,7 +30,9 @@ const { POST } = await import('@/app/[locale]/admin/api/event-creations/allowed-
 describe('allowed market creators route', () => {
   beforeEach(() => {
     vi.restoreAllMocks()
+    mocks.isAdminAuthorized.mockReset()
     mocks.getCurrentUser.mockReset()
+    mocks.isAdminAuthorized.mockResolvedValue(true)
   })
 
   it('rejects non-https site sources before fetching the remote allowlist', async () => {

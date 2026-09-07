@@ -18,7 +18,7 @@ describe('theme site identity helpers', () => {
     expect(identity.name).toBeTruthy()
     expect(identity.description).toBeTruthy()
     expect(identity.logoSvg).toContain('<svg')
-    expect(identity.logoUrl).toContain('data:image/svg+xml;utf8,')
+    expect(identity.logoUrl).toBe('/images/thoughtmarket.png')
     expect(identity.googleAnalyticsId).toBeNull()
     expect(identity.discordLink).toBeNull()
     expect(identity.supportUrl).toBeNull()
@@ -88,7 +88,7 @@ describe('theme site identity helpers', () => {
     expect(validateThemeSiteGoogleAnalyticsId('', 'Google Analytics ID')).toEqual({ value: null, error: null })
     expect(validateThemeSiteGoogleAnalyticsId('G-TEST123', 'Google Analytics ID')).toEqual({ value: 'G-TEST123', error: null })
     expect(validateThemeSiteGoogleAnalyticsId('UA-123', 'Google Analytics ID').error).toContain('invalid format')
-    expect(validateThemeSiteGoogleAnalyticsId('g-test123', 'Google Analytics ID').error).toContain('invalid format')
+    expect(validateThemeSiteGoogleAnalyticsId('g-test123', 'Google Analytics ID')).toEqual({ value: 'G-TEST123', error: null })
     expect(validateThemeSiteGoogleAnalyticsId('bad id', 'Google Analytics ID').error).toContain('invalid format')
 
     expect(validateThemeSiteExternalUrl('', 'Discord link')).toEqual({ value: null, error: null })

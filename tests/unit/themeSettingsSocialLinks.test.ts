@@ -10,7 +10,7 @@ function createValidationInput() {
     siteDescription: defaults.description,
     logoMode: defaults.logoMode,
     logoSvg: defaults.logoSvg,
-    logoImagePath: '',
+    logoImagePath: defaults.logoImagePath ?? '',
     pwaIcon192Path: '',
     pwaIcon512Path: '',
     googleAnalyticsId: '',

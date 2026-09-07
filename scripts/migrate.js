@@ -444,11 +444,18 @@ async function configureSupabaseScheduler(sql, siteUrl, cronSecret) {
   await createSyncBitcoinSweepsCron(sql, siteUrl, cronSecret)
 }
 
-function resolveMigrationConnectionString() {
+function resolveMigrationConnectionString(isSupabaseMode) {
   const migrationUrl = process.env.POSTGRES_URL_NON_POOLING || process.env.POSTGRES_URL
 
   if (!migrationUrl) {
     return null
+  }
+
+  // Self-hosted "Postgres+S3" deployments often run without a configured SSL
+  // cert, so disable it there. Supabase's pooler enforces SSL and rejects
+  // plaintext connections outright, so this must never apply in Supabase mode.
+  if (isSupabaseMode) {
+    return migrationUrl
   }
 
   return migrationUrl.replace('require', 'disable')
@@ -463,7 +470,17 @@ async function releaseMigrationLock(sql) {
 }
 
 async function run() {
-  const connectionString = resolveMigrationConnectionString()
+  let isSupabaseMode
+  try {
+    isSupabaseMode = resolveSupabaseMode(process.env)
+  }
+  catch (error) {
+    console.error('An error occurred:', error)
+    process.exitCode = 1
+    return
+  }
+
+  const connectionString = resolveMigrationConnectionString(isSupabaseMode)
   if (!connectionString) {
     console.log('Skipping db:push because required env vars are missing: POSTGRES_URL_NON_POOLING or POSTGRES_URL')
     return
@@ -478,7 +495,6 @@ async function run() {
   let lockAcquired = false
 
   try {
-    const isSupabaseMode = resolveSupabaseMode(process.env)
     const siteUrl = resolveSiteUrl(process.env)
     const cronSecret = process.env.CRON_SECRET?.trim() || ''
 
